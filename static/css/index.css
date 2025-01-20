@@ -1,0 +1,92 @@
+label {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}
+
+label span.label {
+    display: flex;
+}
+
+form input[type=text], form textarea {
+    background: inherit;
+    color: inherit;
+    border: solid 1px black;
+    font: inherit;
+    padding: 0.3em 0.7em;
+}
+
+ul.form-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+li.form-list-item {
+    padding: 0.3em 1em;
+}
+
+ul.available-list {
+    list-style: none;
+    padding: 0;
+}
+
+li.available-list-item a {
+    color: inherit;
+    text-decoration: none;
+    line-height: 1.5em;
+}
+
+
+.model-item a[data-running="true"] {
+    /* border-color: #3c563c; */
+    /* background: #1a241f; */
+    /* gap: 0.5em; */
+    /* align-items: center; */
+}
+
+.model-item a {
+    border: solid 2px;
+    padding: 0.4em 0.7em;
+    display: flex;
+    margin: 0em 0;
+    border-color: #0a0a0a;
+    background: #111;
+    border-radius: 0.3em;
+    gap: 0.5em;
+    align-items: center;
+}
+
+span.running-indicator {
+    /* border: solid 2px #444; */
+    width: 0.9em;
+    height: 0.9em;
+    display: block;
+    border-radius: 10em;
+    margin: 0 0.4em;
+    background: #333;
+}
+
+
+*[data-running=true] span.running-indicator {
+    background: #329932;
+}
+
+
+ul.models {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em 0.7em;
+}
+
+.model-item span.info {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-item span.info .model-model {
+    color: #777;
+}

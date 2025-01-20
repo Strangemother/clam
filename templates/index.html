@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/polyclass@latest/dist/polyclass.browser-full.js"></script>
+    <link rel="stylesheet" href="./static/css/index.css">
+    <title>Oloqui</title>
+</head>
+
+<body polyclass class='background-#222
+                        color-#DDD
+                        margin-0
+                        font-pack-lexend+deca-500
+                        font-lexend+deca-500 letter-spacing-.1px'>
+    <header class='primary background-#111'>
+        <div class="logo padding-1em
+                    font-size-1rem">Allo</div>
+    </header>
+    <main>
+        <header>
+            <h1 class="title
+                        text-align-center
+                        font-size-5rem">
+                Allo
+            </h1>
+        </header>
+    </main>
+
+    {% raw %}
+    <div id="mini-app">
+        Mini-app
+        <div class='available'>
+            <ul class="available-list display-table">
+                <li class="available-list-item"
+                    v-for="service in services.items">
+                    <a href="#"
+                        class="display-table-row"
+                        @click="getService(service.name)">
+                        <span class="display-table-cell">{{ service.type }}</span>
+                        <span class="display-table-cell">{{ service.name }}</span>
+                        <span class="display-table-cell">{{ service.url }}</span>
+                    </a>
+                    <div>
+                        <ul class="models">
+                            <li class="model-item"
+                                v-for="model in services[service.name]?.models">
+                                <a class="display-table-row"
+                                    :data-running="model.running"
+                                    @click="setModelName(model.name)">
+                                    <span class="indicator-container">
+                                        <span class="running-indicator"></span>
+                                    </span>
+                                    <span class="info">
+                                        <span class="model-name">{{ model.name }}</span>
+                                        <span class="model-model">{{ model.model }}</span>
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="flat-form">
+            <form @submit="formSubmit(event)"
+                method="POST"
+                action='/v1/form/prompt/'>
+                <ul class="form-list">
+                    <li class="form-list-item">
+                        <label>
+                            <span class="label">Selected Service</span>
+                            <input type="text" :value="selectedService.name" name='name'>
+                        </label>
+                        <!-- <input type="text" name='prompt'> -->
+                    </li>
+                    <li class="form-list-item">
+                        <label>
+                            <span class="label">Prompt</span>
+                            <textarea name="prompt" ref='prompt' placeholder="Question"></textarea>
+                        </label>
+                    </li>
+                    <li class="form-list-item">
+                        <label>
+                            <span class="label">Model</span>
+                            <input type="text" :value="selectedService.model" name='model'>
+                        </label>
+                    </li>
+                    <li class="form-list-item">
+                        <input type="submit"
+                            :value="submitting? 'Sending': 'Send'">
+                    </li>
+                </ul>
+            </form>
+            <div class="count">
+                {{ responseData.files?.length }}
+            </div>
+            <div class="files-container">
+                <ul class="file-list">
+                    <li class="file-item" v-for="file in responseData.files">
+                        <audio controls="controls" autoplay="autoplay">
+                           <source :src="file.fixed_url" type="audio/mpeg">
+                           Your browser does not support the audio element.
+                        </audio>
+                        <details>
+                            <pre>{{ file }}</pre>
+                        </details>
+                    </li>
+                </ul>
+            </div>
+            <div class="white-space-pre-wrap"
+                v-html='responseData.response'></div>
+        </div>
+
+    </div>
+
+    {% endraw %}
+
+    <script src="./static/js/petite-vue.iife.js"></script>
+    <script src="./static/js/mini-app.js"></script>
+    <script src="./static/js/index.js"></script>
+</body>
+</html>
+
+
+
