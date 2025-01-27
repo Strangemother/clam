@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/polyclass@latest/dist/polyclass.browser-full.js"></script>
+    <link rel="stylesheet" href="./static/css/index.css">
+    <title>Cluster</title>
+</head>
+
+<body polyclass class='background-#222
+                        color-#DDD
+                        margin-0
+                        font-pack-lexend+deca-500
+                        font-lexend+deca-500 letter-spacing-.1px'>
+    <header class='primary background-#111'>
+        <div class="logo padding-1em
+                    font-size-1rem">Cluster</div>
+    </header>
+    <main>
+        <header>
+            <h1 class="title
+                        text-align-center
+                        font-size-5rem">
+                Cluster
+            </h1>
+        </header>
+    </main>
+
+    {% raw %}
+    <div id="mini-app">
+        <textarea
+            name="input"
+            @keydown.enter="enterSubmitText"
+            id="input"></textarea>
+        <ul class="message-list">
+            <li class="message-item" v-for='message in messages'>
+                <div class='type'>{{ message.type }}</div>
+                <span>{{ message.text }}</span>
+            </li>
+            <li>
+                <div class='type'>
+                    <span ref=status>{{ partialState.status }}</span>
+                    <span ref=counter>-1</span>
+                </div>
+                <div id="presenter" ref='presenter'>
+                </div>
+            </li>
+        </ul>
+    </div>
+    {% endraw %}
+
+    <script src="./static/js/petite-vue.iife.js"></script>
+    <script src="./static/js/index.js"></script>
+</body>
+</html>
+
+
+
