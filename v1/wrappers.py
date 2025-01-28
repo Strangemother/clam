@@ -202,6 +202,7 @@ class HTTPMsty(HTTPClient):
             model['running'] = False # model['name'] in names
         return dict(models=models)
 
+
 class HTTPJan(HTTPMsty):
     """Jan uses Cortex: http://192.168.50.60:9901/
 
