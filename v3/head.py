@@ -5,7 +5,12 @@ Messages inbound from the websocket are expected JSON.
 Farm results through the cluster as needed.
 """
 import requests
+import asyncio
 import json
+
+from clients import get_register
+from shorts import send_json
+
 
 ANGRY_ROLE =  {
     "role": "system",
@@ -23,10 +28,6 @@ configs = {
     }
 }
 
-from clients import get_register
-from shorts import send_json
-
-
 async def send_service_text(websocket, t):
     return await send_json(websocket, text=t)
 
@@ -35,6 +36,7 @@ class OllomaClient:
     append_role = True
     url = "http://192.168.50.60:10000/api/chat/"
     model = "llama3.2:latest"
+    # model = "deepseek-r1:latest"
 
     def __init__(self, head, write_back=None, **kw):
         self.head = head
@@ -45,6 +47,9 @@ class OllomaClient:
         if self.append_role:
             self.messages += (self.role_message(),)
 
+    def last_message(self):
+        return self.messages[-1]
+
     def role_message(self):
         return ANGRY_ROLE
 
@@ -54,11 +59,12 @@ class OllomaClient:
     def is_streaming(self):
         return False
 
-    async def process_input(self, content):
+    async def process_input(self, content, role='user'):
         msg = dict(
-            role='user',
+            role=role,
             content=content,
         )
+        print('In', msg)
         msgs = self.messages + (msg, )
 
         d = {
@@ -67,6 +73,7 @@ class OllomaClient:
             'stream': True,
         }
 
+        self.messages = msgs
         return await self.post(self.url, d)
 
     async def post(self, url, d):
@@ -79,7 +86,6 @@ class OllomaClient:
         print('POST', url)
         response = requests.request("POST", url, data=data,
                                     headers=headers, stream=True)
-
 
         for line in response.iter_lines():
 
@@ -100,11 +106,78 @@ class OllomaClient:
             print(' -- ')
 
 
+from datetime import datetime
+
+import asyncio
+
+
+class Timer:
+    """
+    async def timeout_callback():
+        await asyncio.sleep(0.1)
+        print('echo!')
+
+    print('\nfirst example:')
+    timer = Timer(2, timeout_callback)  # set timer for two seconds
+    await asyncio.sleep(2.5)  # wait to see timer works
+
+    print('\nsecond example:')
+    timer = Timer(2, timeout_callback)  # set timer for two seconds
+    await asyncio.sleep(1)
+    timer.cancel()  # cancel it
+    """
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        await self._callback()
+
+    def cancel(self):
+        self._task.cancel()
+
+
 class Alpha:
 
     def __init__(self, uuid):
-        print('New session', uuid)
+        print(f'New "{self.__class__.__name__}" session', uuid)
+        self.recv_count = 0
+        self.last_recv_count = 0
         self.uuid = uuid
+        self.open_time = datetime.now()
+        self.recv_timer = Timer(4, self.recv_timeout_callback)
+        print('Timer', self.recv_timer)
+
+    async def recv_timeout_callback(self):
+        # push a message into the foreground conversation, as the system.
+        self.recv_timer = None
+        if self.recv_count > self.last_recv_count:
+            return
+
+        await asyncio.sleep(0.1)
+        print('background question!')
+        fgc = self.foreground
+        last_message = '[NEVER PROVIDED]'
+        fgc = self.foreground
+        lm = fgc.last_message()
+        if lm:
+            if lm['role'] != 'assistant':
+                last_message = lm['content']
+        msg = ('[CONTEXT] The user has said nothing since: "'
+                f"{last_message}"
+                '". Prompt them to provide input whilst ensuring '
+                'to reference to the the message [/CONTEXT]')
+        # msg = (
+        #         '[CONTEXT]'
+        #         'role: system \n This is the background system. '
+        #         # 'A background alert occured: `doorbell`. '
+        #         'your memory about "welsh presenter" is saved.'
+        #         'Directly but tersely announce this event to the user in first person perspective. '
+        #         '[/CONTEXT]'
+        #         )
+        await fgc.process_input(msg)
 
     async def wake(self, websocket, data):
         """Very First call on new socket.
@@ -124,9 +197,11 @@ class Alpha:
         the websocket.uuid should match self.uuid, but this doesn't matter.
         The session should exist to communicate to the bot.
         """
-
+        self.recv_count += 1
         print('Message', self.uuid, websocket.uuid)
-
+        if self.recv_timer is None:
+            self.last_recv_count = self.recv_count
+            self.recv_timer = Timer(4, self.recv_timeout_callback)
         """Here - the head must assess and farm the message.
         In most cases the message doesn't change - the memory, thinkers etc...
         all have the same info.
@@ -169,17 +244,19 @@ class Alpha:
             [current context is stopped; and a new one is generated with this partial applied...]
         """
     async def foreground_recv(self, data):
-        print('Said', data)
+        print('.', end='')
         # send a foreground partial to the UI.
 
         # push to UI.
         ws = get_register(self.foreground_uuid)
-        return await send_json(ws,
+        await asyncio.sleep(0)
+        done = data.get("done", -1)
+        await send_json(ws,
             node='foreground',
             n='fg',
             type="partial",
             t="p",
-            done=data["done"],
-            d=int(data["done"]),
+            done=done,
+            d=int(done),
             **data['message'],
             )

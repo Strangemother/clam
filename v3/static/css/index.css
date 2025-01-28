@@ -90,3 +90,16 @@ ul.models {
 .model-item span.info .model-model {
     color: #777;
 }
+
+
+li.message-item {
+    border: solid 1px #111;
+}
+
+ul.message-list {
+    margin: 0;
+    list-style: auto;
+    flex-direction: row-reverse;
+    display: flex;
+    flex-direction: column-reverse;
+}

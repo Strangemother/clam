@@ -1,6 +1,8 @@
 """The proxy handles comms to/from the ui and bots.
 
-The frontend is a served websocket sevice.
+Boot the proxy in parallel to the server. The user connects to the server -
+communicating to the bot through the socket.
+
 """
 import asyncio
 from websockets.asyncio.server import serve
@@ -17,7 +19,11 @@ async def onboard(websocket):
     print('onboard Socket', websocket)
     websocket.count = 0
 
+
 async def capture(websocket):
+    """Onboard the socket and start receiving messages.
+    Send all incoming messages to the recv_message()
+    """
     await onboard(websocket)
 
     async for message in websocket:
@@ -27,6 +33,13 @@ async def capture(websocket):
 
 
 async def recv_message(websocket, message):
+    """
+    Receive the message from the given websocket - expecting JSON from the client.
+
+    If the socket is new, expect a UUID message - it registers and calls
+    cluster.new_socket. After the first call, all salls are sent to
+    cluster.recv_message().
+    """
     d = json.loads(message)
     if websocket.count == 0:
         uuid = d['uuid']
@@ -45,6 +58,8 @@ async def recv_message(websocket, message):
 
 
 async def main():
+    """Serve.
+    """
     pair = ("localhost", 8765)
     print('Waking Service. on', pair)
     async with serve(capture, *pair) as server:

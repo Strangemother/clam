@@ -6,35 +6,41 @@ Connect to the backend, start receiving socket info.
 const url = 'ws://localhost:8765'
 const uuid = Math.random().toString(32).slice(2)
 
-let ws = new WebSocket(url)
+
+let connectSocket = function(endpoint) {
+    console.log('new socket')
+    let ws = new WebSocket(endpoint)
+
+    ws.onmessage = async function(ev){
+        await recvJSONEvent(ev)
+    }
+
+    ws.onopen = async function(ev){
+        console.log("open", ev)
+        app.messages.push({ type: 'socket', text: 'connected' })
+        await sendFirstMessage()
+    }
 
 
-ws.onmessage = async function(ev){
-    await recvJSONEvent(ev)
+    ws.onerror = function(ev){
+        app.messages.push({ type: 'socket', text: 'error' })
+        console.error(ev)
+    }
+
+
+    ws.onclose = function(ev){
+        app.messages.push({ type: 'socket', text: 'closed' })
+        console.log("closed", ev)
+    }
+
+    return ws
 }
 
-
-ws.onopen = async function(ev){
-    console.log("open", ev)
-    app.messages.push({ type: 'socket', text: 'connected' })
-    await sendFirstMessage()
-}
-
-
-ws.onerror = function(ev){
-    app.messages.push({ type: 'socket', text: 'error' })
-    console.error(ev)
-}
-
-
-ws.onclose = function(ev){
-    app.messages.push({ type: 'socket', text: 'closed' })
-    console.log("closed", ev)
-}
 
 const cache = {
     stashValue: ''
     , counter: 0
+    , primarySocket: undefined
 }
 
 const foregroundEvent = async function(data, ev) {
@@ -57,17 +63,21 @@ const foregroundEvent = async function(data, ev) {
     cache['counter'] += 1
     // console.log(cache['counter'])
     let n = `<span>${data.content}</span>`
+    // console.log('.')
     // app.partialState.counter = cache['counter']
     // app.partialState.status = 'receiving'
 
     app.$refs.counter.innerHTML = cache['counter']
     app.$refs.status.innerHTML = data.role
+    // app.$refs.presenter.innerHTML += data.content
     app.$refs.presenter.innerHTML += n
 }
 
 
 let recvJSONEvent = async function(ev) {
     // console.log(ev)
+    // console.log('.')
+
     let data = JSON.parse(ev.data)
     let nodeMap = {
         foreground: foregroundEvent//(data, ev)
@@ -87,17 +97,31 @@ let recvJSONEvent = async function(ev) {
     return await f(data, ev)
 }
 
+let getSocket = function() {
+    if(cache.primarySocket == undefined) {
+        cache.primarySocket = connectSocket(url)
+    }
+
+    return cache.primarySocket
+}
+
+const newSocket = function(){
+    cache.primarySocket = undefined;
+    return getSocket()
+}
 
 let sendTextMessage = async function(t) {
-    app.messages.push({ type: 'socket', text: `send ${t.length}` })
+    app.messages.push({ type: 'user', text: t })
     let v = JSON.stringify({'text': t})
+    let ws = getSocket()
     ws.send(v)
 }
 
 
 let sendJSONMessage = async function(data) {
     let t = JSON.stringify(data)
-    app.messages.push({ type: 'socket', text: `send ${t.length}` })
+    app.messages.push({ type: 'assistant', text: `send ${t.length}` })
+    let ws = getSocket()
     ws.send(t)
 }
 
@@ -117,6 +141,7 @@ const createMiniApp = function() {
             status: "waiting"
             , counter: 0
         })
+
         , async enterSubmitText(ev) {
             /* EnterKey _only_ created new line.
             Adding a modifier sends the text.
@@ -130,11 +155,13 @@ const createMiniApp = function() {
             ev.preventDefault()
             console.log('enterSubmitText')
             await sendTextMessage(ev.target.value)
+            ev.target.value = ''
         }
     }
 
     const res = PetiteVue.createApp(app)
     res.mount('#mini-app')
+    getSocket()
     return app
 };
 

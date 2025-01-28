@@ -3,6 +3,9 @@ A client has an id for the session (for now)
 
 Messages inbound from the websocket are expected JSON.
 Farm results through the cluster as needed.
+
+The `head.Alpha` performs the long-distance bot interactions and will pump
+messages through the socket.
 """
 
 from collections import defaultdict

@@ -5,6 +5,26 @@
 1. A UI made with flask, HTML, Vue, websockets
 2. Connecting to accounts for bots and permissions
 
+
+## Running
+
+The API (olloma) is running elsewhere.
+
+
+The proxy runs websocket host
+
+```
+py proxy.py
+```
+
+Run the frontend of which connects to the proxt.
+
+```
+py server.py
+```
+
+---
+
 ![overview diagram](./overview.png)
 
 ## Goal
@@ -188,6 +208,32 @@ Importantly the primary isn't just the _core memory_ - it maintains message traf
         primary ...
 
 ---
+
+## Update
+
+Okay I solved the ugliest problem, where the UI didn't update _immediately_, but rather waited for a gap in the message outbound.
+
+### Issue
+
+The websocket response from proxy to UI worked fine - but when the server floods messages (during a response) the socket will buffer the responses, releasing them after the server senses a gap.
+
+Or to rephrase the pipe doesn't flush until the server takes a breath. Currently the quick solution is to provide the server a moment:
+
+    # foreground response
+    await asyncio.sleep(0)
+
+later this should be a high low watermark on the socket.
+
+---
+
+This example presents a foreground, with intermittent messages pushed from the backend (primary).
+A quick lesson; the `role=system` doesn't do as expected, yielding an empty response and no inference on the given knowledge. Instead `role=assistant` push directly to the bot (with history), works just-as-well.
+
+I've wrapped the _background context request_ - such as "prompt the user to say something" in `[CONTEXT] ... [/CONTEXT]` for more focus.
+
+To run the example: start the proxy, hit the browser; after a 4 seconds of no messages, the primary will push a question into the foreground, to illicit a response from the chat client (foreground)
+
+Next is a multi client background, where the primary ferries messages to unique models, with distinct instructions and concurrent messages - driven by the primary model.
 
 ## Notes
 
