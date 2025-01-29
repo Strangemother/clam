@@ -235,6 +235,37 @@ To run the example: start the proxy, hit the browser; after a 4 seconds of no me
 
 Next is a multi client background, where the primary ferries messages to unique models, with distinct instructions and concurrent messages - driven by the primary model.
 
+---
+
+## Update
+
+A UI with a comms feedback, and a background primary feeding extra messages to the client.
+
+With the primary bot, messages sent from the server to the foreground can be `system` or `assistant`. The system type can be used as hidden records, supplying information to the foreground without receiving output.
+The assistant type does produce an output, and we can adapt the _input_ of this _assistant message_ with text denoting a background task.
+
+---
+
+For "adaptive roles", we can apply an altered system role message for submission. We can apply up-to-date information to the role, such as _the time_.
+
+    role: system
+    You are a smart clock. The current time is 20:20UTC
+
+    role: user
+    what time is it?
+
+    role: assistant
+    it is 8:30PM
+
+
+---
+
+In this example, we see the bot arbitrarily inject questions into the conversation -
+asking the user for input.
+
+![Chat example](./chat-example.png)
+
+
 ## Notes
 
 sometimes the bot will interrupt the foreground flow, with remarks and past ideas. I feel this is okay - almost natural, as I foresee the bot interrupting itself with "ooh I remember X"
