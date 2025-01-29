@@ -263,7 +263,7 @@ For "adaptive roles", we can apply an altered system role message for submission
 In this example, we see the bot arbitrarily inject questions into the conversation -
 asking the user for input.
 
-![Chat example](./chat-example.png)
+![Chat example](./chat-example.gif)
 
 
 ## Notes
