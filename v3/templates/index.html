@@ -29,22 +29,35 @@
 
     {% raw %}
     <div id="mini-app">
-        <textarea
-            name="input"
-            @keydown.enter="enterSubmitText"
-            id="input"></textarea>
-        <ul class="message-list">
-            <li class="message-item" v-for='message in messages'>
-                <div class='type'>{{ message.type }}</div>
-                <span>{{ message.text }}</span>
+        <div class="socket-info widthed">
+            <input type="text" ref='url' name="url" id="url" value="ws://localhost:8765">
+            <a href="javascript:;" @click=reconnect>Connect</a>
+            <div class="connected-indicator" :data-connected="cacheCopy.socketConnected">
+                <span class="label">Connected: {{cacheCopy.socketConnected}}</span>
+            </div>
+        </div>
+
+        <ul class="input-interface message-list widthed">
+            <li class="presenter-item message-item user">
+                <div class='type'>input</div>
+                <textarea
+                    name="input"
+                    @keydown.enter="enterSubmitText"
+                    id="input"></textarea>
             </li>
-            <li class="message-item">
+        </ul>
+        <ul class="message-list widthed">
+            <li class="message-item" :class='message.type' v-for='message in messages'>
+                <div class='type'>{{ message.type }} - {{ message.model }}</div>
+                <span class="message-text">{{ message.text }}</span>
+            </li>
+
+            <li class="presenter-item message-item assistant" :class="partialState.status">
                 <div class='type'>
                     <span ref=status>{{ partialState.status }}</span>
-                    <span ref=counter>-1</span>
+                    <span ref=counter>{{ partialState.counter }}</span>
                 </div>
-                <div id="presenter" ref='presenter'>
-                </div>
+                <div id="presenter" ref='presenter'></div>
             </li>
         </ul>
     </div>
@@ -54,6 +67,5 @@
     <script src="./static/js/index.js"></script>
 </body>
 </html>
-
 
 

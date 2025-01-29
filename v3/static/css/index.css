@@ -93,13 +93,106 @@ ul.models {
 
 
 li.message-item {
-    border: solid 1px #111;
+    /* border: solid 1px #111; */
+    background: #111;
+    border-radius: 0.6em;
+    margin: 0.4em 1em;
+    /* min-width: 40em; */
+}
+
+div#presenter {
+    padding: 0.6em 1em;
 }
 
 ul.message-list {
-    margin: 0;
+    /* margin: 0; */
     list-style: auto;
     flex-direction: row-reverse;
     display: flex;
     flex-direction: column-reverse;
+}
+
+
+.connected-indicator > * {
+    display: none;
+}
+
+.connected-indicator {
+    background: #000;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    padding: 0;
+    margin: 0;
+    border-radius: 5em;
+}
+
+.socket-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
+input[type=text], textarea {
+    background: #333;
+    color: inherit;
+    border: none;
+    font: inherit;
+}
+
+.connected-indicator[data-connected="true"] {
+    background: green;
+}
+
+.socket-info input[type=text] {
+    padding: 0.4em 0.5em;
+}
+
+input[type=text]:focus, textarea:focus {
+    outline: none;
+    background: #222;
+}
+
+.message-item .type {
+    border-radius: 0.6em 0.6em 0em 0em;
+    background: #0a0a0a;
+    padding: 0.3em 0.8em;
+    color: #555;
+}
+
+.message-item > span, #presenter {
+    padding: 0.5em 1em 0.7em;
+    display: flex;
+    white-space: break-spaces;
+    color: hsl(199deg 27% 59%);
+}
+
+li.message-item.assistant {
+    margin-left: 33%;
+}
+
+li.message-item.user {
+    margin-right: 33%;
+}
+
+.widthed {
+    max-width: 72rem;
+    margin: auto;
+}
+
+
+li.presenter-item.waiting {
+    display: none;
+}
+
+.presenter-item textarea {
+    padding: 0.4em 0em 0.5em;
+    /* border-radius: 0em 0 0.7em 0.7em; */
+    width: 95%;
+    margin: 0 1em;
+    background: inherit;
+}
+
+.presenter-item textarea:focus {
+    background: #0b0b0b;
 }
