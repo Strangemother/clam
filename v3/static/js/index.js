@@ -44,7 +44,8 @@ const cache = {
     , counter: 0
     , primarySocket: undefined
     , socketConnected: false
-
+    , models: []
+    , selectedModel: 'default'
 }
 
 
@@ -57,6 +58,15 @@ const foregroundEvent = async function(data, ev) {
             data.type = data['role']
             data.text =  cache.stashValue
             app.messages.push(data)
+            let modelName = data.model;
+            if(modelName){ // && app.cacheCopy.selectedModel == undefined) {
+                app.cacheCopy.selectedModel = data.model
+                let $models = app.$refs.models
+                Array.from($models.options).forEach((e,i,a)=>{
+                        e.selected = e.value == modelName
+                    })
+            }
+
             setTimeout(()=>{
                 app.$refs.presenter.innerHTML = cache.stashValue = ''
                 // app.$refs.status.innerHTML = data.role
@@ -71,17 +81,36 @@ const foregroundEvent = async function(data, ev) {
 
     cache['stashValue'] += data.content
     cache['counter'] += 1
-    // console.log(cache['counter'])
-    let n = `<span>${data.content}</span>`
-    // console.log('.')
+
     app.partialState.counter = cache['counter']
     app.partialState.status = data.role
 
-    // app.$refs.counter.innerHTML = cache['counter']
-    // app.$refs.status.innerHTML = data.role
-
     app.$refs.presenter.innerHTML += data.content
+    // let n = `<span>${data.content}</span>`
     // app.$refs.presenter.innerHTML += n
+}
+
+const modelEvent = async function(data, ev) {
+    /* A model event
+        { type: 'models'
+          models: [{
+              "name": "nomic-embed-text:latest",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2025-01-25T03:26:41.1548185Z",
+              "size": 274302450,
+              "digest": "0a..9f",
+              "details": {
+                  "parent_model": "",
+                  "format": "gguf",
+                  "family": "nomic-bert",
+                  "families": [ "nomic-bert" ],
+                  "parameter_size": "137M",
+                  "quantization_level": "F16"
+              }
+          }]
+        }
+    */
+   app.cacheCopy.models = data.models
 }
 
 
@@ -98,13 +127,25 @@ let recvJSONEvent = async function(ev) {
         foreground: foregroundEvent//(data, ev)
     }
 
+    let typeMap = {
+        models: modelEvent
+    }
+
     let node = data['node']
     let f = nodeMap[node]
 
     if(f == undefined) {
+
+        let tf = typeMap[data['type']]
+        if(tf != undefined){
+            return await tf(data, ev)
+        }
+
         if(node == undefined) {
+            console.warn('Unknown data', data)
             return
         }
+
         console.warn('Unknown node type', node)
         app.messages.push({ type: 'message', text: data })
         return
@@ -159,6 +200,16 @@ const createMiniApp = function() {
             , counter: 0
         })
 
+        , async changeModel(ev){
+            console.log('changeModel')
+            let models = Array.from(ev.target.selectedOptions).map(e=>e.value)
+            await sendJSONMessage({
+                role: 'service'
+                , action: 'select_models'
+                , models
+            })
+        }
+
         , async enterSubmitText(ev) {
             /* EnterKey _only_ created new line.
                Adding a modifier sends the text.
@@ -170,7 +221,8 @@ const createMiniApp = function() {
             this.partialState.status = 'submitting'
             ev.preventDefault()
             console.log('enterSubmitText')
-            await sendTextMessage(ev.target.value)
+            let role = ev.target.dataset.role
+            await sendTextMessage(ev.target.value, role)
             ev.target.value = ''
         }
         , reconnect(){

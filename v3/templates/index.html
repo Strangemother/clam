@@ -29,22 +29,44 @@
 
     {% raw %}
     <div id="mini-app">
-        <div class="socket-info widthed">
-            <input type="text" ref='url' name="url" id="url" value="ws://localhost:8765">
-            <a href="javascript:;" @click=reconnect>Connect</a>
-            <div class="connected-indicator" :data-connected="cacheCopy.socketConnected">
-                <span class="label">Connected: {{cacheCopy.socketConnected}}</span>
-            </div>
-        </div>
+        <ul class="socket-info widthed">
+            <li>
+                <input type="text" ref='url' name="url" id="url" value="ws://localhost:8765">
+                <a href="javascript:;" @click=reconnect>Connect</a>
+                <div class="connected-indicator" :data-connected="cacheCopy.socketConnected">
+                    <span class="label">Connected: {{cacheCopy.socketConnected}}</span>
+                </div>
+            </li>
+            <li>
+                <select id="model-choice"
+                    @change='changeModel'
+                    ref='models'>
+                    <option value="default">Default</option>
+                    <option v-for='item in cacheCopy.models'
+                            :value="item.model">{{ item.name }}</option>
+                </select>
+            </li>
+        </ul>
 
-        <ul class="input-interface message-list widthed">
+        <ul class="input-interface widthed">
             <li class="presenter-item message-item user">
                 <div class='type'>input</div>
                 <textarea
                     name="input"
+                    data-role='user'
                     @keydown.enter="enterSubmitText"
                     id="input"></textarea>
             </li>
+
+            <li class="presenter-item message-item system">
+                <div class='type'>system</div>
+                <textarea
+                    name="system"
+                    data-role='system'
+                    @keydown.enter="enterSubmitText"
+                    id="system"></textarea>
+            </li>
+
         </ul>
         <ul class="message-list widthed">
             <li class="message-item" :class='message.type' v-for='message in messages'>

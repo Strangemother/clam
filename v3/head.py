@@ -35,6 +35,47 @@ configs = {
 async def send_service_text(websocket, t):
     return await send_json(websocket, text=t)
 
+async def http_quick_get(url):
+    headers = {
+        'Content-Type': "application/json",
+        'Accept': "*/*",
+        'Cache-Control': "no-cache",
+        }
+
+    print(' -- http_quick_get', url)
+    # data = json.dumps(payload)
+    response = requests.request("GET", url, headers=headers)
+    return response
+
+async def http_post_json(url, d, reader=None):
+    headers = {
+            'Content-Type': "application/json",
+            'Cache-Control': "no-cache",
+        }
+
+    data = json.dumps(d)
+    print('JSON POST', url)
+    stream = True
+    response = requests.request("POST", url, data=data,
+                                headers=headers, stream=stream)
+    rows = ()
+    for line in response.iter_lines():
+        # filter out keep-alive new lines
+        if not line:
+            continue
+        decoded_line = line.decode('utf-8')
+        rl = json.loads(decoded_line)
+        if reader:
+            reader(rl, response)
+        rows += (rl,)
+    return rows
+
+
+async def http_get_json(u):
+    d = await http_quick_get(u)
+    return d.json()
+
+
 
 class OllomaClient:
     append_role = True
@@ -52,6 +93,18 @@ class OllomaClient:
         if self.append_role:
             self.messages += (self.role_message(),)
 
+    async def set_model(self, model_name):
+        # If an empty prompt is provided, the model will be loaded into memory.
+
+        # Request
+        # curl http://localhost:11434/api/generate -d '{
+        #   "model": "llama3.2"
+        # }'
+        self.model = model_name
+        url = "http://192.168.50.60:10000/api/generate/"
+        r = await http_post_json(url, {'model': model_name})
+        print('set model response', r)
+
     def last_message(self):
         return self.messages[-1]
 
@@ -60,6 +113,11 @@ class OllomaClient:
 
     async def wake(self, data):
         print('Wake OllomaClient')
+        # push models
+        url = "http://192.168.50.60:10000/api/tags/"
+        models = await http_get_json(url)
+        models['type'] = 'models'
+        return models
 
     def is_streaming(self):
         return self._is_streaming
@@ -94,11 +152,9 @@ class OllomaClient:
                                     headers=headers, stream=stream)
         self._is_streaming = stream
         for line in response.iter_lines():
-
             # filter out keep-alive new lines
             if not line:
                 continue
-
             decoded_line = line.decode('utf-8')
             data = json.loads(decoded_line)
             await self.write_back(data)
@@ -192,11 +248,17 @@ class Alpha:
         """
         config_name = data.get('config', 'default')
         self.config = configs.get(config_name)
-        print('Wake services with ', data)
+        # print('Wake services with ', data)
         await send_service_text(websocket, 'waking clients')
         self.foreground = OllomaClient(head=self, write_back=self.foreground_recv)
-        await self.foreground.wake(data)
+        result = await self.foreground.wake(data)
         self.foreground_uuid = websocket.uuid
+
+        if result is not None:
+            # print('Resulting wake result', result)
+            # This result is sent back to the client.
+            model_data = await send_json(websocket, **result)
+            return model_data
 
     async def recv_message(self, websocket, data):
         """A message from the client socket into the head.
@@ -226,10 +288,14 @@ class Alpha:
             print('!IS STREAMING!')
             pass
 
-        if data.get('role', 'user') in ('user', ):
+        role = data.get('role', 'user')
+        if role in ('user', ):
             return await self.recv_message_user(websocket, data)
 
-        print('sys message')
+        print('sys message - ', role)
+        # service, system, user
+        mname = f"recv_message_{role}"
+        return await getattr(self, mname)(websocket, data)
         # the primary (here) can be responsible for content interruptions.
         # This cell is bound to the socket; So the bot is continuing to chat.
         # We can shoot messages to _stop_ , or _other thoughts_, of which
@@ -250,6 +316,19 @@ class Alpha:
             [current context is stopped; and a new one is generated with this partial applied...]
         """
 
+    async def recv_message_system(self, websocket, data):
+        """Receive a message of a 'user' role. This is processed as conversation.
+        """
+        print('Process system message')
+        fgc = self.foreground
+        content = data['text'] #from client socket
+        role = data.get('role', 'system') # as a 'system'
+        await fgc.process_input(content, role)
+
+        if self.recv_timer is None:
+            self.last_recv_count = self.recv_count
+            self.recv_timer = Timer(1, self.recv_timeout_callback)
+
     async def recv_message_user(self, websocket, data):
         """Receive a message of a 'user' role. This is processed as conversation.
         """
@@ -260,6 +339,25 @@ class Alpha:
         if self.recv_timer is None:
             self.last_recv_count = self.recv_count
             self.recv_timer = Timer(4, self.recv_timeout_callback)
+
+    async def recv_message_service(self, websocket, data):
+        """A Service message is not directly conversation bound, such as model
+        changes or background events.
+        """
+        print('Background event.', data)
+        action = data.get('action')
+        mname = f"recv_message_service_action_{action}"
+        return await getattr(self, mname)(websocket, data)
+
+    async def recv_message_service_action_select_models(self, websocket, data):
+        """
+            {'role': 'service', 'action': 'select_models', 'models': ['deepseek-r1:latest']}
+
+            In the future this will select a layer in the cluster.
+        """
+        models = data.get('models', ())
+        fgc = await self.foreground.set_model(models[0])
+        # if wake - post an empty message.
 
     async def foreground_recv(self, data):
         """
@@ -282,7 +380,8 @@ class Alpha:
 
         live_in = self.foreground_stream_data
         # push to UI.
-        if data['done'] is True:
+        done = data.get("done", -1)
+        if done is True:
             # Stash message
             d = {
                 'content': live_in,
@@ -291,11 +390,14 @@ class Alpha:
             self.foreground.messages += (d, )
             self.foreground_stream_data = ''
         else:
-            bit = data['message']['content']
-            self.foreground_stream_data += bit
+            try:
+                bit = data['message']['content']
+                self.foreground_stream_data += bit
+            except KeyError:
+                print('Error with data', data)
 
         await asyncio.sleep(0)
-        done = data.get("done", -1)
+
         kw = dict(
             node='foreground',
             n='fg',
