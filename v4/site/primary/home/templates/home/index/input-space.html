@@ -1,0 +1,34 @@
+
+<div class="input-space" id="input_space">
+    <div class="half-split">
+        <div class="left-input-space">
+            <div class="input-area">
+                <div class="stretchy-input-field">
+
+                    <div class="typing-area">
+                        <span class="placeholder-field" ref=placeholder>
+                            {% lorem 6 w random %}
+                        </span>
+                        <span
+                            class="typing-area-field"
+                            ref=user_message
+                            @keydown.enter=enterdownHandler
+                            @keydown=keydownHandler
+                            @keyup.enter=enterupHandler
+                            @keyup=keyupHandler
+                            contenteditable="true"></span>
+                    </div>
+
+                </div>
+            </div>
+            <div class="immediate-options-area">
+                <a href="#" class="button secondary">Action</a>
+                {# <a href="#" class="button ternary">Another</a> #}
+            </div>
+        </div>
+        <div class="options-area">
+            <a href="#" class="button secondary">Action</a>
+            <a href="#" class="button ternary">Another</a>
+        </div>
+    </div>
+</div>

@@ -8,7 +8,9 @@ import requests
 import asyncio
 import json
 
-from clients import get_register
+from http_tools import http_quick_get, http_post_json, http_get_json
+from atimer import Timer
+from clients import get_register, OllomaClient
 from shorts import send_json
 
 from datetime import datetime
@@ -23,6 +25,29 @@ ANGRY_ROLE =  {
                 "Every response must contain a swear word.")
 }
 
+
+LAYER1_ROLE =  {
+    "role": "system",
+    "content": ('You are the first assistant of a knowledge cluster for user inputs.\n '
+                'Deeply consider the users input, evaluating the idea in all '
+                'aspects. Detail related thoughts, concepts, or information '
+                'in the conversation, to apply associated knowledge to the '
+                'recent message for the purposes of further discussion.')
+}
+
+
+layer_1_kw = {
+    'role': LAYER1_ROLE,
+    'model': "gemma2:2b",
+    # 'model': "deepseek-r1:latest",
+}
+
+foreground_kw = {
+    "role":ANGRY_ROLE,
+    'model': "gemma2:2b",
+    # 'model': "llama3.2:latest",
+}
+
 configs = {
     "default": {
         'foreground': {
@@ -32,171 +57,11 @@ configs = {
     }
 }
 
+
 async def send_service_text(websocket, t):
     return await send_json(websocket, text=t)
 
-async def http_quick_get(url):
-    headers = {
-        'Content-Type': "application/json",
-        'Accept': "*/*",
-        'Cache-Control': "no-cache",
-        }
-
-    print(' -- http_quick_get', url)
-    # data = json.dumps(payload)
-    response = requests.request("GET", url, headers=headers)
-    return response
-
-async def http_post_json(url, d, reader=None):
-    headers = {
-            'Content-Type': "application/json",
-            'Cache-Control': "no-cache",
-        }
-
-    data = json.dumps(d)
-    print('JSON POST', url)
-    stream = True
-    response = requests.request("POST", url, data=data,
-                                headers=headers, stream=stream)
-    rows = ()
-    for line in response.iter_lines():
-        # filter out keep-alive new lines
-        if not line:
-            continue
-        decoded_line = line.decode('utf-8')
-        rl = json.loads(decoded_line)
-        if reader:
-            reader(rl, response)
-        rows += (rl,)
-    return rows
-
-
-async def http_get_json(u):
-    d = await http_quick_get(u)
-    return d.json()
-
-
-
-class OllomaClient:
-    append_role = True
-    url = "http://192.168.50.60:10000/api/chat/"
-    model = "llama3.2:latest"
-    # model = "deepseek-r1:latest"
-    # model = "L3.2-8X3B-MOE-Dark-Champion-Inst-18.4B-uncen-ablit_D_AU-Q4_k_m-1737597991071:latest"
-    def __init__(self, head, write_back=None, **kw):
-        self.head = head
-        self.write_back = write_back or self.print_bit
-        self.messages = ()
-        self.__dict__.update(**kw)
-        self._is_streaming = False
-
-        if self.append_role:
-            self.messages += (self.role_message(),)
-
-    async def set_model(self, model_name):
-        # If an empty prompt is provided, the model will be loaded into memory.
-
-        # Request
-        # curl http://localhost:11434/api/generate -d '{
-        #   "model": "llama3.2"
-        # }'
-        self.model = model_name
-        url = "http://192.168.50.60:10000/api/generate/"
-        r = await http_post_json(url, {'model': model_name})
-        print('set model response', r)
-
-    def last_message(self):
-        return self.messages[-1]
-
-    def role_message(self):
-        return ANGRY_ROLE
-
-    async def wake(self, data):
-        print('Wake OllomaClient')
-        # push models
-        url = "http://192.168.50.60:10000/api/tags/"
-        models = await http_get_json(url)
-        models['type'] = 'models'
-        return models
-
-    def is_streaming(self):
-        return self._is_streaming
-
-    async def process_input(self, content, role='user'):
-        msg = dict(
-            role=role,
-            content=content,
-        )
-        print('In', msg)
-        msgs = self.messages + (msg, )
-
-        d = {
-            "model": self.model,
-            "messages": msgs,
-            'stream': True,
-        }
-
-        self.messages = msgs
-        return await self.post(self.url, d)
-
-    async def post(self, url, d):
-        headers = {
-                'Content-Type': "application/json",
-                'Cache-Control': "no-cache",
-            }
-
-        data = json.dumps(d)
-        print('POST', url)
-        stream = True
-        response = requests.request("POST", url, data=data,
-                                    headers=headers, stream=stream)
-        self._is_streaming = stream
-        for line in response.iter_lines():
-            # filter out keep-alive new lines
-            if not line:
-                continue
-            decoded_line = line.decode('utf-8')
-            data = json.loads(decoded_line)
-            await self.write_back(data)
-            # self.print_bit(data)
-        self._is_streaming = False
-
-    def print_bit(self, data):
-        bit = data['message']['content']
-        print(bit, end='', flush=True)
-
-        if data['done'] is True:
-            print(' -- ')
-
-
-
-class Timer:
-    """
-    async def timeout_callback():
-        await asyncio.sleep(0.1)
-        print('echo!')
-
-    print('\nfirst example:')
-    timer = Timer(2, timeout_callback)  # set timer for two seconds
-    await asyncio.sleep(2.5)  # wait to see timer works
-
-    print('\nsecond example:')
-    timer = Timer(2, timeout_callback)  # set timer for two seconds
-    await asyncio.sleep(1)
-    timer.cancel()  # cancel it
-    """
-    def __init__(self, timeout, callback):
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
-
-    async def _job(self):
-        await asyncio.sleep(self._timeout)
-        await self._callback()
-
-    def cancel(self):
-        self._task.cancel()
-
+from collections import defaultdict
 
 class Alpha:
 
@@ -209,6 +74,7 @@ class Alpha:
         self.recv_timer = Timer(10, self.recv_timeout_callback)
         print('Timer', self.recv_timer)
         self.foreground_stream_data = ''
+        self.live_streams = defaultdict(str)
 
     async def recv_timeout_callback(self):
         # push a message into the foreground conversation, as the system.
@@ -217,14 +83,16 @@ class Alpha:
             return
 
         await asyncio.sleep(0.1)
+
         print('background question!')
         fgc = self.foreground
-        last_message = '[NEVER PROVIDED]'
+        last_message = 'is blank (user has not entered any text)'
         fgc = self.foreground
         lm = fgc.last_message()
         if lm:
             if lm['role'] not in ('assistant', 'system',):
                 last_message = lm['content']
+
         msg = ('[CONTEXT] The user has said nothing since: "'
                 f"{last_message}"
                 '". Prompt them to provide input whilst ensuring '
@@ -250,9 +118,14 @@ class Alpha:
         self.config = configs.get(config_name)
         # print('Wake services with ', data)
         await send_service_text(websocket, 'waking clients')
-        self.foreground = OllomaClient(head=self, write_back=self.foreground_recv)
-        result = await self.foreground.wake(data)
+        self.foreground = OllomaClient(head=self, write_back=self.foreground_recv, **foreground_kw)
+        self.layer_1 = OllomaClient(head=self, write_back=self.layer_1_recv, **layer_1_kw)
         self.foreground_uuid = websocket.uuid
+        await self.wake_client(self.layer_1, websocket, data)
+        return await self.wake_client(self.foreground, websocket, data)
+
+    async def wake_client(self, client, websocket, data):
+        result = await self.foreground.wake(data)
 
         if result is not None:
             # print('Resulting wake result', result)
@@ -330,11 +203,16 @@ class Alpha:
             self.recv_timer = Timer(1, self.recv_timeout_callback)
 
     async def recv_message_user(self, websocket, data):
-        """Receive a message of a 'user' role. This is processed as conversation.
+        """Receive a message of a 'user' role.
+        This is processed as conversation and sent to the foreground, and the
+        layer_1 (layer 1.)
         """
         fgc = self.foreground
+        l1c = self.layer_1
+
         content = data['text'] #from client socket.
         await fgc.process_input(content)
+        await l1c.process_input(content)
 
         if self.recv_timer is None:
             self.last_recv_count = self.recv_count
@@ -359,26 +237,47 @@ class Alpha:
         fgc = await self.foreground.set_model(models[0])
         # if wake - post an empty message.
 
-    async def foreground_recv(self, data):
+    async def layer_1_recv(self, data):
+        """The first layer responds with a deeper thought on the given input.
         """
+        print(',', end='')
+        client = self.layer_1
+        node = 'layer_1'
+        ## We still send the layer 1 node into to the foreground socket bitstream.
+        socket_uuid = self.foreground_uuid
+        return await self.outbound_bitstream(data, client, node, socket_uuid)
+
+    async def foreground_recv(self, data):
+        """This method is hooked to the olloma client, receiving messages
+        from the bot in real-time.
+
+        Once the message is `done=True`, the response is sent to the other
+        machinery.
+
             {
-            'model': 'llama3.2:latest',
-            'created_at': '2025-01-29T01:33:44.1530517Z',
-            'message': {'role': 'assistant', 'content': ''},
-            'done_reason': 'stop',
-            'done': True,
-            'total_duration': 484904800,
-            'load_duration': 15315700,
-            'prompt_eval_count': 31,
-            'prompt_eval_duration': 1000000,
-            'eval_count': 11,
-            'eval_duration': 467000000
+                'model': 'llama3.2:latest',
+                'created_at': '2025-01-29T01:33:44.1530517Z',
+                'message': {'role': 'assistant', 'content': ''},
+                'done_reason': 'stop',
+                'done': True,
+                'total_duration': 484904800,
+                'load_duration': 15315700,
+                'prompt_eval_count': 31,
+                'prompt_eval_duration': 1000000,
+                'eval_count': 11,
+                'eval_duration': 467000000
             }
         """
         print('.', end='')
+        client = self.foreground
+        socket_uuid = self.foreground_uuid
+        node = 'foreground'
+        return await self.outbound_bitstream(data, client, node, socket_uuid)
+
+    async def outbound_bitstream(self, data, client, node, socket_uuid):
         # send a foreground partial to the UI.
 
-        live_in = self.foreground_stream_data
+        live_in = self.live_streams[node]
         # push to UI.
         done = data.get("done", -1)
         if done is True:
@@ -387,26 +286,28 @@ class Alpha:
                 'content': live_in,
                 'role': data['message']['role'],
             }
-            self.foreground.messages += (d, )
-            self.foreground_stream_data = ''
+            client.messages += (d, )
+            self.live_streams[node] = ''
+
         else:
             try:
                 bit = data['message']['content']
-                self.foreground_stream_data += bit
+                self.live_streams[node] += bit
             except KeyError:
                 print('Error with data', data)
 
         await asyncio.sleep(0)
-
+        model = data.get('model', None)
+        wm = f'service unpackaged an empty message object from the live stream {node}'
         kw = dict(
-            node='foreground',
-            n='fg',
+            # n='fg',
+            # t="p",
+            # d=int(done),
+            node=node,
             type="partial",
-            t="p",
             done=done,
-            d=int(done),
-            **data['message'],
-            model=data['model'],
+            **data.get('message', { 'warning': wm}),
+            model=model,
         )
 
         for k in data:
@@ -414,5 +315,5 @@ class Alpha:
                 continue
             kw[k] = data[k]
 
-        ws = get_register(self.foreground_uuid)
+        ws = get_register(socket_uuid)
         await send_json(ws,**kw)

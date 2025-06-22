@@ -1,0 +1,50 @@
+<template class="user-message">
+
+    <li class="message-container user-message-list-item">
+
+        <div class="message-container-content double">
+
+            <div class='user-messages-container'>
+                <div class="user message">
+                    <p>{% verbatim %}
+                        <span class="user-text">
+                          <slot name="user">
+                            <template v-if=message>
+                            {{  message.text }}
+                            </template>
+                            <template v-else>
+                            {{ userText }}
+                            </template>
+                        </slot>
+                        </span>
+                    {% endverbatim %}</p>
+                </div>
+            </div>
+
+            <div class="machine-messages-container">
+
+                {% verbatim %}
+                <div class="machine message">
+                        <span class="user-text">
+                          <slot name="response">
+                            <template v-if=message>
+                                <p>{{  message.response }}</p>
+                            </template>
+                            <template v-else>
+                                <p>{{ responseText }}</p>
+                            </template>
+                        </slot>
+                        </span>
+                </slot>
+                </div>
+                {% endverbatim %}
+                {# <div class="machine message"> #}
+                    {# {% lorem b_count p random %} #}
+                {# </div> #}
+            </div>
+
+        </div>
+
+    </li>
+
+</template>

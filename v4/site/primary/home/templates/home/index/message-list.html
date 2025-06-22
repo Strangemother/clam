@@ -1,0 +1,136 @@
+<ol class="templates">
+    {% include "./fragments/message-list-item-system.html" with w_count=20 %}
+    {% include "./fragments/message-list-item-pair.html" %}
+</ol>
+
+<ol class="messages" id="message_list">
+
+    {% comment %}
+
+    <system-message></system-message>
+    <pair-message></pair-message>
+
+    <pair-message>
+        <template #user>
+            {% lorem 10 w random %}
+        </template>
+
+        <template #response>
+            {% lorem 2 p random %}
+        </template>
+    </pair-message>
+
+    {% include "../message-list-item-system.html" with w_count=20 %}
+
+    <pair-message id=activeMessage ref=activeMessage>
+        <template #user>
+        {% verbatim %}
+            {{ liveValue }}
+        {% endverbatim %}
+        </template>
+        <template #response>
+            {% verbatim %}
+            {{ liveResponse }}
+        {% endverbatim %}
+        </template>
+    </pair-message>
+
+    {% endcomment %}
+
+    <template v-for="message in messages">
+        <component :is=message.type :message=message></component>
+        {# <pair-message :message=message></pair-message> #}
+    </template>
+
+    <pair-message id=activeMessage ref=activeMessage :message=liveMessage>
+    </pair-message>
+
+{% comment %}
+    {% include "../message-list-item.html" with w_count=20 a_count=4 %}
+    {% include "../message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+
+    {% include "../message-list-item-machine.html" with w_count=20 %}
+    {% include "../message-list-item-system.html" with w_count=20 %}
+
+    {% include "../message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "../message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+
+    {% include "../message-list-item-machine.html" with w_count=1 %}
+    {% include "../message-list-item-system.html" with w_count=20 %}
+
+
+    {% include "./message-list-item.html" with w_count=20 a_count=4 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+
+    {% include "./message-list-item.html" with w_count=30 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=4 b_count=1 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=5 b_count=2 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=3%}
+    {% include "./message-list-item.html" with w_count=50 a_count=1 b_count=1 %}
+    {% include "./message-list-item-machine.html" with w_count=2 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=8 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=3 b_count=1 %}
+    {% include "./message-list-item-machine.html" with w_count=3 %}
+    {% include "./message-list-item-system.html" with w_count=10 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=4 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=7 b_count=1 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=3 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+    {% include "./message-list-item-system.html" with w_count=20 %}
+    {% include "./message-list-item.html" with w_count=20 a_count=1 %}
+    {% include "./message-list-item.html" with w_count=50 a_count=2 b_count=6 %}
+    {% include "./message-list-item-machine.html" with w_count=1 %}
+{% endcomment %}
+
+</ol>

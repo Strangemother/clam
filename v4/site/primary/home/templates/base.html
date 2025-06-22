@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+{% load static link %}
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>
+            {% block title %}{% endblock %}
+        </title>
+
+        {# <meta name="description" content="{{ page.search_description }}" /> #}
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        {# Global stylesheets #}
+        {# <link rel="stylesheet" type="text/css" href="{% static 'css/primary.css' %}"> #}
+        {% link.js "js/polyclass.browser-full.js" %}
+
+        {% block extra_css %}
+        {# Override this in templates to add extra stylesheets #}
+        {% endblock %}
+    </head>
+
+    <body polyclass class="{% block body_class %}{% endblock %} {% block body_fonts %}font-pack-Inter-100-200-300-400-500-600-700-800
+    font-pack-Inter+Tight-100-200-300-400-500-600-700-800
+    font-inter
+    {% endblock %}">
+        {% block content %}{% endblock %}
+
+        {# Global javascript #}
+        <script type="text/javascript" src="{% static 'js/primary.js' %}"></script>
+
+        {% block extra_js %}
+        {# Override this in templates to add extra javascript #}
+        {% endblock %}
+    </body>
+</html>

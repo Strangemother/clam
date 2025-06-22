@@ -125,6 +125,7 @@ let recvJSONEvent = async function(ev) {
     let data = JSON.parse(ev.data)
     let nodeMap = {
         foreground: foregroundEvent//(data, ev)
+        , layer_1: foregroundEvent//(data, ev)
     }
 
     let typeMap = {
@@ -203,6 +204,15 @@ const createMiniApp = function() {
         , async changeModel(ev){
             console.log('changeModel')
             let models = Array.from(ev.target.selectedOptions).map(e=>e.value)
+            await sendJSONMessage({
+                role: 'service'
+                , action: 'select_models'
+                , models
+            })
+        }
+        , async runModel(ev){
+            let target = app.$refs.models
+            let models = Array.from(target.selectedOptions).map(e=>e.value)
             await sendJSONMessage({
                 role: 'service'
                 , action: 'select_models'

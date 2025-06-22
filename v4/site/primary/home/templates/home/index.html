@@ -1,0 +1,25 @@
+{% extends "../base.html" %}
+{% load static %}
+{% load link %}
+
+{% block body_class %}template-article{% endblock %}
+
+{% block extra_css %}{% endblock extra_css %}
+
+{% block content %}
+    {% link.css "css/index.css" %}
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <main>
+        <div class="body">
+            {% include './llm-chat-panel-3.html' %}
+        </div>
+    </main>
+
+    {% link.js "js/index/events.js" %}
+    {% link.js "js/index/index.js" %}
+    {% link.js "js/index/overlay-app.js" %}
+    {% link.js "js/index/user-input-app.js" %}
+    {% link.js "js/index/message-list-app.js" %}
+
+{% endblock content %}

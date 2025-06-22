@@ -1,0 +1,23 @@
+<template class="system-message">
+
+    <li class="message-container system-message-list-item">
+        <div class="message-container-content double">
+            <div class="system message">
+                <p>
+
+                {% verbatim %}
+                <template v-if=message>
+                {{  message.text }}
+                </template>
+                <template v-else>
+                {{ messageValue }}
+                </template>
+                {% endverbatim %}
+
+                </p>
+                {# <p>{% lorem 20 w random %}</p> #}
+            </div>
+        </div>
+    </li>
+
+</template>

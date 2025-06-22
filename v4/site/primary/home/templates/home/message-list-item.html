@@ -1,0 +1,22 @@
+<li class="message-container">
+    <div class="message-container-content double">
+        <div class='user-messages-container'>
+            <div class="user message">
+                <p>{% lorem w_count w random %}</p>
+            </div>
+        </div>
+        <div class="machine-messages-container">
+            {% if a_count %}
+            <div class="machine message">
+                {% lorem a_count p random %}
+            </div>
+            {% endif %}
+
+            {% if b_count %}
+            <div class="machine message">
+                {% lorem b_count p random %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</li>
