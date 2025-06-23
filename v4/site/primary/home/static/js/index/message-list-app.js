@@ -7,7 +7,7 @@ const MessageListApp = {
             , liveResponse: 'no response'
             , liveMessage: {
                 text: "live message user text"
-                ,response: "live message response text"
+                , response: "live message response text"
             }
             , messages: [
                 {
@@ -44,20 +44,18 @@ const MessageListApp = {
 
 }
 
-let template = document.querySelector('.templates .user-message')
-
 const PairMessageComponent = {
     props: ['message']
-    , template
+    , template: document.querySelector('.templates .user-message')
     , data() {
         return {
             userText: 'default user text'
             , responseText: 'default responseText'
         }
     }
-    , mounted() {
-        console.log('pairMessageComponent mounted', this.message)
-    }
+    // , mounted() {
+    //     console.log('pairMessageComponent mounted', this.message)
+    // }
 }
 
 

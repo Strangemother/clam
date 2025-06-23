@@ -89,12 +89,20 @@ class EventBase extends CustomEvent {
 }
 
 
+
 class ExampleEvent extends EventBase {
     /* ExampleEvent.emit({ foo: 1}) */
 }
 
 class UserMessage extends EventBase {
-    /* UserMessage.emit({ foo: 1}) */
+    /*
+        UserMessage.emit({ foo: 1})
+        UserMessage.listen(func)
+
+    in a class:
+
+        UserMessage.listen(this.func.bind(this))
+    */
 }
 
 class SetFirstFocusEvent extends EventBase {
