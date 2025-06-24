@@ -6,6 +6,7 @@ communicating to the bot through the socket.
 """
 import asyncio
 from websockets.asyncio.server import serve
+import websockets
 import json
 
 import cluster
@@ -42,13 +43,16 @@ async def capture(websocket):
     # Async now waits forever
     async for message in websocket:
         # Hooking when a new message appears
-        await recv_message(websocket, message)
-
+        try:
+            await recv_message(websocket, message)
+        except websockets.exceptions.ConnectionClosed:
+            print('Socket closed')
 
     # And now dropped when closed.
     print('Lost client', websocket.uuid)
     if websocket.registered is True:
         drop_register(websocket.uuid)
+    return await cluster.drop_socket(websocket)
 
 
 async def onboard(websocket):
@@ -76,19 +80,29 @@ async def recv_message(websocket, message):
     print('Recv', message)
     websocket.count += 1
     # send acceptance.
-    await send_json(websocket, ok=True, accept=len(message))
+    await send_json(websocket, ok=True, code=1111, accept=len(message))
     # send to cluster.
     await cluster.recv_message(websocket, d)
 
 
 async def recv_new_socket(websocket, d):
+    """Called by the `recv_message` function when it detects a newly incoming
+    socket.
+
+    Called _once_ per socket, first time.
+
+    Check the socket for authenticity, then onboard the socket to the register.
+    Finally. Inform the socket of the acceptance, and hand-off to the cluster
+    _new socket_ process.
+
+    """
     # No messages ever. Start the register.
     uuid = d['uuid']
 
     if not accepted(websocket, d):
-        print('Refuse client', uuid)
+        print('Refuse client:', uuid)
         # https://github.com/Luka967/websocket-close-codes
-        return await websocket.close(3000, reason='failed ID')
+        return await websocket.close(4001, reason='failed ID')
     # Store in the persistent.
     set_register(uuid, websocket)
     print('Recv', uuid)
@@ -96,12 +110,14 @@ async def recv_new_socket(websocket, d):
     # setup the new socket.
     websocket.uuid = uuid
     websocket.count += 1
-    await send_json(websocket, ok=True, accept=uuid)
+    await send_json(websocket, ok=True, code=1111, accept=uuid)
     # tell the _cluster_ it has an active input.
     return await cluster.new_socket(websocket, d)
 
+
 def accepted(websocket, data):
-    return True
+
+    return 'role' in data
 
 
 if __name__ == "__main__":

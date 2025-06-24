@@ -23,8 +23,19 @@ let getSocket = function(url) {
 
 
 const sendFirstMessage = async function(addition={}) {
+    /* Called by the onopen before the global message is dispatched.
+    Here we can define the _Authy_ and assignment steps.
+    The next response should be a wake. */
     console.log('Send first message', uuid)
-    await sendJSONMessage(Object.assign({uuid}, addition))
+    let data = {
+            uuid /* Send a unique string for this session/connection.*/
+            // Define what _this_ is. I think colons are cool.
+            , role: "user::primary"
+            /* Things this interface can do. Such as play audio*/
+            , abilities: ['text']
+        }
+
+    await sendJSONMessage(Object.assign(data, addition))
 }
 
 

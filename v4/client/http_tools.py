@@ -12,7 +12,6 @@
 import requests
 import json
 
-hurl = "http://192.168.50.60:10000/api/chat/"
 
 
 async def http_quick_get(url):
