@@ -13,6 +13,25 @@ identity, The functionality is abstract from the cluster.
 This could have been a JSON file, but py files allow comments by default.
 """
 
-role = 'alpha'
+# Define the tooling slot type, such as "memory" or "user"
+# sent to the cluster on client_connected.
+ROLE = 'example'
+
+# Custom locked ID for this client - may be a forced key by the cluster.
+UUID = 1000
+
 
 abilities = ['text']
+
+# The cluster endpoint
+WEBSOCKET_ENDPOINT = "ws://localhost:8765"
+
+# The service endpoint - in this case, basic olloma.
+OLLOMA_CHAT_ENDPOINT = "http://192.168.50.60:10000/api/chat/"
+
+# The model selected on the service. Examples
+# TinyDolphin
+# llama3.2:latest
+# "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"
+#  'smollm2:360m-instruct-fp16'
+MODEL_NAME = "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"

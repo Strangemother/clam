@@ -15,7 +15,7 @@ const messengerMain = function() {
     UserMessage.listen((e)=>{
         let text = e.detail.message
         console.log('messenger-app received userMessage', text)
-        sendJSONMessage({text})
+        sendJSONMessage({text, _meta: Math.random().toString(32)})
     })
 }
 

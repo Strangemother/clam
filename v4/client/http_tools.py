@@ -27,7 +27,7 @@ async def http_quick_get(url):
     return response
 
 
-async def http_post_json(url, d, reader=None):
+async def http_post_json(url, d, reader=None, async_reader=None):
     headers = {
             'Content-Type': "application/json",
             'Cache-Control': "no-cache",
@@ -47,6 +47,8 @@ async def http_post_json(url, d, reader=None):
         rl = json.loads(decoded_line)
         if reader:
             reader(rl, response)
+        if async_reader:
+            await async_reader(rl, response)
         rows += (rl,)
     return rows
 

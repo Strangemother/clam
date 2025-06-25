@@ -8,6 +8,7 @@ const uuid = Math.random().toString(32).slice(2)
 const cache = {
     primarySocket: undefined
     , socketConnected: false
+    , used: false
     , globalSocketEndpoint: 'ws://localhost:8765'
 }
 

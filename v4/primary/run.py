@@ -12,22 +12,30 @@ import json
 import cluster
 from clients import set_register, drop_register
 
+from loguru import logger
+
+log = logger.debug
+
+
+from uuid import uuid4
+
+def str_uuid4():
+    return str(uuid4())
 
 
 async def main():
     """Serve.
     """
     pair = ("localhost", 8765)
-    print('Waking Service. on', pair)
+    log(f'Waking Service. on {pair=}')
     # The capture function receives the new socket
     async with serve(capture, *pair) as server:
-        print('Served', pair)
+        log(f'Served {pair=}')
         await server.serve_forever()
 
 
 async def send_json(websocket, **kw):
     return await websocket.send(json.dumps(kw))
-
 
 
 async def capture(websocket):
@@ -45,11 +53,12 @@ async def capture(websocket):
         # Hooking when a new message appears
         try:
             await recv_message(websocket, message)
+            await asyncio.sleep(.01)
         except websockets.exceptions.ConnectionClosed:
-            print('Socket closed')
+            log('Socket closed')
 
     # And now dropped when closed.
-    print('Lost client', websocket.uuid)
+    log(f'Lost client {websocket.uuid=}')
     if websocket.registered is True:
         drop_register(websocket.uuid)
     return await cluster.drop_socket(websocket)
@@ -58,10 +67,11 @@ async def capture(websocket):
 async def onboard(websocket):
     """ Called by `capture` on first connection.
     """
-    print('onboard Socket', websocket)
+    log(f'onboard Socket {websocket=}')
     websocket.count = 0
     websocket.uuid = -1
     websocket.registered = False
+    websocket.receipts = True
 
 
 async def recv_message(websocket, message):
@@ -72,15 +82,38 @@ async def recv_message(websocket, message):
     cluster.new_socket. After the first call, all salls are sent to
     cluster.recv_message().
     """
-    d = json.loads(message)
+    if len(message) > 0 and message[0] == "{":
+        d = json.loads(message)
+    else:
+        # log('binary or string message')
+        d = {
+            'raw': message
+        }
     if websocket.count == 0 or websocket.uuid == -1:
-        print('Detected new socket')
+        log('Detected new socket')
         return await recv_new_socket(websocket, d)
 
-    print('Recv', message)
+    # log(f'Recv {message=}')
     websocket.count += 1
+    origin_id = str_uuid4()
     # send acceptance.
-    await send_json(websocket, ok=True, code=1111, accept=len(message))
+    if websocket.receipts is True:
+        receipt = {
+                'ok':True,
+                'code':1111,
+                'accept':len(message),
+                'origin_id':origin_id,
+            }
+        if '_meta' in d:
+            receipt['_meta'] = d['_meta']
+        await send_json(websocket, **receipt)
+
+    if 'origin_id' in d:
+        # d['origin_id'] = d['origin_id']
+        # log(' - origin_id exists')
+        pass
+    else:
+        d['origin_id'] = origin_id
     # send to cluster.
     await cluster.recv_message(websocket, d)
 
@@ -100,12 +133,12 @@ async def recv_new_socket(websocket, d):
     uuid = d['uuid']
 
     if not accepted(websocket, d):
-        print('Refuse client:', uuid)
+        log(f'Refuse client: {uuid=}')
         # https://github.com/Luka967/websocket-close-codes
         return await websocket.close(4001, reason='failed ID')
     # Store in the persistent.
     set_register(uuid, websocket)
-    print('Recv', uuid)
+    log(f'Recv {uuid=}')
     websocket.registered = True
     # setup the new socket.
     websocket.uuid = uuid

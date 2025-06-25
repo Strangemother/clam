@@ -37,7 +37,13 @@ A Message may be from the _user_ to other connected clients (abilities)
 """
 from collections import defaultdict
 from datetime import datetime
+from uuid import uuid4
 import json
+import asyncio
+from loguru import logger
+
+
+log = logger.debug
 
 
 # Map the UUID to the associated socket.
@@ -50,10 +56,19 @@ uuid_wrapper_map = {}
 # Created on entry for a new socket.
 role_uuid_map = defaultdict(list)
 
-from uuid import uuid4
+
+#"role" mapping of clients.
+CLUSTER_CONFIG = {
+    # Messages from the user primary (the UI), to the _alpha_ outputs.
+    "user::primary": ["example"],
+    # All alpha messages return to the user.
+    "example": ["user::primary"]
+}
+
 
 def str_uuid4():
     return str(uuid4())
+
 
 def get_mem(uuid, websocket, **data):
     """Get or create the socket store, bound by its UUID (already assigned by
@@ -79,7 +94,7 @@ def set_mem(uuid, websocket, data):
     uuid_wrapper_map[uuid] = wrap_socket(uuid, websocket, data)
     uuid_ws_map[uuid] = websocket
     role = data.get('role')
-    print(f'Storing {role=} as {uuid=}')
+    log(f'Storing {role=} as {uuid=}')
     role_uuid_map[role] += [uuid,]
     return uuid_wrapper_map[uuid]
 
@@ -90,6 +105,10 @@ async def drop_socket(websocket):
     is dropped. As the socket is lost, remove it from the graph.
     """
     uuid = websocket.uuid
+    if uuid == -1:
+        # never assigned.
+        return uuid
+
     wrapper = uuid_wrapper_map[uuid]
     role = wrapper.role
     del uuid_wrapper_map[uuid]
@@ -100,7 +119,7 @@ async def drop_socket(websocket):
         # i = role_uuid_map[role].index(uuid)
         role_uuid_map[role].remove(uuid)
     else:
-        print(f'{uuid=} was not in {role=} stack', role_uuid_map)
+        log(f'{uuid=} was not in {role=} stack {role_uuid_map=}')
     return uuid
 
 
@@ -131,20 +150,11 @@ def wrap_socket(uuid, socket, data):
     return SocketWrapper(uuid, data)
 
 
-#"role" mapping of clients.
-CLUSTER_CONFIG = {
-    # Messages from the user primary (the UI), to the _alpha_ outputs.
-    "user::primary": ["example"],
-    # All alpha messages return to the user.
-    "example": ["user::primary"]
-}
-
-
 class SocketWrapper:
     role = None
 
     def __init__(self, uuid, config=None):
-        print(f'New "{self.__class__.__name__}" session', uuid)
+        log(f'New "{self.__class__.__name__}" session {uuid=}')
         self.uuid = uuid
         self.open_time = datetime.now()
         self.recv_count = 0
@@ -154,6 +164,9 @@ class SocketWrapper:
         self.config = config or {}
         self.role = self.config.get('role')
 
+        self.stream_mode = False
+        self.stream_meta = None
+
     async def wake(self, websocket, data):
         """First call from the websocket.
 
@@ -161,17 +174,19 @@ class SocketWrapper:
 
         """
         self.session_id = data.get('session_id', str_uuid4())
-        return await self.send_json(websocket,
-                session_id=self.session_id,
-                text='waking you.',
-                code=1200
-                )
+
+        return await self.send_json(
+            websocket,
+            session_id=self.session_id,
+            text='Hello.',
+            code=1200
+            )
 
     async def send_text(self, websocket, text):
         return await self.send_json(websocket, text=text)
 
     async def send_json(self, websocket, **kw):
-        print('wrapper', self.uuid, 'sending json to', websocket.uuid, kw)
+        # log(f"wrapper {self.uuid=} sending json to {websocket.uuid=}, {kw=}")
         return await websocket.send(json.dumps(kw))
 
     async def recv_message(self, websocket, data):
@@ -182,32 +197,73 @@ class SocketWrapper:
         The session should exist to communicate to the bot.
         """
         self.recv_count += 1
-        print('Message', self.uuid, websocket.uuid)
+        # log(f'Message {self.uuid=} {websocket.uuid=}')
         # data['origin_ids'] = [self.uuid, websocket.uuid]
+        code = data.get('code')
+        if code == 1515:
+            log('open stream')
+
+            return await self.start_recv_message_stream(websocket, data)
+
+        if code == 1516:
+            log('close stream')
+            return await self.stop_recv_message_stream(websocket, data)
+
+        if self.stream_mode:
+            await asyncio.sleep(.01)
+            return await self.from_stream_message(websocket, data)
+        return await self.from_message(websocket, data)
+
+    async def from_stream_message(self, websocket, data):
+        data.update(self.stream_meta)
+        return data
+
+    async def from_message(self, websocket, data):
+
         # Origin ID doesn't change is kept throughout the chain.
-        data['origin_id'] = str_uuid4()
+        # Given before this receiver.
+        # data['origin_id'] = str_uuid4()
 
         # The session ID doesn't change throughout the connection mostly.
         session_id = data.get('session_id', self.session_id)
         data['session_id'] = session_id
 
-        # The current message id.
+        # The current (new) message id.
         data['message_id'] = str_uuid4()
         return data
 
+    async def start_recv_message_stream(self, websocket, data):
+        """Code 1515 denotes open stream. data is propped
+        """
+        self.stream_mode = True
+        self.stream_meta = data['meta']
+        websocket.receipts = False
+        return data
+
+    async def stop_recv_message_stream(self, websocket, data):
+        """Code 1516 denotes close stream. data is propped
+        """
+        self.stream_mode = False
+        self.stream_meta = None
+        websocket.receipts = True
+        return data
 
 async def recv_message(websocket, data):
+    """First function called by the primary.run::recv_message
+    providing the websocket and its buffered message.
+    """
     uuid = websocket.uuid
-    print('cluster', data, 'from', uuid)
+    # log(f"cluster {data=} from {uuid=}")
     head = get_mem(uuid, websocket)
 
     # the socket wrapper cleans the message. Converts, or waits.
     cd = await head.recv_message(websocket, data)
+
     """Here - the head must assess and farm the message.
     In most cases the message doesn't change - the memory, thinkers etc...
     all have the same info.
     """
-    return await dispatch_through_graph(head, websocket, data)
+    return await dispatch_through_graph(head, websocket, cd)
 
 
 async def dispatch_through_graph(head, websocket, data):
@@ -220,23 +276,23 @@ async def dispatch_through_graph(head, websocket, data):
     role = head.role
     destinations = CLUSTER_CONFIG[role]
 
-    print(f'{role=} message => dispatch_through_graph to destinations', destinations)
+    # log(f'{role=} message => dispatch_through_graph to {destinations=}')
     for dest_role in destinations:
         # role to uuid maps.
         uuids = role_to_uuids(dest_role)
 
-        print(f'  {dest_role=} to {uuids=}')
+        # log(f'{dest_role=} to {uuids=}')
 
         for dest_uuid in uuids:
             dest_head = uuid_to_wrapper(dest_uuid)
-            print("    Message heading to", dest_head)
+            # log(f"Message heading to {dest_head=}")
             dest_websocket = uuid_to_socket(dest_uuid)
-            print('_- Destination socket:', dest_websocket.uuid)
+            # log(f'_- Destination socket: {dest_websocket.uuid=}')
             await dest_head.send_json(dest_websocket, **data)
-            print('^- Destination socket done:', dest_websocket.uuid)
+            # log(f'^- Destination socket done: {dest_websocket.uuid=}')
 
-        print(f'  Done {dest_role}')
-    print('... All dispatch_through_graph complete.')
+        # log(f'  Done {dest_role=}')
+    # log('... All dispatch_through_graph complete.')
 
 
 async def new_socket(websocket, data):
@@ -253,7 +309,7 @@ async def new_socket(websocket, data):
     The `head` maintains state and internal changes.
     """
     uuid = websocket.uuid
-    print(f'cluster.new_socket {uuid=}, setting memory with {data=}')
+    log(f'cluster.new_socket {uuid=}, setting memory with {data=}')
     head = set_mem(uuid, websocket, data)
     ## If the response is a obj
     session_id = await head.wake(websocket, data)

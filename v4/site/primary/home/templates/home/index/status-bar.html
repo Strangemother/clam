@@ -1,6 +1,13 @@
+{% verbatim %}
 <div class="status-bar flex-direction-row" id="status_bar">
-    <div class="address">//socket.unresearch.ai</div>
+    <div class="address">
+        <a href="javascript:;" @click=addressClick>
+        {{ socketEndpoint }}</a>
+    </div>
     <div class="spacer flex-grow-1"></div>
-    <div class="status-1">connected</div>
+    <div class="status-1">
+        {{ statusMessage }}
+    </div>
     <div class="status-1">status</div>
 </div>
+{% endverbatim %}

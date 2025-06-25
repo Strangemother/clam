@@ -91,7 +91,7 @@ const InputSpaceApp = {
                 return false
             }
 
-            console.log('Accepted Printable: code', code, 'char', char)
+            // console.log('Accepted Printable: code', code, 'char', char)
             return true
         }
 

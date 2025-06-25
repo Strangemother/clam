@@ -17,7 +17,7 @@ let getSocket = function(url) {
         console.log('new socket required.')
         cache.primarySocket = connectSocket(url)
     }
-
+    // cache.used = true
     return cache.primarySocket
 }
 
@@ -60,7 +60,7 @@ let recvJSONEvent = async function(ev) {
     */
     // console.log('.')
     let data = JSON.parse(ev.data)
-    console.log('message', data, ev)
+    // console.log('message', data, ev)
     GlobalSocketEvent.emit({ type: 'message', data })
     return data
 }
