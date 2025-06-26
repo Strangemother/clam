@@ -773,6 +773,7 @@ li.message-container {
 .message p {
     padding: 0em;
     margin: 1.5em;
+    /* margin: 0; */
 }
 
 .chat-panel {
@@ -1138,13 +1139,15 @@ ul.tab-list {list-style: none;display: flex;margin: 0;padding: 0;gap: 1em;}
     /* display: flex; */
     /* flex-grow: 1; */
     /* flex-shrink: 1; */
+    flex-basis: 50%;
 }
 
 .machine-messages-container {
     /* display: flex; */
     flex-direction: column;
-    /* flex-grow: 1; */
+    flex-grow: 1;
     /* flex-shrink: 1; */
+    flex-basis: 50%;
 }
 
 .typing-area {
@@ -1158,4 +1161,70 @@ span.placeholder-field {
 
 span.placeholder-field.hide {
     visibility: hidden;
+}
+
+.design-3 .user-messages-container .user.message, .design-3 .machine-messages-container .machine.message {
+    padding: 0;
+    margin: 1.5em;
+}
+
+.tiny-header + p {
+    margin-top: 0;
+    white-space: pre-line;
+}
+
+.message .tiny-header {
+    margin: 0 1.5rem;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.coin {
+    background: #000;
+    width: 1em;
+    height: 1em;
+    /* justify-self: center; */
+    /* display: inline-flex; */
+    /* align-self: baseline; */
+    /* align-content: center; */
+    /* align-items: center; */
+}
+
+.coin.flip {
+    background: #aaa;
+}
+
+span.user-text {
+    word-break: break-word;
+}
+
+.tiny-header > * {
+    color: inherit;
+}
+
+.tiny-header .spacer {
+    flex-grow: 1;
+}
+
+.message.machine p span {
+    /* color: rebeccapurple; */
+    /* transition: color .3s; */
+    /* animation: 0.2s linear 0s colorText; */
+}
+
+@keyframes colorText {
+    from {
+        color: #020304;
+    }
+
+    to {
+        color: #DDD; 
+    }
+}
+
+.message.machine .user-text p span:last-child {
+    color: #ff0000;
 }

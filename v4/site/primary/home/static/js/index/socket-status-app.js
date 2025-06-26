@@ -24,6 +24,7 @@ const SocketStatusApp = {
             /*{ type: 'open'}*/
 
             this.statusMessage = d.detail.type
+            this.$refs.coin.classList.toggle('flip')
         }
 
         , addressClick(e) {

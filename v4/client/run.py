@@ -35,6 +35,7 @@ async def main():
     return await connect_wait(conf)
 
 
+
 async def process_data(data, websocket):
     """Do the required work, posting to the service and pushing
     results through the socket.
@@ -58,14 +59,20 @@ async def process_data(data, websocket):
     else:
         user_history = histories[session_id]
 
+    if len(user_history) == 0:
+        user_history += (conf.FIRST_MESSAGE,)
+    messages = user_history + (msg,)
+
+    log(f' -- history messages {len(messages)=}')
+
     d = {
         "model": model_name,
-        "messages": user_history + (msg,),
+        "messages": messages,
         'stream': True,
     }
 
     url = conf.OLLOMA_CHAT_ENDPOINT
-    log(f'Sending {url=} \n {d=}')
+    log(f'Sending {url=} \n {len(d)=}')
 
     async def stream_print_bit(decoded, response):
         bit = decoded['message']['content']
@@ -92,16 +99,20 @@ async def process_data(data, websocket):
 
     ## All messages are stacked after the response has ended.
     all_messages = await http_post_json(url, d, async_reader=stream_print_bit)
-
-    histories[session_id] = histories[session_id] + (msg,)
     log(f'result: {len(all_messages)=}')
     res_obj = concat_stream_messages(all_messages)
+    # Extract the assistant message, and store it into the message stack.
+    histories[session_id] = messages  + (res_obj['message'],)
 
     await close_stream(websocket, {
                 'origin_id': origin_id
             })
 
-    await send_json(websocket, {'result':res_obj, 'origin_id': origin_id})
+    await send_json(websocket, {
+            'result':res_obj,
+            'code':1517,
+            'origin_id': origin_id
+        })
     # return True
 
 

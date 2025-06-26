@@ -17,9 +17,18 @@ This could have been a JSON file, but py files allow comments by default.
 # sent to the cluster on client_connected.
 ROLE = 'example'
 
+from file_text import file_text
+
+# The instruction message.
+FIRST_MESSAGE =  {
+    "role": "system",
+    # "content": file_text('./angrybot-prompt.txt'),
+    "content": file_text('./kettle-prompt.txt'),
+    # "content": file_text('./moly-prompt.txt'),
+}
+
 # Custom locked ID for this client - may be a forced key by the cluster.
 UUID = 1000
-
 
 abilities = ['text']
 

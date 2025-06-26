@@ -5,8 +5,9 @@
         <div class="message-container-content double">
 
             <div class='user-messages-container'>
-                <div class="user message">
-                    <p>{% verbatim %}
+                <div class="user message">{% verbatim %}
+                    <div class="tiny-text tiny-header meta-key">{{ message.metaKey }}</div>
+                    <p>
                         <span class="user-text">
                           <slot name="user">
                             <template v-if=message>
@@ -17,25 +18,31 @@
                             </template>
                         </slot>
                         </span>
-                    {% endverbatim %}</p>
-                </div>
+                    </p>
+                </div>{% endverbatim %}
             </div>
 
             <div class="machine-messages-container">
-
                 {% verbatim %}
                 <div class="machine message">
-                        <span class="user-text">
-                          <slot name="response">
+                    <span class="user-text">
+                        <div class="tiny-text tiny-header origin-id meta-key">
+                            <div class="origin-id">{{ message.origin_id }}</div>
+
+                        </div>
+                        <slot name="response">
                             <template v-if=message>
-                                <p>{{  message.response }}</p>
+                                <p v-html=message.response>Response</p>
                             </template>
                             <template v-else>
                                 <p>{{ responseText }}</p>
                             </template>
                         </slot>
-                        </span>
-                </slot>
+                        <div class="tiny-text tiny-header">
+                            <div class="spacer"></div>
+                            <div class="model-name" v-if="message.final">{{ message.final.model }}</div>
+                        </div>
+                    </span>
                 </div>
                 {% endverbatim %}
                 {# <div class="machine message"> #}

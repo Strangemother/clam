@@ -1,22 +1,40 @@
+/*
 
+USer typy typy space. A Vue app to listen for events and activate posts.
+
+ */
 const InputSpaceApp = {
     mounted() {
         console.log('Input Mounted')
+
+        /* User sends a message. We _listen_ for the user message event,
+        rather than the internal keydown, to capture potential view delays. */
         UserMessage.listen(this.exampleEventHandler.bind(this))
+
+        /* The  SetFirstFocusEvent.emit() is dispatched by the message list app,
+        when the view _asks_ for the correct view.
+
+        Focus on the message field.
+        */
         SetFirstFocusEvent.listen((e)=>{
             setTimeout(()=>{
                 this.messageField().focus()
             }, 50)
         })
 
+        /* Hide the placeholder if there is pre-prepared text. */
         let isEmpty = this.userText(true).length == 0
-
         this.showPlaceholder(!isEmpty)
 
     }
 
     , methods: {
+
         exampleEventHandler(e) {
+            /* The user message event, dispatched by the system
+            when the user sends a message through sendUserText
+
+            We assume this message was due to inputs from the message field. */
             console.log('self acknowledging message', e)
             this.messageField().textContent = "";
         }
@@ -112,6 +130,9 @@ const InputSpaceApp = {
             console.log('dispatch', ev)
             UserMessage.emit({
                 message: target.textContent
+                /* Apply a meta key, to track the responses and
+                pop them into the live message. */
+                , _meta: Math.random().toString(32)
                 , from: ev
             })
         }
