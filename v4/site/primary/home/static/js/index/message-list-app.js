@@ -1,3 +1,5 @@
+const CLOSE_THINKING = '</think>'
+const OPEN_THINKING = '<think>'
 
 const MessageListApp = {
 
@@ -9,6 +11,8 @@ const MessageListApp = {
             */
             liveValue: 'no message'
             , liveResponse: 'no response'
+            , liveMessageStash: ''
+            , previousLiveValue: ''
             , liveMessage: {
                 text: "live message user text"
                 , response: "live message response text"
@@ -16,7 +20,7 @@ const MessageListApp = {
                 , origin_id: -1
                 , streaming: false
                 , model_name: 'no model'
-
+                , historyCount: 0
             }
 
             /* Existing messages in the view. Usually blank*/
@@ -35,6 +39,7 @@ const MessageListApp = {
     }
 
     , mounted() {
+
         UserMessage.listen(this.userMessage.bind(this))
         GlobalSocketEvent.listen(this.globalSocketEventHandler.bind(this))
 
@@ -53,7 +58,34 @@ const MessageListApp = {
             console.log('message list heard user message', detail)
             this.liveMessage.text = detail.message
             this.liveMessage.metaKey = _meta
+            // this.liveMessage.historyCount += 1
             // this.liveValue = e.detail.message
+        }
+
+        , resendUserText(){
+
+            this.liveMessage.historyCount += 1
+            let copyMessage = JSON.parse(JSON.stringify(
+                                Object.assign({},
+                                    this.liveMessage,
+                                    {histories: undefined}
+                                )
+                            ))
+            let histories = this.liveMessage.histories
+            if(histories == undefined) {
+                histories = []
+            };
+
+            histories.push(copyMessage)
+            this.liveMessage.histories = histories
+
+            UserMessage.emit({
+                message: this.liveMessage.text
+                /* Apply a meta key, to track the responses and
+                pop them into the live message. */
+                , _meta: Math.random().toString(32)
+                // , from: ev
+            })
         }
 
         , globalSocketEventHandler(e){
@@ -75,13 +107,33 @@ const MessageListApp = {
                         /* This origin is about to stream.*/
                         this.liveMessage.streaming = true
                         this.liveMessage.response = ''
+                        this.dynamicResponseStreamStart(e.detail)
                     }
                 }
 
                 if(data.code == 1516) {
+                    /* Stream close */
                     if(this.liveMessage.origin_id == data.origin_id) {
                         /* This origin has stopped stream.*/
                         this.liveMessage.streaming = false
+                        this.liveMessageStash = ''
+                        this.previousLiveValue = ''
+                    }
+                }
+
+                if(data.code == 1519) {
+                    /* stream info. */
+                    console.log('stream info said', data)
+                    console.log(data.result.model_name)
+                    if(this.liveMessage.origin_id == data.origin_id) {
+                        console.log('Setting current model name')
+                        this.$refs.modelName.textContent = data.result.model_name
+                        // this.liveMessage.model_name = data.model
+                    }
+
+                    if(!data.raw) {
+                        // nothing to process...
+                        return
                     }
                 }
 
@@ -128,17 +180,109 @@ const MessageListApp = {
                         let d = data.result
                         this.liveMessage.final = d
                         this.liveMessage.model_name = d.model
+                        this.dynamicResponseClose(e.detail)
+
                     }
                 }
+
 
                 if(this.liveMessage.origin_id == data.origin_id
                     && this.liveMessage.streaming == true) {
                     // This message is for this unit, and
                     // is in streaming mode.
-                    this.liveMessage.response += `<span>${data.raw}</span>`
+                    this.dynamicResponseInsert(e.detail)
+                    let peformRaw = false;
+                    if(peformRaw) {
+
+                        let value = data.raw
+                        if(value == OPEN_THINKING || value == CLOSE_THINKING) {
+                            // Is a special.
+                            // this.liveMessage.response += `<hr>`
+                            this.liveMessageStash += this.previousLiveValue + `<hr>`
+                            this.previousLiveValue = ''
+                        } else {
+                            /* Instead of span everything, we span the _last token_
+                            */
+                            this.liveMessageStash += this.previousLiveValue
+                            this.liveMessage.response = this.liveMessageStash
+                            this.previousLiveValue = value
+
+                            let $el = document.querySelector('#message_list')
+                            $el.scrollTop = $el.scrollHeight;
+
+                        }
+                    }
+
                 }
 
             }
+        }
+
+        , dynamicResponseStreamStart(detail) {
+            /*A new stream to start */
+            // copy into history stack.
+            let outputArea = this.$refs.dynamicResponse;
+            outputArea.innerHTML = ''
+            outputArea.outputCell = undefined
+        }
+
+        , dynamicResponseClose(detail) {
+            // copy the output cell into the history
+
+        }
+
+        , dynamicResponseInsert(detail) {
+
+            let data = detail.data
+            let outputArea = this.$refs.dynamicResponse;
+
+            let outputCell = outputArea.outputCell
+
+            if(outputCell == undefined) {
+                /* Create a new one.*/
+                outputCell = document.createElement('span')
+                outputCell.classList.add('outputCell')
+                outputCell.id = Math.random().toString(32)
+                // Start of the output text.
+                outputCell.textContent = ''
+
+                outputArea.outputCell = outputCell
+                outputArea.appendChild(outputCell)
+            }
+
+            let raw = data.raw
+            if(raw == OPEN_THINKING || raw == CLOSE_THINKING) {
+                /* Shoudl create a new cell and write it into the cireview.*/
+
+                if(raw == OPEN_THINKING){
+                    console.log('Open thinking', raw)
+
+                    let thinkingCell = document.createElement('span')
+                    thinkingCell.classList.add('thinkingCell')
+                    thinkingCell.id = Math.random().toString(32)
+                    // Any prefix text here.
+                    thinkingCell.appendChild(thinkingTag(raw))
+
+                    thinkingCell.originOutputCell = outputArea.outputCell
+
+                    outputCell.appendChild(thinkingCell)
+                    outputArea.outputCell = thinkingCell
+                } else if(raw == CLOSE_THINKING){
+                    /* Finish the cell. backout to the original.*/
+                    console.log('close thinking', raw)
+                    outputArea.outputCell.appendChild(thinkingTag(raw))
+                    // outputArea.outputCell.innerHTML += thinkingTag(raw)
+                    let renderCell = document.createElement('span')
+                    renderCell.classList.add('renderCell')
+
+                    outputArea.outputCell.originOutputCell.appendChild(renderCell)
+                    outputArea.outputCell = renderCell
+
+                }
+            } else{
+                outputCell.innerHTML += raw
+            }
+
         }
 
         , gotoPrimary(e) {
@@ -148,7 +292,28 @@ const MessageListApp = {
             SetFirstFocusEvent.emit()
         }
     }
+}
 
+const thinkingTag = function(value){
+    let node = document.createElement('span')
+    node.classList.add('thinking-tag')
+    node.id = Math.random().toString(32)
+    // Any prefix text here.
+    node.innerHTML = escapeHtml(value)
+    return node
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"'/]/g, function (char) {
+    return ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#47;',
+    })[char];
+  });
 }
 
 

@@ -105,6 +105,8 @@ class UserMessage extends EventBase {
     */
 }
 
+class SystemMessage extends EventBase {}
+
 class SetFirstFocusEvent extends EventBase {
 
 }

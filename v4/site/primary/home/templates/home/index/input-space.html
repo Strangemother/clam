@@ -22,13 +22,15 @@
                 </div>
             </div>
             <div class="immediate-options-area">
-                <a href="#" class="button secondary">Action</a>
+                <a href="#" class="button secondary" @click='sendButton'>Send</a>
                 {# <a href="#" class="button ternary">Another</a> #}
             </div>
         </div>
         <div class="options-area">
-            <a href="#" class="button secondary">Action</a>
-            <a href="#" class="button ternary">Another</a>
+            <a href="#" @click="getModels" class="button secondary">Get Models</a>
+            <a href="#" @click="getRole" class="button secondary">Get Role</a>
+            <a href="#" @click="getRoleSystem" class="button ternary">Set Role</a>
+            <a href="#" @click="setModel" class="button ternary">Set New Model</a>
         </div>
     </div>
 </div>

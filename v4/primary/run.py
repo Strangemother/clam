@@ -69,6 +69,7 @@ async def onboard(websocket):
     """
     log(f'onboard Socket {websocket=}')
     websocket.count = 0
+    # Set to blank. The UUID Is applied elsewhere.
     websocket.uuid = -1
     websocket.registered = False
     websocket.receipts = True
@@ -96,6 +97,7 @@ async def recv_message(websocket, message):
     # log(f'Recv {message=}')
     websocket.count += 1
     origin_id = str_uuid4()
+
     # send acceptance.
     if websocket.receipts is True:
         receipt = {
@@ -114,6 +116,7 @@ async def recv_message(websocket, message):
         pass
     else:
         d['origin_id'] = origin_id
+
     # send to cluster.
     await cluster.recv_message(websocket, d)
 

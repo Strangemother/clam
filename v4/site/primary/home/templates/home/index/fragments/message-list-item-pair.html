@@ -32,7 +32,7 @@
                         </div>
                         <slot name="response">
                             <template v-if=message>
-                                <p v-html=message.response>Response</p>
+                                <p v-html=message.response></p>
                             </template>
                             <template v-else>
                                 <p>{{ responseText }}</p>
@@ -40,7 +40,7 @@
                         </slot>
                         <div class="tiny-text tiny-header">
                             <div class="spacer"></div>
-                            <div class="model-name" v-if="message.final">{{ message.final.model }}</div>
+                            <div class="model-name">{{ message.model_name }}</div>
                         </div>
                     </span>
                 </div>

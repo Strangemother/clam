@@ -60,14 +60,42 @@ role_uuid_map = defaultdict(list)
 #"role" mapping of clients.
 CLUSTER_CONFIG = {
     # Messages from the user primary (the UI), to the _alpha_ outputs.
-    "user::primary": ["example"],
+    "user::primary": ["memory"],
     # All alpha messages return to the user.
-    "example": ["user::primary"]
+    "memory": ["memory::layer2"],
+    "memory::layer2": ["user::primary"],
 }
 
 
 def str_uuid4():
     return str(uuid4())
+
+
+async def new_socket(websocket, data):
+    """The new socket has appeared; this first entrance (after the accepted, and
+    first messaging clauses), captures and onboards the socket into the cluster.
+
+    The socket is bi-directional, so we can ask it questions, such as 'abilities.'
+
+    However in first draft this can be given in the first message here (`data`)
+
+    ---
+
+    The `get_mem` will return the internal class wrapper for the socket.
+    The `head` maintains state and internal changes.
+    """
+    uuid = websocket.uuid
+    log(f'cluster.new_socket {uuid=}, setting memory with {data=}')
+    head = set_mem(uuid, websocket, data)
+
+    ## is SocketWrapper
+    session_id:SocketWrapper = await head.wake(websocket, data)
+    # head.open_time =
+
+    ## We need a session ID. Something that doesn't change throughout a conversation.
+    ## This should be associated with the user, for history continuation.
+    ## for now, this can be a new one for the connected socket.
+    ## A change can be requested by the user later.
 
 
 def get_mem(uuid, websocket, **data):
@@ -97,7 +125,6 @@ def set_mem(uuid, websocket, data):
     log(f'Storing {role=} as {uuid=}')
     role_uuid_map[role] += [uuid,]
     return uuid_wrapper_map[uuid]
-
 
 
 async def drop_socket(websocket):
@@ -202,7 +229,6 @@ class SocketWrapper:
         code = data.get('code')
         if code == 1515:
             log('open stream')
-
             return await self.start_recv_message_stream(websocket, data)
 
         if code == 1516:
@@ -247,6 +273,7 @@ class SocketWrapper:
         self.stream_meta = None
         websocket.receipts = True
         return data
+
 
 async def recv_message(websocket, data):
     """First function called by the primary.run::recv_message
@@ -294,28 +321,3 @@ async def dispatch_through_graph(head, websocket, data):
         # log(f'  Done {dest_role=}')
     # log('... All dispatch_through_graph complete.')
 
-
-async def new_socket(websocket, data):
-    """The new socket has appeared; this first entrance (after the accepted, and
-    first messaging clauses), captures and onboards the socket into the cluster.
-
-    The socket is bi-directional, so we can ask it questions, such as 'abilities.'
-
-    However in first draft this can be given in the first message here (`data`)
-
-    ---
-
-    The `get_mem` will return the internal class wrapper for the socket.
-    The `head` maintains state and internal changes.
-    """
-    uuid = websocket.uuid
-    log(f'cluster.new_socket {uuid=}, setting memory with {data=}')
-    head = set_mem(uuid, websocket, data)
-    ## If the response is a obj
-    session_id = await head.wake(websocket, data)
-    # head.open_time =
-
-    ## We need a session ID. Something that doesn't change throughout a conversation.
-    ## This should be associated with the user, for history continuation.
-    ## for now, this can be a new one for the connected socket.
-    ## A change can be requested by the user later.

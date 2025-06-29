@@ -1,1 +1,1 @@
-py run.py 
+py run.py %*

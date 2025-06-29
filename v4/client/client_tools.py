@@ -9,6 +9,7 @@ import websockets
 
 
 log = logger.debug
+warning = logger.warning
 
 
 async def connect_wait(conf):
@@ -47,7 +48,11 @@ async def client_connected(websocket, conf):
     try:
         log('waiting on messages')
         async for message in websocket:
-            await process_message(message, websocket)
+            unused = await process_message(message, websocket)
+            if unused is not None:
+                _type = type(unused)
+                msg = f'client.process_message() return an unused {_type}.'
+                warning(msg)
     except websockets.exceptions.ConnectionClosed:
         log('Socket closed')
         # websocket.send('{ "id": 100 }')
@@ -108,9 +113,12 @@ def concat_stream_messages(all_messages):
     for a_msg in all_messages:
         # Get the last one
         res_obj = a_msg
-        content += a_msg['message']['content']
+        m = a_msg['message'] if 'message' in a_msg else {}
+        content += m.get('content', '')
 
-    res_obj['message']['content'] = content
+    m = res_obj['message'] if 'message' in res_obj else {}
+    m['content'] = content
+    res_obj['message'] = m
     return res_obj
 
 

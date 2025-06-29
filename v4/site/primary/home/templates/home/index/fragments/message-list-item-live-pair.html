@@ -1,0 +1,58 @@
+<template class="user-message">
+
+    <li class="message-container user-message-list-item">
+
+        <div class="message-container-content double">
+
+            <div class='user-messages-container'>
+                <div class="user message">{% verbatim %}
+                    <div class="tiny-text tiny-header meta-key">{{ message.metaKey }}</div>
+                    <p>
+                        <span class="user-text">
+                          <slot name="user">
+                            <template v-if=message>
+                            {{  message.text }}
+                            </template>
+                            <template v-else>
+                            {{ userText }}
+                            </template>
+                        </slot>
+                        </span>
+                    </p>
+                </div>{% endverbatim %}
+            </div>
+
+            <div class="machine-messages-container">
+                {% verbatim %}
+                <div class="machine message">
+                    <span class="user-text">
+                        <div class="tiny-text tiny-header origin-id meta-key">
+                            <div class="origin-id">{{ message.origin_id }}</div>
+
+                        </div>
+
+                        <slot name="response">
+                            <template v-if=message>
+                                <p v-html=message.response></p>
+                            </template>
+                            <template v-else>
+                                <p>{{ responseText }}</p>
+                            </template>
+                        </slot>
+                        <div class="tiny-text tiny-header">
+                            <div class="spacer"></div>
+                            <div class="model-name">{{ message.model_name }}</div>
+                        </div>
+                    </span>
+                </div>
+                {% endverbatim %}
+                {# <div class="machine message"> #}
+                    {# {% lorem b_count p random %} #}
+                {# </div> #}
+            </div>
+
+        </div>
+
+    </li>
+
+</template>

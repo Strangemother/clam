@@ -15,16 +15,17 @@ This could have been a JSON file, but py files allow comments by default.
 
 # Define the tooling slot type, such as "memory" or "user"
 # sent to the cluster on client_connected.
-ROLE = 'example'
+ROLE = 'memory'
 
 from file_text import file_text
 
 # The instruction message.
 FIRST_MESSAGE =  {
     "role": "system",
-    # "content": file_text('./angrybot-prompt.txt'),
-    "content": file_text('./kettle-prompt.txt'),
-    # "content": file_text('./moly-prompt.txt'),
+    # "content": file_text('./prompts/angrybot-prompt.txt'),
+    "content": file_text('./prompts/memorybot-prompt.txt'),
+    # "content": file_text('./prompts/tilly-prompt.txt'),
+    # "content": file_text('./prompts/moly-prompt.txt'),
 }
 
 # Custom locked ID for this client - may be a forced key by the cluster.
@@ -37,10 +38,15 @@ WEBSOCKET_ENDPOINT = "ws://localhost:8765"
 
 # The service endpoint - in this case, basic olloma.
 OLLOMA_CHAT_ENDPOINT = "http://192.168.50.60:10000/api/chat/"
-
+OLLOMA_TAGS_ENDPOINT = "http://192.168.50.60:10000/api/tags/"
+OLLOMA_PS_ENDPOINT = "http://192.168.50.60:10000/api/ps/"
+OLLOMA_GENERATE_ENDPOINT = "http://192.168.50.60:10000/api/generate/"
 # The model selected on the service. Examples
 # TinyDolphin
 # llama3.2:latest
 # "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"
 #  'smollm2:360m-instruct-fp16'
+#  deepseek-r1:latest
+#
 MODEL_NAME = "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"
+# MODEL_NAME = "deepseek-r1:latest"

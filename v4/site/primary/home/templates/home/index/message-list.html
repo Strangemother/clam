@@ -42,8 +42,85 @@
         {# <pair-message :message=message></pair-message> #}
     </template>
 
+    <li class="message-container user-message-list-item"
+        id=activeMessage
+        ref=activeMessage
+        :message=liveMessage>
+
+        <div class="message-container-content double">
+
+            <div class='user-messages-container'>
+                <div class="user message">{% verbatim %}
+                    <div class="tiny-text tiny-header meta-key">{{ liveMessage.metaKey }}</div>
+                    <p>
+                        <span class="user-text">
+                          <slot name="user">
+                            <template v-if=liveMessage>
+                            {{  liveMessage.text }}
+                            </template>
+                            <template v-else>
+                            {{ userText }}
+                            </template>
+                        </slot>
+                        </span>
+                    </p>
+                   <div class="tiny-text tiny-header">
+                        <div class="spacer"></div>
+                        <a href="javascript:;" @click='resendUserText'>resend</a>
+                    </div>
+                </div>{% endverbatim %}
+            </div>
+
+            <div class="machine-messages-container">
+                {% verbatim %}
+                <div class="machine message">
+                    <div class="user-text" ref='responseCell'>
+                        <div class="tiny-text tiny-header origin-id meta-key">
+                            <div class="origin-id">{{ liveMessage.origin_id }}</div>
+                        </div>
+
+                        <div class="dynamic-response" ref='dynamicResponse'></div>
+                    {% endverbatim %}
+                    {% comment %}
+                        <slot name="response">
+                            <template v-if=liveMessage>
+                                <p>
+                                    <span v-html=liveMessage.response></span>
+                                    <span>{{previousLiveValue}}</span>
+                                </p>
+                            </template>
+                            <template v-else>
+                                <p>{{ responseText }}</p>
+                            </template>
+                        </slot>
+                    {% endcomment %}
+                    {% verbatim %}
+
+                        <div class="tiny-text tiny-header">
+                            <div class="stackButtons">
+                                <a href="javascript:;">less</a>
+                                <span>{{ liveMessage.historyCount }}</span>
+                                <a href="javascript:;">more</a>
+                            </div>
+                            <div class="spacer"></div>
+                            <div class="model-name" ref='modelName'>model name</div>
+                        </div>
+                    </div>
+                </div>
+                {% endverbatim %}
+                {# <div class="machine message"> #}
+                    {# {% lorem b_count p random %} #}
+                {# </div> #}
+            </div>
+
+        </div>
+
+    </li>
+
+    {% comment %}
     <pair-message id=activeMessage ref=activeMessage :message=liveMessage>
     </pair-message>
+    {% endcomment %}
 
 {% comment %}
     {% include "../message-list-item.html" with w_count=20 a_count=4 %}

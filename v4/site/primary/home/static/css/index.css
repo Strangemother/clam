@@ -871,6 +871,7 @@ textarea.user-input:focus {
 .user-messages-container .user.message {
     position: sticky;
     top: 0;
+    font-family: "Inter Tight", "emoji", sans-serif;
 }
 
 .design-3 .message {
@@ -1148,6 +1149,7 @@ ul.tab-list {list-style: none;display: flex;margin: 0;padding: 0;gap: 1em;}
     flex-grow: 1;
     /* flex-shrink: 1; */
     flex-basis: 50%;
+    font-family: "Inter Tight", "emoji", sans-serif;
 }
 
 .typing-area {
@@ -1213,6 +1215,7 @@ span.user-text {
     /* color: rebeccapurple; */
     /* transition: color .3s; */
     /* animation: 0.2s linear 0s colorText; */
+    white-space: pre-line;
 }
 
 @keyframes colorText {
@@ -1221,10 +1224,51 @@ span.user-text {
     }
 
     to {
-        color: #DDD; 
+        color: #DDD;
     }
 }
 
 .message.machine .user-text p span:last-child {
     color: #ff0000;
+}
+
+@font-face {
+  font-family: "emoji";
+  src: url(/static/fonts/NotoColorEmoji-Regular.ttf) format("truetype");
+}
+
+
+.thinkingCell, .thinking-cell {
+    /* color: mediumpurple; */
+    /* outline: solid 1px; */
+    /* outline-offset: 0.3em; */
+    /* outline-color: #444; */
+    background: #101010;
+    /* display: block; */
+    display: inline-block;
+    padding: 0em;
+    margin: 0em;
+    flex-direction: column;
+    /* white-space: pre-line; */
+    font-size: 0.9em;
+    padding: 0.2em 0.5em;
+    margin: 0em;
+    border-radius: .4em;
+}
+
+.output-cell, .outputCell {
+    white-space: pre-line;
+    display: block;
+    /* flex-direction: column; */
+}
+
+.thinking-tag {
+    display: inline-flex;
+    color: #5e2c91;
+    font-weight: 700;
+}
+
+span.renderCell {
+    display: flex;
+    /* border: solid; */
 }
