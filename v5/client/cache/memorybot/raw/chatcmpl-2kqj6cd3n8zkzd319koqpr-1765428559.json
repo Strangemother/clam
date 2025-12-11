@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-2kqj6cd3n8zkzd319koqpr",
+    "object": "chat.completion",
+    "created": 1765428559,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User expressed excitement about riding a horse for the first time, describing it as awesome. They also mentioned Jason's injury where he fell off and broke something in his shoulder area (\"arm neck\"). This appears to be an important personal experience for the user related to equine activities, with Jason being someone significant in their life who encountered an unexpected event during this activity.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 74,
+        "total_tokens": 516
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

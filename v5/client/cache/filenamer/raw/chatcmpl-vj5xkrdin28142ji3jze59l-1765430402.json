@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-vj5xkrdin28142ji3jze59l",
+    "object": "chat.completion",
+    "created": 1765430402,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "rodehorseawesomejasonfellclaviclearmneck",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 178,
+        "completion_tokens": 13,
+        "total_tokens": 191
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

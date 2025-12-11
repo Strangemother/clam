@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-piom53evmpnojmxp1ives",
+    "object": "chat.completion",
+    "created": 1765429022,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User rode a horse today, found the experience awesome but expressed concern about Jason's injury from falling off the animal previously.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 26,
+        "total_tokens": 468
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

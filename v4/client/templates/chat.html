@@ -1,0 +1,9 @@
+{% extends "./index.html" %}
+
+{% block body %}
+<ul>
+{% for key in response %}
+    <li>{{ key }}: {{ response[key] }}</li>
+{% endfor %}
+</ul>
+{% endblock body %}

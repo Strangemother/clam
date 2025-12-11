@@ -1,0 +1,15 @@
+{% extends "home/base.html" %}
+{% load link %}
+
+{% block content.body %}
+    <ul>
+        <li>
+            {% link "home:index" "Back to Interface" %}
+        </li>
+        {% for item in object_list  %}
+        <li>
+            {% link "prompts:detail" item.slug item.name %}
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock content.body %}

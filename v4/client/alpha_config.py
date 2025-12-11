@@ -17,13 +17,14 @@ This could have been a JSON file, but py files allow comments by default.
 # sent to the cluster on client_connected.
 ROLE = 'memory'
 
-from file_text import file_text
+from file_text import file_text, url_text
 
 # The instruction message.
 FIRST_MESSAGE =  {
     "role": "system",
     # "content": file_text('./prompts/angrybot-prompt.txt'),
-    "content": file_text('./prompts/memorybot-prompt.txt'),
+    # "content": file_text('./prompts/memorybot-prompt.txt'),
+    "content": url_text('http://localhost:8006/prompts/memory-bot/'),
     # "content": file_text('./prompts/tilly-prompt.txt'),
     # "content": file_text('./prompts/moly-prompt.txt'),
 }
@@ -37,10 +38,17 @@ abilities = ['text']
 WEBSOCKET_ENDPOINT = "ws://localhost:8765"
 
 # The service endpoint - in this case, basic olloma.
-OLLOMA_CHAT_ENDPOINT = "http://192.168.50.60:10000/api/chat/"
-OLLOMA_TAGS_ENDPOINT = "http://192.168.50.60:10000/api/tags/"
+# OLLOMA_CHAT_ENDPOINT = "http://192.168.50.60:10000/api/chat/"
+# OLLOMA_TAGS_ENDPOINT = "http://192.168.50.60:10000/api/tags/"
+# OLLOMA_PS_ENDPOINT = "http://192.168.50.60:10000/api/ps/"
+# OLLOMA_GENERATE_ENDPOINT = "http://192.168.50.60:10000/api/generate/"
+
+## LMStudio
+OLLOMA_CHAT_ENDPOINT = "http://192.168.50.60:1234/v1/chat/completions/"
 OLLOMA_PS_ENDPOINT = "http://192.168.50.60:10000/api/ps/"
-OLLOMA_GENERATE_ENDPOINT = "http://192.168.50.60:10000/api/generate/"
+OLLOMA_TAGS_ENDPOINT = "http://192.168.50.60:1234/v1/models/"
+OLLOMA_GENERATE_ENDPOINT = "http://192.168.50.60:1234/v1/completions/"
+
 # The model selected on the service. Examples
 # TinyDolphin
 # llama3.2:latest
@@ -48,5 +56,6 @@ OLLOMA_GENERATE_ENDPOINT = "http://192.168.50.60:10000/api/generate/"
 #  'smollm2:360m-instruct-fp16'
 #  deepseek-r1:latest
 #
-MODEL_NAME = "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"
+MODEL_NAME = "unsloth/gpt-oss-20b"
+# MODEL_NAME = "gemma-2-2b-it-abliterated-Q8_0-1750821090814:latest"
 # MODEL_NAME = "deepseek-r1:latest"

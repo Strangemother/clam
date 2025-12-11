@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-khofi1m9hzgmyi9g5szarm",
+    "object": "chat.completion",
+    "created": 1765429243,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User had an enjoyable experience riding a horse, but was concerned about their friend Jason who recently suffered an injury while riding. The user intends to share more details about the incident with Jason later on.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 41,
+        "total_tokens": 483
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

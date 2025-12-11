@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-q7feguu4exigjt9hz45v",
+    "object": "chat.completion",
+    "created": 1765430066,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "\"AmazingDayRidingHorseJasonFellOffClavicleOrNeck\"",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 166,
+        "completion_tokens": 19,
+        "total_tokens": 185
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

@@ -2,7 +2,7 @@
 {% load static %}
 {% load link %}
 
-{% block body_class %}template-article{% endblock %}
+{% block body_class %}template-article expanded{% endblock %}
 
 {% block extra_css %}{% endblock extra_css %}
 
@@ -19,12 +19,15 @@
     {% link.js "js/index/events.js" %}
     {% link.js "js/index/websocket-tools.js" %}
 
-    {% link.js "js/index/messenger-app.js" %}
+    {% link.js "js/index/apps/messenger-app.js" %}
     {% link.js "js/index/index.js" %}
 
-    {% link.js "js/index/overlay-app.js" %}
-    {% link.js "js/index/user-input-app.js" %}
-    {% link.js "js/index/message-list-app.js" %}
-    {% link.js "js/index/socket-status-app.js" %}
+    {% link.js "js/index/apps/overlay-app.js" %}
+
+    {% link.js "js/index/apps/user-input-area-app.js" %}
+    {% link.js "js/index/apps/options-area-app.js" %}
+
+    {% link.js "js/index/apps/message-list-app.js" %}
+    {% link.js "js/index/apps/socket-status-app.js" %}
 
 {% endblock content %}

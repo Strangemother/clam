@@ -14,7 +14,7 @@ import json
 
 
 
-async def http_quick_get(url):
+def http_quick_get(url):
     headers = {
         'Content-Type': "application/json",
         'Accept': "*/*",
@@ -27,7 +27,7 @@ async def http_quick_get(url):
     return response
 
 
-async def http_post_json(url, d, reader=None, async_reader=None):
+def http_post(url, d, reader=None, stream=True):
     headers = {
             'Content-Type': "application/json",
             'Cache-Control': "no-cache",
@@ -35,25 +35,33 @@ async def http_post_json(url, d, reader=None, async_reader=None):
 
     data = json.dumps(d)
     print('JSON POST', url)
-    stream = True
-    response = requests.request("POST", url, data=data,
-                                headers=headers, stream=stream)
+    response = requests.request("POST", url,
+        data=data, headers=headers, stream=stream)
+    return response
+
+
+def http_post_json(url, d, reader=None):
     rows = ()
+    response = http_post_json(url, d, reader)
     for line in response.iter_lines():
         # filter out keep-alive new lines
         if not line:
             continue
         decoded_line = line.decode('utf-8')
-        rl = json.loads(decoded_line)
+        try:
+            if decoded_line.startswith('data:'):
+                decoded_line = decoded_line[len('data: '):]
+            rl = json.loads(decoded_line)
+        except json.decoder.JSONDecodeError:
+            print('Response is not JSON', decoded_line)
+            rl = decoded_line
         if reader:
             reader(rl, response)
-        if async_reader:
-            await async_reader(rl, response)
         rows += (rl,)
     return rows
 
 
-async def http_get_json(u):
-    d = await http_quick_get(u)
+def http_get_json(u):
+    d = http_quick_get(u)
     return d.json()
 

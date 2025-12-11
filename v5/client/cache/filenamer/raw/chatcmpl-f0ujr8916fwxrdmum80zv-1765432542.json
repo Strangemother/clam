@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-f0ujr8916fwxrdmum80zv",
+    "object": "chat.completion",
+    "created": 1765432542,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "rode-horse-awesomeness-jason-fell-clavicle-neck",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 205,
+        "completion_tokens": 18,
+        "total_tokens": 223
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

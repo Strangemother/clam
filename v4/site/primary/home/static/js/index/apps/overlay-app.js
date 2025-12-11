@@ -1,4 +1,4 @@
-
+/* The panel for first entry; containing a _go_ button (amongst other buttons). */
 const OverlayPanelsApp = {
     mounted() {
     }

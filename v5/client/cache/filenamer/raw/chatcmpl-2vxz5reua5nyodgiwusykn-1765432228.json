@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-2vxz5reua5nyodgiwusykn",
+    "object": "chat.completion",
+    "created": 1765432228,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "wow rode horse today awesome cant believe jason fell off broke clavicle or whatever called",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 205,
+        "completion_tokens": 19,
+        "total_tokens": 224
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

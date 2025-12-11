@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-5vfcaedu9h6o57tsjbi6o",
+    "object": "chat.completion",
+    "created": 1765429101,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User expressed excitement about riding a horse today, describing the experience as \"awesome.\" They also mentioned an incident involving Jason who fell off the horse and broke something in his arm or neck region, using terminology related to bones. The specific term used was likely \"clavicle,\" which is another name for the collarbone.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 441,
+        "completion_tokens": 66,
+        "total_tokens": 507
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

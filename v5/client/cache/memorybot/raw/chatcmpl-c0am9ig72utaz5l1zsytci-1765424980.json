@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-c0am9ig72utaz5l1zsytci",
+    "object": "chat.completion",
+    "created": 1765424980,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User expressed excitement about riding a horse, but is surprised by Jason's accident involving a broken clavicle or similar shoulder area part. The memory captures the user's positive experience and concern for Jason's injury without additional context or opinions.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 443,
+        "completion_tokens": 49,
+        "total_tokens": 492
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

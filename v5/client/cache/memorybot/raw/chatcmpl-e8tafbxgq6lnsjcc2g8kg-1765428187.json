@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-e8tafbxgq6lnsjcc2g8kg",
+    "object": "chat.completion",
+    "created": 1765428187,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User rode a horse for the first time, finding the experience very enjoyable. The User also noted an incident involving Jason who fell off and broke their clavicle or another bone in the shoulder area.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 42,
+        "total_tokens": 484
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

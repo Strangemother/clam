@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-ig3o0v2pegibputm56up3h",
+    "object": "chat.completion",
+    "created": 1765429686,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User rode a horse today, finding the experience awesome. They were surprised to hear about Jason's recent accident where he fell off and sustained an injury to his clavicle or collarbone area.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 442,
+        "completion_tokens": 41,
+        "total_tokens": 483
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

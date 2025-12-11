@@ -1,0 +1,3 @@
+[submodule "v4/unresearch.ai-chat-suite"]
+	path = v4/unresearch.ai-chat-suite
+	url = git@github.com:Strangemother/unresearch.ai-chat-suite.git

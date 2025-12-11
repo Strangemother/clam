@@ -126,9 +126,12 @@ html body {
     /* background: hsl(269deg 3% 3%); */
     flex-direction: column;
     flex-grow: 1;
+    z-index: 2;
     max-height: 97vh;
     /* overflow: hidden; */
 }
+
+.machine-content-container {}
 
 .intro-content-container .text-content {
     max-width: 26em;
@@ -886,7 +889,7 @@ textarea.user-input:focus {
 
 .stretchy-input-field {
     border: solid 1px #333;
-    min-width: 30em;
+    min-width: 24em;
     min-height: 3em;
     flex-basis: 48%;
     display: flex;
@@ -897,6 +900,7 @@ textarea.user-input:focus {
 .design-3 .input-area {
     justify-content: flex-start;
     padding: 1em 1.5em;
+    flex-grow: 1;
 }
 
 span.typing-area, span.typing-area-field, .placeholder-field {
@@ -1090,16 +1094,21 @@ a.button.user-button {
     display: flex;
 }
 
-.options-area {
+.half-split .options-area {
     display: flex;
+    flex-basis: auto;
     padding: 1em;
     align-items: baseline;
     align-self: flex-end;
+    /* flex-grow: 1; */
+    flex-shrink: 1;
+    flex-wrap: wrap;
 }
 
 .half-split {
     display: flex;
     flex-grow: 1;
+    flex-wrap: wrap;
 }
 
 .immediate-options-area {
@@ -1111,11 +1120,12 @@ a.button.user-button {
 }
 
 .half-split > * {
-    flex-basis: 50%;
+    flex-basis: 46%;
 }
 
 .left-input-space {
     display: flex;
+    flex-grow: 1;
 }
 
 .design-3 .system.message {
@@ -1271,4 +1281,137 @@ span.user-text {
 span.renderCell {
     display: flex;
     /* border: solid; */
+}
+
+.systemprompt-detail .content {
+    white-space: pre-wrap;
+    /* flex-basis: 40em; */
+    /* display: flex; */
+    /* max-width: 65em; */
+    /* width: 63%; */
+    display: inline;
+    /* padding: 0.6em; */
+    line-height: 1.3em;
+    /* background: #0c0c0ce0; */
+}
+
+.systemprompt-detail {
+    padding: 2em;
+    max-width: 65em;
+}
+
+.content:focus {
+    outline: solid 2px #333;
+    /* outline-style: dashed; */
+}
+
+form input {background: #111;border: none;font: inherit;border-radius: 0.3em;padding: 0.2em 0.5em;}
+
+form button[type=submit] {
+    background: #101010;
+    padding: 0.6em 1.3em;
+    font: inherit;
+    border-radius: 0.4em;
+    border: none;
+}
+
+form > ul > li {
+    padding: 0.1rem;
+}
+
+form > ul {
+    list-style: none;
+    padding: 0;
+}
+
+form ul li input {
+    padding: 0.4em 1em;
+}
+
+ul.no-style {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+main button, main .btn {
+    background: inherit;
+    font: inherit;
+    padding: 0.5em 1.3em;
+    border: solid 2px;
+    border-left: none;
+    border-radius: 0em;
+    border-right: none;
+    border-color: #444;
+}
+
+.beta-grid-container.hidden {
+    max-width: 0em;
+    /* transition: all .6s ease; */
+}
+
+.beta-grid-container {
+    max-width: 20em;
+    transition: max-width .6s cubic-bezier(0.46, 0.68, 0.24, 1);
+}
+
+.beta-grid-container > .fixed-panel {
+    width: 20em;
+    padding: 0px 0 0 1em;
+    overflow: hidden;
+}
+
+.button-bar {
+    display: flex;
+    padding: 0 0em;
+}
+
+.button-bar > *:first-child {
+    border-left: solid 2px;
+    border-color: #222;
+}
+
+.button-bar *:last-child {border-right: solid 2px;border-color: #222;}
+
+.button-bar > * {
+    border-color: #222;
+}
+
+.fixed-panel h2 {
+    font-size: 1.5em;
+    margin: 0.5em 0;
+}
+
+
+.expanded .body,.full .body {
+    flex-grow: 1;
+    display: flex;
+}
+
+.full .machine-content-container {
+    max-height: none;
+}
+
+.full .beta-grid-container {border-left: solid 1px #111;border-right: none;}
+
+.full .status-bar {
+    padding: 0.8em 0 0.8em;
+}
+
+.full .chat-panel > .pad-wrap {
+    margin: 0;
+}
+
+.full .beta-grid-container.machine-panel {
+    border-left: none;
+    border-right: solid 1px #111;
+    overflow: hidden;
+}
+
+.machine-panel.beta-grid-container {
+    overflow: hidden;
+}
+
+span.side-label .text-content a {
+    text-decoration: inherit;
 }

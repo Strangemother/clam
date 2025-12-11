@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-lzgskdbqj7jswi1g3asp4",
+    "object": "chat.completion",
+    "created": 1765424455,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User decided to try horse riding for the first time, finding it an exhilarating experience despite witnessing a friend's unfortunate accident involving broken collarbone.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 443,
+        "completion_tokens": 31,
+        "total_tokens": 474
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

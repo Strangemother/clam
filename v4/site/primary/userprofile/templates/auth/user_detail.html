@@ -1,0 +1,10 @@
+{% extends "home/base.html" %}
+{% load link %}
+
+{% block content.body %}
+    {% link "home:index" "Home" %}
+    <h1>Profile</h1>
+    <p>{{ user }}</p>
+    {% link "userprofile:logout" "Logout" %}
+
+{% endblock content.body %}

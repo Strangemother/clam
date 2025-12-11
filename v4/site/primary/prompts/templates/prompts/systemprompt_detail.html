@@ -1,0 +1,20 @@
+{% extends "home/base.html" %}
+{% load link %}
+
+{% block content.body %}
+<div class="systemprompt-detail">
+
+    <div class="back-link">
+        {% link "prompts:list" "Back to List" %}
+    </div>
+    <div class="name">
+        <h1>{{ object.name }}</h1>
+    </div>
+
+    <div class="content" contenteditable="true">{{ object.content }}</div>
+    <div class="token-count">
+        {{ object.token_count }} tokens
+    </div>
+</div>
+
+{% endblock content.body %}

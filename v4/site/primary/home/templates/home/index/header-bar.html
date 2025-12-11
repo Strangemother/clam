@@ -1,6 +1,7 @@
+{% load link %}
 <div class="header-status-bar">
 
     <div class="user-space">
-        <a href="#" class="button user-button">{{ request.user }}</a>
+        {% link "userprofile:index" request.user  class="button user-button" %}
     </div>
 </div>

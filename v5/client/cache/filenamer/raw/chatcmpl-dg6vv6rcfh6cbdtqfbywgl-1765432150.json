@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-dg6vv6rcfh6cbdtqfbywgl",
+    "object": "chat.completion",
+    "created": 1765432150,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "ooh-wow-i-rod-horse-today-it-was-awesome-I-can-believe-Jason-fell-off-and-broke-his-clavicle-or-whatever-it-was-called-Something-arm-neck",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 205,
+        "completion_tokens": 44,
+        "total_tokens": 249
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

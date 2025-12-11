@@ -1,0 +1,43 @@
+<div class="alpha-grid-container" data-stage="0">
+
+    <div class="machine-content-container">
+
+        {% include "./header-bar.html" %}
+
+        <div class="horiz-stack">
+
+            <div class="intro-content-container">
+                <div class="text-content">
+                    <div class="large-quote">
+                        <p>
+                            <span class="persona-editable"
+                                contenteditable="true">
+                                Seek to educate and equip society to implement AI safely.
+                            </span>
+                        </p>
+                        <a href="#" class="button secondary inline">Evaluate</a>
+                    </div>
+                    <div class="author">
+                        <div class="indicator"></div>
+                        <p>
+                            <span class="persona-editable"
+                                contenteditable="true">
+                                The Unresearch Collective.
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conversation-window">
+                {% include "./conversation-header-bar.html" %}
+                {% include "./message-list.html" %}
+                {% include "./input-space.html" %}
+            </div>
+        </div>
+
+        {% include "./status-bar.html" %}
+    </div>
+
+    {% include "./overlay-panels.html" %}
+</div>

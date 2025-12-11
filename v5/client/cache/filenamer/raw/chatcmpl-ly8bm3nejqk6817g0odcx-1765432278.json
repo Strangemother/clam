@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-ly8bm3nejqk6817g0odcx",
+    "object": "chat.completion",
+    "created": 1765432278,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "ooh-wow-I-rode-a-horse-today-it-was-awesome",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 205,
+        "completion_tokens": 16,
+        "total_tokens": 221
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

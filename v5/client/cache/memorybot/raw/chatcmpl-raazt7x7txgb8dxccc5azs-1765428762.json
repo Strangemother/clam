@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-raazt7x7txgb8dxccc5azs",
+    "object": "chat.completion",
+    "created": 1765428762,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User expressed excitement about riding a horse and sharing the story of their friend, Jason, who fell off a horse and injured himself. The event took place recently (within the past day or two) and holds personal significance due to its connection with Jason's injury. It might be relevant in discussions about horses or outdoor activities, particularly for anyone involved in equine sports or lessons.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 441,
+        "completion_tokens": 77,
+        "total_tokens": 518
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-xa6glgaxq38ekkdyqfbj8i",
+    "object": "chat.completion",
+    "created": 1765431279,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "horseridingtodayawesomeJasonfelloffbrokeclavicleorarmneck",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 207,
+        "completion_tokens": 18,
+        "total_tokens": 225
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

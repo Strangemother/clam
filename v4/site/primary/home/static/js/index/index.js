@@ -22,3 +22,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
     console.log('index DOMContentLoaded')
     indexMain()
 })
+
+
+
+
+const toggleClass = function(className, selector) {
+
+    let nodes = document.querySelectorAll(selector)
+    nodes.forEach((n,i,a)=>{
+        n.classList.toggle(className)
+    })
+}

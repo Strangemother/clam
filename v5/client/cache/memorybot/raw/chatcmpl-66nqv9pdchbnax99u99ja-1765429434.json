@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-66nqv9pdchbnax99u99ja",
+    "object": "chat.completion",
+    "created": 1765429434,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "The User rode a horse today, finding the experience wonderful. The User also learned about Jason's accident involving a broken clavicle or similar bone in the shoulder area.",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 441,
+        "completion_tokens": 35,
+        "total_tokens": 476
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

@@ -1,8 +1,9 @@
 
-<div class="input-space" id="input_space">
+<div class="input-space">
     <div class="half-split">
+
         <div class="left-input-space">
-            <div class="input-area">
+            <div class="input-area" id="input_area">
                 <div class="stretchy-input-field">
 
                     <div class="typing-area">
@@ -21,12 +22,14 @@
 
                 </div>
             </div>
+
             <div class="immediate-options-area">
                 <a href="#" class="button secondary" @click='sendButton'>Send</a>
                 {# <a href="#" class="button ternary">Another</a> #}
             </div>
         </div>
-        <div class="options-area">
+
+        <div class="options-area" id="options_area">
             <a href="#" @click="getModels" class="button secondary">Get Models</a>
             <a href="#" @click="getRole" class="button secondary">Get Role</a>
             <a href="#" @click="getRoleSystem" class="button ternary">Set Role</a>

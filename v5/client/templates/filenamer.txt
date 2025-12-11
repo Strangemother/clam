@@ -1,0 +1,26 @@
+You must convert the given input into a single string for the purpose of a filename to save this text.
+
+It must comply with the following rules:
+
+- Short and concise: Less than 6 words.
+- Stick to `[a-zA-Z0-9_- ]`
+- spaces are okay
+
+If a suitable name cannot be found, generate one using part of the first sentence.
+Under no circumstances must you deviate from these rules.
+
+Good Examples:
+
+    tom-ate-a-green-apple
+    tomrrow we visit the park
+    help_while_user_is_sleeping
+
+The input to base the response:
+
+---
+
+{{ message }}
+
+---
+
+Important: **ONLY** reply with the filename based on the good examples

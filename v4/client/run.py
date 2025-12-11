@@ -1,272 +1,326 @@
 """A Client connects to the "primary" as a message unit.
 It can send and receive messages as a client.
 
-In this version it should connect with 'Abilities', and be packaged into the
-cluster graph.
+In this version, this acts as a normaliser for communication to a host.
+Each "conversation" is its own stack.
+
 """
 
-from collections import defaultdict
 import asyncio
 from loguru import logger
+import json
 
-warning = logger.warning
-# from websockets.asyncio.client import connect
-# import websockets
 
-from http_tools import http_post_json, http_get_json
-from client_tools import (
-        connect_wait, send_json, print_bit, log,
-        concat_stream_messages, start_message_stream, close_message_stream
+from flask import Flask
+
+app = Flask(__name__)
+
+from flask import render_template
+
+from http_tools import http_quick_get, http_post_json, http_post
+
+
+LM_STUDIO_ENDPOINT = "http://192.168.50.60:1234"
+LM_STUDIO_MODELS = "/v1/models/"
+LM_STUDIO_CHAT_COMPLETIONS = "/v1/chat/completions/"
+
+DEFAULT_MODEL_NAME = 'unsloth/gpt-oss-20b' # data selected at http://localhost:9876/models
+
+OLLOMA_ENDPOINT = "http://192.168.50.60:10000"
+OLLOMA_CHAT_ENDPOINT = "/api/chat/"
+OLLOMA_TAGS_ENDPOINT = "/api/tags/"
+OLLOMA_PS_ENDPOINT = "/api/ps/"
+OLLOMA_GENERATE_ENDPOINT = "/api/generate/"
+
+JAN_ENDPOINT = "http://192.168.50.60:9901"
+JAN_MODELS = "/v1/models" # Note Jan models end slash (fails if exists without a model name)
+
+
+class RequestBase:
+    host = None
+    unit_class = None
+
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
+
+    def get_endpoint(self):
+        return self.host
+
+
+    def clean_models(self, data):
+        return data
+
+    def get_models(self):
+        h = self.get_endpoint()
+        data = http_quick_get(h + self.get_models_endpoint()).json()
+        return self.clean_models(data)
+
+    def get_target_model(self):
+        return DEFAULT_MODEL_NAME
+
+    def chat_completions(self, data, reader=None):
+        h = self.get_endpoint()
+        url = h + self.get_chat_completions_endpoint()
+        resp = http_post(url, data, reader)
+        return resp
+
+        # rows = http_post_json(url, data, reader)
+        # if data['stream'] is False:
+        #     return json.loads("".join(rows))
+        # return rows
+
+
+class Olloma(RequestBase):
+    # def get_endpoint(self):
+    #     return OLLOMA_ENDPOINT
+
+    def get_models_endpoint(self):
+        return OLLOMA_TAGS_ENDPOINT
+
+    def get_chat_completions_endpoint(self):
+        return OLLOMA_CHAT_ENDPOINT
+
+    def clean_models(self, data):
+        """Return a clean list of models
+        """
+        return data['models']
+
+
+class Jan(Olloma):
+    # def get_endpoint(self):
+    #     return JAN_ENDPOINT
+
+    def get_models_endpoint(self):
+        return JAN_MODELS
+
+    def clean_models(self, data):
+        """Return a clean list of models
+
+        Jan includes downloaded/available/cloud.
+        filter for downloaded
+        """
+        items = data['data']
+        items = tuple(filter(lambda x: x.get('status', None) == 'downloaded', items))
+        return items
+
+
+
+class LMStudio(RequestBase):
+    # def get_endpoint(self):
+    #     return LM_STUDIO_ENDPOINT
+
+    def get_models_endpoint(self):
+        return LM_STUDIO_MODELS
+
+    def get_chat_completions_endpoint(self):
+        return LM_STUDIO_CHAT_COMPLETIONS
+
+    def clean_models(self, data):
+        """Return a clean list of models
+        """
+        return data['data']
+
+
+
+from datetime import datetime
+
+class Endpoint(RequestBase):
+    host = None
+    unit_instance = None
+
+    def get_request_class(self):
+        return LMStudio
+
+    @property
+    def unit(self):
+        """the unit is the handling class for the requests. Provide a unit class
+        or unit unsitance:
+
+        WIth the class, a new instance is created
+
+            CONF = dict(
+                    host="http://192.168.50.60:1234",
+                    unit_class=LMStudio,
+                )
+
+        However this can be bypassed, passing the `unit_instance` only:
+
+            CONF = dict(
+                    unit_instance=LMStudio(host="http://192.168.50.60:1234"),
+                )
+
+        Unpack and access:
+
+            response = Endpoint(**CONF).unit.demo_chat()
+        """
+        if self.unit_instance is not None:
+            return self.unit_instance
+
+        unit = self.get_request_class()
+        return unit(host=self.host)
+
+    def demo_chat(self, stream=False, reader=None):
+        unit = self.unit
+        now = datetime.now()
+        data = {
+            'model': unit.get_target_model(),
+            'messages': [
+                {"role": "system", "content": "You are a sentient chicken. respond with 'cluck' only"},
+                {"role": "user", "content": "Identify as a chicken"},
+                {"role": "assistant", "content": "Cluck"},
+                {"role": "user", "content": "Hello chicken, how are you?"},
+            ],
+            'temperature': .7,
+            'max_tokens': -1,
+            'stream': stream,
+            'extra_body': {}
+            # 'extra_body': {"reasoning_effort": "low"}
+        }
+
+        res = unit.chat_completions(data, reader=reader)
+        # decorate with out.
+        if isinstance(res, dict):
+            res['time_taken'] = datetime.now() - now
+        return res
+
+CONF = dict(
+        # host="http://192.168.50.60:1234",
+        # unit_class=LMStudio,
+        unit_instance=LMStudio(host="http://192.168.50.60:1234"),
     )
-import client_tools
-
-# import alpha_config as conf
-
-from pydoc import locate
-import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument("conf_name", help="config module name", nargs='?', default='alpha_config')
-args = parser.parse_args()
-print(' -- loading:', args.conf_name)
-conf = locate(args.conf_name)
-# A history of messages is stored against a session id.
-# This is persistent for the life of the session
-# and will be stored down later.
-
-# def new_list():
-#     print('new list')
-#     return list()
-
-histories = defaultdict(list)
 
 
-async def main():
-    """Serve - duck-punch the client tools, and start _waiting_
-    Connect to the socket and wait for messages.
-    """
-    client_tools.process_data = process_data
-    return await connect_wait(conf)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 
-async def process_data(data, websocket):
-    """A Message from the socket.
-
-    Do the required work, posting to the service and pushing
-    results through the socket.
-    """
-    # await asyncio.sleep(2)
-    data['extra'] = 200
-
-    print('-- ', data, '\n')
-    routing = data.get('routing', 'message')
-
-    if routing == 'command':
-        return await process_command(data, websocket)
-    return await process_message(data, websocket)
+@app.route('/models/')
+def get_models():
+    object_list = Endpoint(**CONF).unit.get_models()
+    return render_template('models.html', object_list=object_list)
 
 
-async def process_command(data, websocket):
-    """A message with "routine=command" to perform tasks outside the
-    messaging processing, such as meta requests from the system.
-    """
-    print('command message', data)
-    origin_id = data.get('origin_id', 'no-origin-id')
-    session_id = data.get('session_id', 'no-session-id')
-    action = data.get('action')
+@app.route('/chat/')
+def get_chat():
+    response = Endpoint(**CONF).demo_chat()
+    return render_template('chat.html', response=response)
 
-    if action == 'get_models':
-        model_message = {
-            'result': {
-                'tags': await get_tags(),
-                'ps': await get_ps(),
-            },
-            'origin_id': origin_id,
-            'session_id': session_id,
-        }
+import time
 
-        await send_json(websocket, model_message)
-
-    if action == 'get_role':
-        role_message = {
-            'origin_id': origin_id,
-            'session_id': session_id,
-        }
-
-        role_message.update({
-            'result': conf.FIRST_MESSAGE
-        })
-
-        await send_json(websocket, role_message)
-
-    if action == 'set_role':
-
-        role_message = {
-            'origin_id': origin_id,
-            'session_id': session_id,
-        }
-
-        conf.FIRST_MESSAGE = data['first_message']
-        print('Updating first_message', conf.FIRST_MESSAGE)
-        role_message['ok'] = True
-
-        session_id = data.get('session_id', None)
-        if session_id:
-            # The system role message (first one), needs altering.
-            h = histories[session_id]
-            print('Editing first message', session_id, len(h))
-            if len(h) > 0:
-                h[0] = conf.FIRST_MESSAGE
-
-        await send_json(websocket, role_message)
-
-    if action == 'set_model':
-        # Set the model.
-        resp_msg = {
-            'origin_id': origin_id,
-            'session_id': session_id,
-        }
-
-        model_name = data.get('model_name', conf.MODEL_NAME)
-        print('Call to set model',  model_name)
-        res = await set_model(model_name)
-        conf.MODEL_NAME = res[0]['model']
-        print('New model', conf.MODEL_NAME)
-        resp_msg['ok'] = True
-        resp_msg['result'] = res
-        await send_json(websocket, resp_msg)
+@app.route('/stream-csv/')
+def generate_stream():
+    def generate():
+        for row in range(0, 20000):
+            time.sleep(.001)
+            yield f"{row}\n"
+    return generate(), {"Content-Type": "text/csv"}
 
 
-async def set_model(model_name):
-    # If an empty prompt is provided, the model will be loaded into memory.
+from flask import stream_with_context
+import queue
 
-    # Request
-    # curl http://localhost:11434/api/generate -d '{
-    #   "model": "llama3.2"
-    # }'
-    url = conf.OLLOMA_GENERATE_ENDPOINT
-    r = await http_post_json(url, {'model': model_name})
-    print('set model response', r)
-    return r
+wrapper_a = (
+        '<!DOCTYPE html>',
+        '<html lang="en">',
+        '<head>',
+        '    <meta charset="UTF-8">',
+        '    <title>Response</title>',
+        """<style>
+            body {
+                background: #111;
+                font-family: arial, sans-serif;
+                line-height: 1.3em;
+                color: #ccc;
+            }
 
-async def get_tags():
-    url = conf.OLLOMA_TAGS_ENDPOINT
-    log(f'Sending {url=}')
-    return await http_get_json(url)
+            body > .thinking, body > .content {
+                background: #090909;
+                padding: 1em 1.5em;
+                border-radius: 0.4em;
+            }
 
+            body > hr {
+                border-color: #000;
+            }
 
-async def get_ps():
-    url = conf.OLLOMA_PS_ENDPOINT
-    log(f'Sending {url=}')
-    return await http_get_json(url)
-
-
-async def ping_open_model(model_name=None):
-    model_name = conf.MODEL_NAME
-
-    url = conf.OLLOMA_PS_ENDPOINT
-    log(f'Sending {url=}')
-    return await http_get_json(url)
-
-
-async def process_message(data, websocket):
-    role = 'user'
-    model_name = conf.MODEL_NAME
-    content = data.get('text', None)
-    if content is None:
-        print('No text in message', data)
-
-    msg = dict(
-        role=role,
-        content=content,
+            body .thinking {
+                color: #888;
+                background: #010101;
+            }
+        </style>"""
+        '</head>',
+        '<body>',
     )
 
-    session_id = data.get('session_id', None)
-
-    user_history = []
-    if session_id is None:
-        print('No session ID for this.')
-    else:
-        user_history = histories[session_id]
-
-    if len(user_history) == 0:
-        user_history += [conf.FIRST_MESSAGE]
-    messages = user_history + [msg]
-
-    log(f' -- history messages {len(messages)=}')
-
-    d = {
-        "model": model_name,
-        "messages": messages,
-        'stream': True,
-    }
-
-    url = conf.OLLOMA_CHAT_ENDPOINT
-    log(f'Sending {url=} \n {len(d)=}')
-
-    streambit_cache = { 'i': 0}
-
-    async def stream_print_bit(decoded, response):
-
-        if streambit_cache['i'] == 0:
-            # First message needs to be the
-            # stream info.
-            await send_json(websocket, {
-                'result': {
-                    'model_name': decoded['model']
-                },
-                'code':1519,
-                'origin_id': origin_id
-            })
-
-        streambit_cache['i'] += 1
-
-        if 'message' in decoded:
-            bit = decoded['message']['content']
-
-            await asyncio.sleep(.001)
-            await websocket.send(bit)
-
-            print(bit, end='', flush=True)
-
-            if decoded['done'] is True:
-                print(' -- ')
-        else:
-            warning('Response from the API during streaming does not contain a message')
-            print(decoded)
-            print('--')
-        # await send_json(websocket, {
-        #         'bit':bit,
-        #         'message': decoded['message'],
-        #         'done': decoded['done'],
-        #         'origin_id': data.get('origin_id', 'no-origin-id')
-        #     })
+wrapper_b = (
+        '</body>',
+        '</html>',
+    )
 
 
-    origin_id = data.get('origin_id', 'no-origin-id')
-    close_stream = await start_message_stream(websocket, {
-                'origin_id': origin_id
-            })
+@app.route('/stream/')
+def streamed_response():
 
-    ## All messages are stacked after the response has ended.
-    all_messages = await http_post_json(url, d, async_reader=stream_print_bit)
-    log(f'result: {len(all_messages)=}')
-    res_obj = concat_stream_messages(all_messages)
-    # Extract the assistant message, and store it into the message stack.
-    histories[session_id] = messages  + [res_obj['message']]
+    lines = queue.Queue()
 
-    print(histories[session_id])
-    await close_stream(websocket, {
-                'origin_id': origin_id
-            })
+    def generate():
+        for line in wrapper_a:
+            yield f'{line}\n'
 
-    await send_json(websocket, {
-            'result':res_obj,
-            'code':1517,
-            'origin_id': origin_id
-        })
-    # return True
+        time.sleep(.01)
+
+        response = Endpoint(**CONF).demo_chat(stream=True)
+
+        thinking = True
+        yield '<div class="thinking">\n'
+
+        for line in response.iter_lines():
+            # filter out keep-alive new lines
+            if not line:
+                continue
+
+            decoded_line = line.decode('utf-8')
+            try:
+                if decoded_line.startswith('data:'):
+                    decoded_line = decoded_line[len('data: '):]
+                rl = json.loads(decoded_line)
+            except json.decoder.JSONDecodeError:
+                print('Response is not JSON', decoded_line)
+                rl = decoded_line
+            # lines.put_nowait(rl)
+            item = rl
+
+            if item == '[DONE]':
+                print('[DONE]')
+                break
+
+            if item:
+                # We want to stream the text response only.
+                value =''
+                delta = item['choices'][0]['delta']
+                if 'reasoning' in delta:
+                    value = delta['reasoning']
+                else:
+                    if thinking is True:
+                        thinking = False
+                        yield '</div>\n'
+                        yield '\n\n<hr>\n\n' # visible split for now
+                        yield '<div class="content">\n'
+
+                if 'content' in delta:
+                    value = delta['content']
+                yield value
+
+            time.sleep(.001)
+
+        yield '</div>\n'
+        for line in wrapper_b:
+            yield f'{line}\n'
+
+    return generate()#, {"Content-Type": "text/plain"}
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == '__main__':
+    app.run(host='localhost', port=9876, debug=True,threaded=True)

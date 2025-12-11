@@ -99,7 +99,6 @@ const messengerMain = function() {
         sendJSONMessage(data)
     })
 
-
 }
 
 

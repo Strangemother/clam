@@ -1,0 +1,1 @@
+raw json memorybot memories are stored here

@@ -117,6 +117,9 @@ def concat_stream_messages(all_messages):
         content += m.get('content', '')
 
     m = res_obj['message'] if 'message' in res_obj else {}
+    if isinstance(res_obj, str):
+        res_obj = {}
+        content = res_obj
     m['content'] = content
     res_obj['message'] = m
     return res_obj

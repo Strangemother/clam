@@ -1,3 +1,20 @@
+/* Generate events can emit from anywhere.
+
+Two types of _event_ exist for ease
+
+    SystemMessage.emit(Object.assign(action, {
+        routing: 'command'
+        , _meta: Math.random().toString(32)
+        , from: ev
+        , callback
+    }))
+
+    UserMessage.emit({
+        message: target.textContent
+        , _meta: Math.random().toString(32)
+        , from: ev
+    })
+*/
 
 class EventCenter {
 
@@ -89,10 +106,10 @@ class EventBase extends CustomEvent {
 }
 
 
-
 class ExampleEvent extends EventBase {
     /* ExampleEvent.emit({ foo: 1}) */
 }
+
 
 class UserMessage extends EventBase {
     /*
@@ -105,8 +122,8 @@ class UserMessage extends EventBase {
     */
 }
 
+
 class SystemMessage extends EventBase {}
 
-class SetFirstFocusEvent extends EventBase {
 
-}
+class SetFirstFocusEvent extends EventBase {}

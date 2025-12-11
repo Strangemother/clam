@@ -1,0 +1,25 @@
+{
+    "id": "chatcmpl-dsrd0f4fpxwvo9xp70e99k",
+    "object": "chat.completion",
+    "created": 1765432405,
+    "model": "granite-4.0-h-tiny",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "rode-horse-today-awsome-fell-off-broke-clavicle",
+                "tool_calls": []
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 205,
+        "completion_tokens": 18,
+        "total_tokens": 223
+    },
+    "stats": {},
+    "system_fingerprint": "granite-4.0-h-tiny"
+}

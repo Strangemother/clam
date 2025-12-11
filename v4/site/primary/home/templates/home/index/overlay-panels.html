@@ -1,8 +1,10 @@
+{% load link %}
 <div class="user-overlay" id="overlay">
     <div class="start-panel">
         <div class="buttons">
             <a href="#" class="button ternary access">Ternary</a>
-            <a href="#" class="button secondary access">Secondary</a>
+            {# <a href="#" class="button secondary access">Secondary</a> #}
+            {% link "prompts:list" "Prompts" class="button secondary access" %}
             <a href="#"
                 @click=gotoPrimary
                 class="button primary access">Primary</a>

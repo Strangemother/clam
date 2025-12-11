@@ -1,0 +1,32 @@
+<div class="interface-panel hidden beta-grid-container" data-stage="1">
+    <div class="fixed-panel">
+        <h2>Interface Settings</h2>
+        <p>
+            Configure your interface.
+        {% if user.is_anonymous %}
+            These settings are temporary because you're anonymous.
+        {% else %}
+            The settings are temporary until you press save.
+        {% endif %}
+        </p>
+
+        <ul class="no-style">
+            <!-- <li>
+
+                <div class="button-bar">
+                    <button>Condensed</button>
+                    <button>Expanded</button>
+                    <button>Full</button>
+                </div>
+            </li> -->
+            <li>
+                <div class="button-bar">
+                    <a class="btn" href="javascript: toggleClass('condensed', 'body')">Condensed</a>
+                    <a class="btn" href="javascript: toggleClass('expanded', 'body')">Expanded</a>
+                    <a class="btn" href="javascript: toggleClass('full', 'body')">Full</a>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+</div>
