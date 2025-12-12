@@ -1,0 +1,17 @@
+Charlie Client Response Template
+================================
+
+Received Message: {{ message }}
+Processed At: {{ timestamp }}
+Processing ID: {{ process_id }}
+
+Status: COMPLETED
+Client: {{ client_name }}
+Port: {{ port }}
+
+---
+Response: I have successfully processed your request.
+Next action will be dispatched shortly.
+---
+
+Template rendered by Jinja2

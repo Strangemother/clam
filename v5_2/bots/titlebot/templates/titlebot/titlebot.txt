@@ -1,0 +1,27 @@
+Please create a very short concise and clear title given the users input.
+
+It must comply with the following rules:
+
+- Very Short and concise: Less than 6 words.
+- **only use characters**: `[a-zA-Z0-9_- ]`
+- spaces are okay
+- never use special characters, including apostrophe, comma
+
+If a suitable name cannot be found, generate one using part of the first sentence.
+Under no circumstances must you deviate from these rules.
+
+Good Examples:
+
+    tom ate a green apple
+    tomrrow we visit the park
+    help while user is sleeping
+
+The input to base the response:
+
+---
+
+{{ message }}
+
+---
+
+Important: **ONLY** reply with the filename based on the good examples
