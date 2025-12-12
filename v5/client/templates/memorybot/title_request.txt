@@ -1,6 +1,6 @@
 Please create a concise and clear title for the users input.
 
-It must comply with the following rules:
+you MUST comply with the following rules:
 
 - Short and concise: Less than 6 words.
 - **only use characters**: `[a-zA-Z0-9_- ]`
@@ -20,8 +20,8 @@ The input to base the response:
 
 ---
 
-{{ message }}
+{{ text }}
 
 ---
 
-Important: **ONLY** reply with the filename based on the good examples
+Important: **ONLY** reply with the filename based on the good examples. Short and concise - Less than 6 words.

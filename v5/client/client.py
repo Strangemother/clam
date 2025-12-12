@@ -2,7 +2,7 @@
 Simple standalone Python client for receiving and processing messages.
 Uses Flask for HTTP communication and threading for non-blocking work.
 """
-
+import os
 from flask import Flask, request, jsonify, render_template
 from threading import Thread, Timer
 import logging
@@ -25,12 +25,14 @@ def socket_bind_wrapper(self):
 
 socketserver.TCPServer.server_bind = socket_bind_wrapper   #Hook the wrapper
 
+import uuid
+
 
 class Client:
 
     host = '127.0.0.1'
     port = 9000
-    name = 'Client'
+    name = None # 'Client'
 
     def __init__(self, work_function=None,
                 host=None, port=None, name=None,
@@ -56,6 +58,21 @@ class Client:
         self.app = Flask(__name__)
         self._setup_routes()
 
+    def get_name(self):
+        if self.name is None:
+            return self.__class__.__name__
+        return self.name
+
+    def wake(self):
+        self.cache = {}
+
+    def add_handler(self, _id, on_get, *a, **kw):
+        self.cache[_id] = on_get, (a, kw,)
+
+    def as_safe_cache_path(self, filename):
+        p = self.as_cache_path(filename)
+        os.makedirs(p.parent, exist_ok=True)
+        return p
     def perform_work(self, message):
         return
 
@@ -68,7 +85,13 @@ class Client:
             if request.method == 'POST':
                 message = request.form.get('message', '')
                 return str(on_recv_message({"message":message}))
-            return render_template('home.html', client_name=self.name, port=self.port)
+
+            message = self.get_template('demos/one').render()
+            return render_template('home.html',
+                            client_name=self.get_name(),
+                            port=self.port,
+                            message=message,
+                            )
 
         @self.app.route('/message', methods=['POST'])
         def receive_message():
@@ -78,21 +101,24 @@ class Client:
 
         def on_recv_message(data):
             message = data.get('message', '')
+            _id = data.get('id', uuid.uuid4().hex.upper()[0:10])
+            response_id = _id
             sender_url = data.get('sender_url', None)
 
             # Print immediate thanks response
-            print(f"[{self.name}] Received: {message}")
-            print(f"[{self.name}] Response: thanks")
+            print(f"[{self.get_name()}] Received: {message}")
+            print(f"[{self.get_name()}] Response: thanks")
 
             # Process work in a separate thread for non-blocking behavior
-            thread = Thread(target=self._process_async, args=(message, sender_url))
+            thread = Thread(target=self._process_async, args=(message, sender_url, response_id))
             thread.daemon = True
             thread.start()
 
             # Immediately return acknowledgment
             return {
                 'status': 'received',
-                'message': 'thanks'
+                'message': 'thanks',
+                'id': _id,
             }
 
         @self.app.route('/work', methods=['POST'])
@@ -118,27 +144,55 @@ class Client:
         def receive_response():
             """Receive a response from another client."""
             data = request.get_json()
-            message = data.get('message', '')
-            print(f"[{self.name}] Got response: {message}")
-            return jsonify({'status': 'ok'}), 200
+            d = self.receive_response(data)
+            return jsonify(d), 200
 
         @self.app.route('/ping', methods=['GET'])
         def ping():
             """Health check endpoint."""
             return jsonify({'status': 'ok'}), 200
 
-    def _process_async(self, message, sender_url=None):
+    def receive_response(self, data):
+        """/response endpoint from a url
+        """
+        if self.client_id_route_receive_response(data) is True:
+            return {'status': 'ok', 'action': 'routed'}
+
+
+        message = data.get('message', '')
+        print(f'[{self.get_name()}]::receive_response: "{message}"')
+        return {'status': 'ok', 'message': message}
+
+
+    def client_id_route_receive_response(self, data):
+        """/response endpoint from a url
+        """
+        message = data#.get('message', '')
+        print(f'[{self.get_name()}]::receive_response: "{message}"')
+        _id = message.get('id', None)
+
+        if _id in self.cache:
+            print('CACHE HIT', _id)
+            f, (a, kw) = self.cache[_id]
+            f(*a, message, **kw)
+            del self.cache[_id]
+            return True
+        return False
+        # return {'status': 'ok', 'message': message}
+
+
+    def _process_async(self, message, sender_url=None, response_id=None):
         """Process work asynchronously in a separate thread."""
         # try:
         result = self.work_function(message)
         if result:
             # If there's a result and we know who sent the message, send it back to them
             if sender_url:
-                self._send_response(sender_url, result)
+                self._send_response(sender_url, result, response_id)
             else:
-                print(f"[{self.name}] Completed work: {result}")
+                print(f"[{self.get_name()}] Completed work: {result}")
         # except Exception as e:
-        #     print(f"[{self.name}] Error processing work: {e}")
+        #     print(f"[{self.get_name()}] Error processing work: {e}")
 
     def send_message(self, target_url, message):
         """Send a message to another client."""
@@ -149,28 +203,31 @@ class Client:
             'message': message,
             'sender_url': sender_url
         })
-        print(f"[{self.name}] Sent to {target_url}: {message}")
+        print(f"[{self.get_name()}] Sent to {target_url}: {message}")
         return response.json()
         # except Exception as e:
-        #     print(f"[{self.name}] Error sending message: {e}")
+        #     print(f"[{self.get_name()}] Error sending message: {e}")
         #     return None
 
-    def _send_response(self, target_url, response_message):
+    def _send_response(self, target_url, response_message, response_id=None):
         """Send a response message back to the sender."""
         # try:
-        requests.post(f"{target_url}/response", json={'message': response_message})
+        requests.post(f"{target_url}/response", json={
+                'message': response_message,
+                'id': response_id,
+            })
         # except Exception as e:
-        #     print(f"[{self.name}] Error sending response: {e}")
+        #     print(f"[{self.get_name()}] Error sending response: {e}")
 
     def start(self):
         """Start the client and listen for messages."""
-        print(f"[{self.name}] listening on http://{self.host}:{self.port}")
+        print(f"[{self.get_name()}] listening on http://{self.host}:{self.port}")
 
         # Setup auto-start if configured
         if self.auto_start and self.on_start:
-            print(f"[{self.name}] Will auto-start in {self.auto_start} seconds...")
+            print(f"[{self.get_name()}] Will auto-start in {self.auto_start} seconds...")
             timer = Timer(self.auto_start, self.on_start)
             timer.daemon = True
             timer.start()
-
-        self.app.run(host=self.host, port=self.port, debug=True)
+        self.wake()
+        self.app.run(host=self.host, port=self.port, debug=False)

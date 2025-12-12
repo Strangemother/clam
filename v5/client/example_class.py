@@ -1,5 +1,5 @@
 """
-Memorybpt - Running on port 9383
+This serves as an example of the available methods on a client.
 """
 import pathlib
 import os
@@ -19,7 +19,12 @@ FILENAMER_URL = "http://localhost:9394"
 
 
 def main():
-    client = MemoryBot()
+    client = MemoryBot(
+                    # port=MY_PORT,
+                    # name=NAME,
+                    # auto_start=5,
+                    # on_start=start_process
+                )
     client.start()
 
 
@@ -31,9 +36,8 @@ class MemoryBot(ToolClient):
         """Memory sends a message to the llm, templated through the text file.
         The response is saved an a messsage is sent back to
         """
-        print(f'[{self.get_name()}] start work')
+
         text_out = self.get_rendered_template_message(message)
-        print("sending len:", len(text_out))
         msg = make_message(text_out)
         d = send_wait_message(msg)
         print_content_response(d)
@@ -55,30 +59,14 @@ class MemoryBot(ToolClient):
         if text is None:
             print('No memory for this')
             return
-        return self.get_remote_filename(text, d)
+        return self.remote_flow_example(text, d)
 
-    def save_memory_local(self, d):
-        """Call to the llm directly through `get_filename` rather than
-        the remote caller `save_memory`
-        """
-        filename = self.get_filename(text, d)
-        result = self.template_rendered('save_memory.txt', {
-                "text": text,
-                "filename": filename
-            })
-        p = self.as_cache_path(filename)
-        os.makedirs(p.parent, exist_ok=True)
-        p.write_text(result)
-        print("memory saved: ", p)
-        return p
-
-    def get_remote_filename(self, text, d, url=FILENAMER_URL):
+    def remote_flow_example(self, text, d, url=FILENAMER_URL):
         """Send a request to a remote machine with the remote receipt
         routine.
         """
         t = self.send_message(url, text)
-        print('get_remote_filename: ', t)
-
+        print('remote_flow_example: ', t)
         _id = t.get('id', None)
         if _id is not None:
             self.add_handler(_id, self.on_get_remote_filename, text, d)

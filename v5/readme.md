@@ -86,6 +86,33 @@ The background space returns the result and sends it to the user.
 It's a chatty bot.
 
 
+## Lifetime cache
+
+some information is needed for self awareness, such as age, current datetime,
+a list of concurrent tasks
+
+These can exist in a lifetime cache, bank for read/write,
+
+## Persona
+
+a persona persists for the character. This mainly exists in the foreground as the chatty bot interface but also includes _name_ and personal choices.
+
+This should manifest organically
+
+### Name
+
+One of the first persona elements is likely a name. Initially this is undefined and the bot prompt will know this.
+Through initial conversation the topic of a name should be raised. However it would be interesting to see if we can code the bot to choose a name over a period.
+
+### Emotive State
+
+Give the state of information the persona will have an emotive state. In a crude form this can be a _happiness_ or _anger_.
+
+### Identity
+
+The bot should think in first person, talking to the user as the operator
+
+
 
 ---
 
@@ -97,4 +124,6 @@ Using the non-stream version for now.
 + The background loop and clock
 + templatable prompt files
 + A memory input routine for sqlite memories.
+
+
 

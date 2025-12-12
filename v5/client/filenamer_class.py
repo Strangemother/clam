@@ -1,5 +1,6 @@
 """
-Memorybpt - Running on port 9383
+file namer. - Or a better name "Title Bot" to receive text an create a short
+title
 """
 import pathlib, os
 
@@ -13,12 +14,7 @@ CLIENT_A_URL = "http://localhost:8010"
 
 
 def main():
-    client = FilenamerBot(
-                    # port=MY_PORT,
-                    # name=NAME,
-                    # auto_start=5,
-                    # on_start=start_process
-                )
+    client = FilenamerBot()
     client.start()
 
 
@@ -26,21 +22,29 @@ class FilenamerBot(ToolClient):
     port = 9394
     name = 'filenamer'
 
+    def log(self, *a):
+        print(f'[{self.get_name()}]', *map(str, a))
+
+
     def perform_work(self, message):
         """Memory sends a message to the llm, templated through the text file.
         The response is saved an a messsage is sent back to
         """
-        print(f'[{self.name}] start work')
+        self.log('start work')
         text_out = self.get_rendered_template_message(message)
-        print("sending len:", len(text_out))
+        self.log("sending len:", len(text_out))
         d = send_wait(text_out)
         print_content_response(d)
-        self.save_raw(d)
+        self.save_raw({
+            'sent': text_out,
+            'received': d
+
+            })
         text = self.save_memory(d)
         return text
 
     def save_raw(self, d):
-        filename = f"raw/{d['id']}-{d['created']}.json"
+        filename = f"raw/{d['received']['id']}-{d['received']['created']}.json"
         return self.save_json(filename, d)
 
     def save_memory(self, d):
@@ -48,14 +52,14 @@ class FilenamerBot(ToolClient):
         """
         text = self.easy_extract_message(d)
         if text is None:
-            print('No memory for this')
+            self.log('No memory for this')
             return
 
         filename = f"memory/{d['id']}-{d['created']}.txt"
         p = self.as_cache_path(filename)
         os.makedirs(p.parent, exist_ok=True)
         p.write_text(text)
-        print("memory saved: ", p)
+        self.log(p)
         return text
 
     def easy_extract_message(self, d):

@@ -12,27 +12,42 @@ from client import Client
 
 class ToolClient(Client):
     port = 0
-    name = 'toolclient'
+    name = None # 'toolclient'
     cache_dir = None # pathlib.Path(f'./cache/{name}/')
     template_path = None # f'templates/{name}.txt'
 
-    def get_template_path(self):
-        return f'templates/{self.name}.txt'
+    def get_template_path(self, name=None):
+        n = name or self.get_name()
+        return f'templates/{n}.txt'
 
     def get_cache_dir(self):
-        return pathlib.Path(f'./cache/{self.name}/')
+        return pathlib.Path(f'./cache/{self.get_name()}/')
+
+    def get_template_dir(self):
+        return pathlib.Path(f'./templates/{self.get_name()}/')
 
     def as_cache_path(self, filename):
         """Save to the correct place.
         """
         return self.get_cache_dir() / filename
 
+    def template_rendered(self, sub_template_name=None, *a, **kw):
+        """given a sub template name, resolve the template and render
+        returning the rendered text.
+        """
+        template_path = self.get_template_dir() / sub_template_name
+        # with open(template_path, 'r') as f:
+        d = {}
+        for x in a:
+            d.update(x)
+        d.update(kw)
+        return Template(template_path.read_text()).render(**d)
 
-    def get_template(self):
-        template_path = os.path.join(os.path.dirname(__file__), self.get_template_path())
+
+    def get_template(self, name=None):
+        template_path = os.path.join(os.path.dirname(__file__), self.get_template_path(name))
         with open(template_path, 'r') as f:
             return Template(f.read())
-
 
     def get_rendered_template_message(self, message, **info):
 
@@ -40,7 +55,7 @@ class ToolClient(Client):
         response = self.get_template().render(
             message=message,
             timestamp=time.time(),
-            client_name=self.name,
+            client_name=self.get_name(),
             port=self.port,
             **info
         )
