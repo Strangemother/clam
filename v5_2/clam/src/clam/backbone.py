@@ -89,7 +89,7 @@ def unmount(unit_id):
         return None
 
 
-def configure_parser(parser, subparsers):
+def configure_parser(parser, subparsers=None):
     """Configure the subparser for backbone service."""
 
     if subparsers:

@@ -15,19 +15,15 @@ def main():
 
     # cli subcommand
     configure_terminal_chat(parser, subparsers)
-
-    # backbone subcommand
     configure_backbone(parser, subparsers)
 
     args = parser.parse_args()
-    
-    # Load config
     config.load(args.config)
 
     if hasattr(args, "func"):
-        args.func(args)
-    else:
-        parser.print_help()
+        return args.func(args)
+
+    parser.print_help()
 
 
 if __name__ == "__main__":
