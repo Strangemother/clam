@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import uuid
 import requests
 from datetime import datetime, timezone
+from . import config
 
 app = Flask(__name__)
 
@@ -88,11 +89,9 @@ def unmount(unit_id):
         return None
 
 
-def configure_parser(parser, subparsers=None):
+def configure_parser(subparsers):
     """Configure the subparser for backbone service."""
-    if subparsers:
-        parser = subparsers.add_parser('backbone', help='Run the backbone service')
-
+    parser = subparsers.add_parser('backbone', help='Run the backbone service')
     parser.set_defaults(func=main)
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
     parser.add_argument('--port', type=int, default=5000, help='Port to bind to (default: 5000)')
@@ -103,16 +102,17 @@ def configure_parser(parser, subparsers=None):
 def main(args=None):
     """Run the backbone service."""
     import argparse
-
+    
     if args is None:
         parser = argparse.ArgumentParser(description="Backbone service")
         configure_parser(parser)
         args = parser.parse_args()
-
-    host = getattr(args, 'host', '0.0.0.0')
-    port = getattr(args, 'port', 5000)
-    debug = getattr(args, 'debug', False)
-
+    
+    # CLI args override config
+    host = getattr(args, 'host', None) or config.BACKBONE_HOST
+    port = getattr(args, 'port', None) or config.BACKBONE_PORT
+    debug = getattr(args, 'debug', False) or config.DEBUG
+    
     print(f'Starting backbone service on {host}:{port}')
     app.run(host=host, port=port, debug=debug)
 

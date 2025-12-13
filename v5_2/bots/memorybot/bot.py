@@ -10,13 +10,24 @@ from clam.bot_pipe import (send_wait_message,
                       print_payload_messages)
 
 
-CLIENT_A_URL = "http://localhost:8010"
-FILENAMER_URL = "http://localhost:9394"
-
-
 class MemoryBot(ToolClient):
-    port = 9383
     name = 'memorybot'
+    
+    @property
+    def port(self):
+        return self.config.MEMORYBOT_PORT
+    
+    @port.setter
+    def port(self, value):
+        self.config.MEMORYBOT_PORT = value
+    
+    @property
+    def client_a_url(self):
+        return self.config.CLIENT_A_URL
+    
+    @property
+    def filenamer_url(self):
+        return self.config.FILENAMER_URL
 
     def get_module_dir(self):
         """The template path root is this file location.
@@ -73,10 +84,11 @@ class MemoryBot(ToolClient):
         print("memory saved: ", p)
         return p
 
-    def get_remote_filename(self, text, d, url=FILENAMER_URL):
+    def get_remote_filename(self, text, d, url=None):
         """Send a request to a remote machine with the remote receipt
         routine.
         """
+        url = url or self.filenamer_url
         t = self.send_message(url, text)
         print('get_remote_filename: ', t)
 

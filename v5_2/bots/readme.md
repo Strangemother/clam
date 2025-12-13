@@ -35,6 +35,7 @@ form _bots_ are runnable modules.
 
 
 ```py
+python -m  bots.memorybot
 # cd root
 run.bat bots/memorybot
 # executes __main__

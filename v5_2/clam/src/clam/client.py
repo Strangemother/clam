@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, render_template
 from threading import Thread, Timer
 import logging
 import requests
-
+from . import config
 # Suppress Flask's default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -18,7 +18,7 @@ import socketserver
 original_socket_bind = socketserver.TCPServer.server_bind
 def socket_bind_wrapper(self):
     ret = original_socket_bind(self)
-    print("Socket running at {}:{}".format(*self.socket.getsockname()))
+    print("Socket running at http://{}:{}".format(*self.socket.getsockname()))
     # Recover original implementation
     socketserver.TCPServer.server_bind = original_socket_bind
     return ret
@@ -49,6 +49,7 @@ class Client:
             auto_start: Delay in seconds before auto-starting a process (default: None)
             on_start: Function to call when auto-start triggers (default: None)
         """
+        self.config = config  # Make config accessible via self.config
         self.work_function = work_function or self.perform_work
         self.host = host or self.host
         self.port = port or self.port
