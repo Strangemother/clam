@@ -43,13 +43,16 @@ from .prompt import Prompt
 
 import argparse
 
-def configure_parser(subparsers):
+def configure_parser(parser, subparsers):
     """Configure the subparser for terminal chat."""
-    parser_cli = subparsers.add_parser("cli", 
+    parser_cli = parser
+    if subparsers:
+
+        parser_cli = subparsers.add_parser("cli",
                                        help="Run terminal chat")
     parser_cli.set_defaults(func=main)
-    parser_cli.add_argument("--prompt-file", "-f", 
-                           type=str, 
+    parser_cli.add_argument("--prompt-file", "-f",
+                           type=str,
                            required=False,
                             help="User prompt text"
                     )
@@ -63,7 +66,7 @@ def main(args=None):
         )
         configure_parser(parser)
         args = parser.parse_args()
-    
+
     pf = args.prompt_file
     if pf is None:
         pf = config.DEFAULT_PROMPT_FILE
@@ -109,11 +112,11 @@ def register_unmount():
     """Register an atexit handler to unmount from backbone."""
     import atexit
     from . import backbone
-    
+
     def _unmount():
         if _unit_id:
             backbone.unmount(_unit_id)
-    
+
     atexit.register(_unmount)
 
 
