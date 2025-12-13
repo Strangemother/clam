@@ -42,22 +42,27 @@ from .prompt import Prompt
 
 import argparse
 
-def make_parser():
-    parser = argparse.ArgumentParser(
-        description="Simple CLI for passing a prompt to a bot"
-    )
-
-    parser.add_argument("--prompt-file", "-f", type=str, required=False,
-                        help="User prompt text"
+def configure_parser(subparsers):
+    """Configure the subparser for terminal chat."""
+    parser_cli = subparsers.add_parser("cli", 
+                                       help="Run terminal chat")
+    parser_cli.set_defaults(func=main)
+    parser_cli.add_argument("--prompt-file", "-f", 
+                           type=str, 
+                           required=False,
+                            help="User prompt text"
                     )
 
-    return parser
 
-
-def main():
+def main(args=None):
     cwd = os.getcwd()
-    parser = make_parser()
-    args = parser.parse_args()
+    if args is None:
+        parser = argparse.ArgumentParser(
+            description="Simple CLI for passing a prompt to a bot"
+        )
+        configure_parser(parser)
+        args = parser.parse_args()
+    
     pf = args.prompt_file
     if pf is None:
         pf = 'prompts/angry-bot.prompt.md'
@@ -151,8 +156,6 @@ def append_input(data, res):
 
 def append_output(data, out):
     data['messages'].append(out)
-
-
 
 
 async def hello(data=None):
