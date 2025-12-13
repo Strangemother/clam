@@ -8,6 +8,7 @@ import asyncio
 import json
 from pprint import pprint
 import pathlib
+from . import config
 
 
 HERE =  pathlib.Path(__file__).parent
@@ -65,7 +66,7 @@ def main(args=None):
     
     pf = args.prompt_file
     if pf is None:
-        pf = 'prompts/angry-bot.prompt.md'
+        pf = config.DEFAULT_PROMPT_FILE
     print("Loading file:", pf, end='')
     pr = Prompt(pathlib.Path(cwd) / pf)
 
