@@ -3,11 +3,8 @@ import argparse
 
 from .terminal_chat import (configure_parser as configure_terminal_chat, 
                             main as terminal_main)
-
-
-def cli_command(args):
-    """Run the CLI terminal chat."""
-    terminal_main(args)
+from .backbone import (configure_parser as configure_backbone,
+                      main as backbone_main)
 
 
 def main():    
@@ -16,6 +13,9 @@ def main():
     
     # cli subcommand
     configure_terminal_chat(subparsers)
+    
+    # backbone subcommand
+    configure_backbone(subparsers)
    
     args = parser.parse_args()
 
