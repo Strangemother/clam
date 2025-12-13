@@ -22,3 +22,9 @@ MEMORYBOT_PORT = 9383
 
 # Terminal chat settings
 DEFAULT_PROMPT_FILE = 'prompts/angry-bot.prompt.md'
+PROMPT_DIR = './prompts'
+
+# LLM Service endpoints
+SERVICE_HOST = 'http://192.168.50.60:1234'
+SERVICE_COMPLETIONS_PATH = '/v1/chat/completions/'
+SERVICE_GENERATE_PATH = '/api/generate/'

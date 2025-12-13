@@ -9,12 +9,10 @@ import json
 from pprint import pprint
 import pathlib
 from . import config
+from .services import get_service_endpoint
 
 
 HERE =  pathlib.Path(__file__).parent
-
-hurl = "http://192.168.50.60:1234/v1/chat/completions/"
-# hurl = "http://192.168.50.60:10000/api/generate/"
 
 
 def _post(url, payload, print_out=False):
@@ -40,6 +38,7 @@ def _post(url, payload, print_out=False):
 
 
 from .prompt import Prompt
+from .terminal_select import select_prompt
 
 import argparse
 
@@ -53,6 +52,11 @@ def configure_parser(subparsers):
                            required=False,
                             help="User prompt text"
                     )
+    parser_cli.add_argument("--select", "-s",
+                           type=str,
+                           nargs='?',
+                           const='select',
+                           help="Select prompt from directory (optionally specify directory)")
 
 
 def main(args=None):
@@ -64,9 +68,18 @@ def main(args=None):
         configure_parser(parser)
         args = parser.parse_args()
     
-    pf = args.prompt_file
-    if pf is None:
-        pf = config.DEFAULT_PROMPT_FILE
+    # Handle prompt selection
+    if hasattr(args, 'select') and args.select:
+        prompt_dir = args.select if args.select != 'select' else None
+        pf = select_prompt(prompt_dir)
+        if pf is None:
+            print("No prompt selected. Exiting.")
+            return
+    else:
+        pf = args.prompt_file
+        if pf is None:
+            pf = config.DEFAULT_PROMPT_FILE
+    
     print("Loading file:", pf, end='')
     pr = Prompt(pathlib.Path(cwd) / pf)
 
@@ -118,7 +131,8 @@ def register_unmount():
 
 
 def continue_conversation(res):
-    resp =  _post(hurl, {
+    endpoint = get_service_endpoint('completions')
+    resp =  _post(endpoint, {
             # 'model':'TinyDolphin',
             # model='phi4:latest',
             # 'prompt':'enumerate and list every number from 200 to 1000.',
@@ -159,18 +173,18 @@ def append_output(data, out):
     data['messages'].append(out)
 
 
-async def hello(data=None):
-    data = data or setup_structure()
-    resp = await _post(hurl, {
-            # 'model':'TinyDolphin',
-            # model='phi4:latest',
-            # 'prompt':'enumerate and list every number from 200 to 1000.',
-            # **tool_prompt()
-            **data
-    })
+# async def hello(data=None):
+#     data = data or setup_structure()
+#     resp = await _post(hurl, {
+#             # 'model':'TinyDolphin',
+#             # model='phi4:latest',
+#             # 'prompt':'enumerate and list every number from 200 to 1000.',
+#             # **tool_prompt()
+#             **data
+#     })
 
-    print(resp)
-    return resp
+#     print(resp)
+#     return resp
 
 
 def setup_structure(system_prompt):
