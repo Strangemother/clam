@@ -1,18 +1,15 @@
 """Talk to the LLM on the terminal.
-
-    > run.bat -m clam.cli cli
-    $> clam cli
 """
 import os
 import requests
 import asyncio
 # from websockets.asyncio.client import connect
-from pprint import pprint
-import argparse
-import pathlib
+# from websockets.sync.client import connect
 import json
+from pprint import pprint
+import pathlib
+from . import config
 
-from .prompt import Prompt
 
 HERE =  pathlib.Path(__file__).parent
 
@@ -42,16 +39,17 @@ def _post(url, payload, print_out=False):
     # print(data['choices'][0]['message']['content'])
 
 
-def configure_parser(parser, subparsers=None):
-    """Configure the subparser for terminal chat."""
+from .prompt import Prompt
 
-    parser_cli = parser
-    if subparsers:
-        parser_cli = subparsers.add_parser("cli",
-                                            help="Run terminal chat")
+import argparse
+
+def configure_parser(subparsers):
+    """Configure the subparser for terminal chat."""
+    parser_cli = subparsers.add_parser("cli", 
+                                       help="Run terminal chat")
     parser_cli.set_defaults(func=main)
-    parser_cli.add_argument("--prompt-file", "-f",
-                           type=str,
+    parser_cli.add_argument("--prompt-file", "-f", 
+                           type=str, 
                            required=False,
                             help="User prompt text"
                     )
@@ -65,10 +63,10 @@ def main(args=None):
         )
         configure_parser(parser)
         args = parser.parse_args()
-
+    
     pf = args.prompt_file
     if pf is None:
-        pf = 'prompts/angry-bot.prompt.md'
+        pf = config.DEFAULT_PROMPT_FILE
     print("Loading file:", pf, end='')
     pr = Prompt(pathlib.Path(cwd) / pf)
 
@@ -77,7 +75,6 @@ def main(args=None):
     data = setup_structure(pr)
     mount_backbone({
         "name": pr.title,
-        "title": pr.title,
         "type": "terminal_chat",
         # "url": "http://terminal_chat.local"
     })
@@ -112,11 +109,11 @@ def register_unmount():
     """Register an atexit handler to unmount from backbone."""
     import atexit
     from . import backbone
-
+    
     def _unmount():
         if _unit_id:
             backbone.unmount(_unit_id)
-
+    
     atexit.register(_unmount)
 
 

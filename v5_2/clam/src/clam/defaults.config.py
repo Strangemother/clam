@@ -19,3 +19,6 @@ FILENAMER_URL = 'http://localhost:9394'
 
 # Bot ports
 MEMORYBOT_PORT = 9383
+
+# Terminal chat settings
+DEFAULT_PROMPT_FILE = 'prompts/angry-bot.prompt.md'
