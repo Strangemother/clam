@@ -40,7 +40,7 @@ def index():
     """Manual registration form."""
     from flask import render_template, redirect, url_for
     import json as json_lib
-    
+
     if request.method == 'POST':
         try:
             data = json_lib.loads(request.form['json_data'])
@@ -49,20 +49,20 @@ def index():
             return redirect(url_for('index'))
         except json_lib.JSONDecodeError as e:
             return render_template('backbone.html', error=str(e), units=register)
-    
+
     return render_template('backbone.html', units=register)
 
 
 def mount(registration=None):
     """Register a unit with the backbone service."""
     import socket
-    
+
     hostname = socket.gethostname()
     d = {
         "name": hostname,
-        "url": f"http://{hostname}:5000"
+        # "url": f"http://{hostname}:5000"
     }
-    
+
     if registration:
         d.update(registration)
     try:

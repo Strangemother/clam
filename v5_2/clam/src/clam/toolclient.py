@@ -9,6 +9,7 @@ import pathlib
 
 from jinja2 import Template
 from .client import Client
+from clam.backbone import mount
 
 class ToolClient(Client):
     port = 0
@@ -19,6 +20,16 @@ class ToolClient(Client):
     def get_template_path(self, name=None):
         n = name or self.get_name()
         return f'templates/{n}.txt'
+
+    def wake(self):
+        super().wake()
+        mount({
+                'name': self.get_name(),
+                'id': self.get_name(),
+                'host': self.host,
+                'port': self.port,
+                'type': 'bot',
+            })
 
     def get_cache_dir(self):
         return pathlib.Path(f'./cache/{self.get_name()}/')
