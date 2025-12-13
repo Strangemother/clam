@@ -67,7 +67,12 @@ def main():
     print(f' "{pr.title}"')
 
     data = setup_structure(pr)
-    mount_backbone()
+    mount_backbone({
+        "name": pr.title,
+        "type": "terminal_chat",
+        # "url": "http://terminal_chat.local"
+    })
+    register_unmount()
     out = continue_conversation(data)
     print_response(out)
     data['messages'].append(out['choices'][0]['message'])
@@ -82,9 +87,28 @@ def main():
         data['messages'].append(out['choices'][0]['message'])
 
 
-def mount_backbone():
-    # Tell the backbone service this unit is awake.
-    print('Tell backbone')
+# Store the unit ID globally for unmount
+_unit_id = None
+
+
+def mount_backbone(registration=None):
+    """Tell the backbone service this unit is awake."""
+    global _unit_id
+    from . import backbone
+    _unit_id = backbone.mount(registration)
+    return _unit_id
+
+
+def register_unmount():
+    """Register an atexit handler to unmount from backbone."""
+    import atexit
+    from . import backbone
+    
+    def _unmount():
+        if _unit_id:
+            backbone.unmount(_unit_id)
+    
+    atexit.register(_unmount)
 
 
 def continue_conversation(res):

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backbone Register</title>
+    <style>
+        body { font-family: monospace; margin: 40px; background: #1e1e1e; color: #d4d4d4; }
+        textarea { width: 500px; height: 150px; font-family: monospace; background: #2d2d2d; color: #d4d4d4; border: 1px solid #555; }
+        button { background: #0e639c; color: #fff; border: none; padding: 8px 16px; cursor: pointer; font-family: monospace; }
+        button:hover { background: #1177bb; }
+        .error { color: #f48771; }
+        .unit { background: #2d2d2d; padding: 10px; margin: 10px 0; border: 1px solid #3e3e3e; }
+    </style>
+</head>
+<body>
+    <h1>Backbone Register</h1>
+    
+    <h2>Add Unit</h2>
+    {% if error %}
+        <p class="error">Error: {{ error }}</p>
+    {% endif %}
+    
+    <form method="POST">
+        <textarea name="json_data">{"name": "unit-1", "url": "http://localhost:8000"}</textarea>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+    
+    <h2>Registered Units ({{ units|length }})</h2>
+    {% for id, unit in units.items() %}
+        <div class="unit">
+            <strong>ID:</strong> {{ id }}<br>
+            <strong>Data:</strong> {{ unit }}
+        </div>
+    {% endfor %}
+</body>
+</html>
