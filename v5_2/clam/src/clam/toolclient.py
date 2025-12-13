@@ -55,8 +55,9 @@ class ToolClient(Client):
 
     def get_rendered_template_message(self, message, **info):
 
+        name = info.pop('template_name', None)
         # Render template response
-        response = self.get_template().render(
+        response = self.get_template(name).render(
             message=message,
             timestamp=time.time(),
             client_name=self.get_name(),

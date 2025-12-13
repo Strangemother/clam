@@ -85,6 +85,11 @@ The background space returns the result and sends it to the user.
 
 It's a chatty bot.
 
+## User Knowledge.
+
+Gather and understand knowledge statements of the user, e.g. name, age, favourite food.
+These are stacked as user based information. A graph of user persona
+
 
 ## Lifetime cache
 

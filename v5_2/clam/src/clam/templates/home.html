@@ -10,8 +10,21 @@
 </head>
 <body>
     <h1>{{ client_name }} ({{ port }})</h1>
+
+    {% if post_result %}
+        <h2>Post Result</h2>
+        {{ post_result }}
+    {% endif %}
+
+
+    {{ form_fields }}
     <form method="post" action="">
-        <textarea name="message" rows="20" cols="100">{{message}}</textarea><br>
+    {% for field in form_fields %}
+        <label>
+            <h2>{{field}}</h2>
+            <textarea name="{{field}}" rows="10" cols="100">{{message}}</textarea><br>
+        </label>
+    {% endfor %}
         <button type="submit">Send</button>
     </form>
 </body>

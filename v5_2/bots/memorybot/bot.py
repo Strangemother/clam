@@ -30,7 +30,8 @@ class MemoryBot(ToolClient):
         The response is saved an a messsage is sent back to
         """
         print(f'[{self.get_name()}] start work')
-        text_out = self.get_rendered_template_message(message)
+        text_out = self.get_rendered_template_message(message,
+                            template_name='memorybot.v2' )
         print("sending len:", len(text_out))
         msg = make_message(text_out)
         d = send_wait_message(msg)

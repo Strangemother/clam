@@ -10,8 +10,10 @@ import asyncio
 import json
 from pprint import pprint
 
+#lm studio
 hurl = "http://192.168.50.60:1234/v1/chat/completions/"
 # hurl = "http://192.168.50.60:10000/api/generate/"
+chat_url = "http://192.168.50.60:1234/api/chat/"
 
 
 async def async_post(url, payload):
@@ -40,6 +42,7 @@ async def async_post(url, payload):
 def print_payload_messages(payload):
     for msg in payload['messages']:
         print('  >  ', f"{msg['role']:<12} {msg['content']}")
+
 
 def print_content_response(json_data):
     # json_data = response.json()

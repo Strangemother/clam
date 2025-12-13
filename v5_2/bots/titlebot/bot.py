@@ -45,7 +45,7 @@ class FilenamerBot(ToolClient):
         self.log('start work')
 
         # text_out = self.get_rendered_template_message(message)
-        text_out = self.template_rendered('titlebot.txt',
+        text_out = self.template_rendered('titlebot.v2.txt',
             message=message,
             timestamp=time.time(),
             client_name=self.get_name(),
@@ -61,7 +61,25 @@ class FilenamerBot(ToolClient):
 
             })
         text = self.save_memory(d)
+
+        self.send_editor_message(
+            user_message=message,
+            bot_output=text,
+            bot_prompt=text_out,
+        )
+
         return text
+
+    def send_editor_message(self, **data_message):
+        print('\n\nsend_editor_message\n')
+        EDITOR_URL = "http://localhost:9387"
+        t = self.send_message(EDITOR_URL, data_message)
+        _id = t.get('id', None)
+        if _id is not None:
+            self.add_handler(_id, self.handle_send_editor_message, data_message)
+
+    def handle_send_editor_message(self, data_message, resp):
+        print('Editor message response')
 
     def save_raw(self, d):
         filename = f"raw/{d['received']['id']}-{d['received']['created']}.json"

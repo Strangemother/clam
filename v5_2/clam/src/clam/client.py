@@ -77,21 +77,37 @@ class Client:
     def perform_work(self, message):
         return
 
+    def get_form_field_names(self):
+        return ['message']
+
+    def process_form(self, form):
+        # message = form.get('message', '')
+        r = {}
+        for k in self.get_form_field_names():
+            v = form.get(k)
+            r[k] = v
+        # return {"message":message}
+        return r
+
     def _setup_routes(self):
         """Setup Flask routes for receiving messages."""
 
         @self.app.route('/', methods=['GET', 'POST'])
         def home():
             """Home page with client info and message form."""
+
+            post_result = None
             if request.method == 'POST':
-                message = request.form.get('message', '')
-                return str(on_recv_message({"message":message}))
+                # message = request.form.get('message', '')
+                post_result = str(on_recv_message(self.process_form(request.form)))
 
             message = self.get_template('demos/one').render()
             return render_template('home.html',
+                            post_result=post_result,
                             client_name=self.get_name(),
                             port=self.port,
                             message=message,
+                            form_fields=self.get_form_field_names(),
                             )
 
         @self.app.route('/message', methods=['POST'])
@@ -231,4 +247,4 @@ class Client:
             timer.daemon = True
             timer.start()
         self.wake()
-        self.app.run(host=self.host, port=self.port, debug=False)
+        self.app.run(host=self.host, port=self.port, debug=True)

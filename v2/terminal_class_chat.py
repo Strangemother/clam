@@ -4,11 +4,13 @@
 import requests
 import asyncio
 # from websockets.asyncio.client import connect
-from websockets.sync.client import connect
+# from websockets.sync.client import connect
 import json
 from pprint import pprint
 
-hurl = "http://192.168.50.60:10000/api/chat/"
+# hurl = "http://192.168.50.60:10000/api/chat/"
+hurl = "http://192.168.50.60:1234/v1/chat/completions/"
+
 # hurl = "http://192.168.50.60:10000/api/generate/"
 
 
