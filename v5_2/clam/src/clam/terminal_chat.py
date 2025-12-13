@@ -45,11 +45,10 @@ def _post(url, payload, print_out=False):
 def configure_parser(parser, subparsers=None):
     """Configure the subparser for terminal chat."""
 
+    parser_cli = parser
     if subparsers:
         parser_cli = subparsers.add_parser("cli",
                                             help="Run terminal chat")
-    else:
-        parser_cli = parser
     parser_cli.set_defaults(func=main)
     parser_cli.add_argument("--prompt-file", "-f",
                            type=str,
