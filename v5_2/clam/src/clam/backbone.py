@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 import uuid
 import requests
 from datetime import datetime, timezone
+from . import config
 
 app = Flask(__name__)
 
@@ -107,9 +108,10 @@ def main(args=None):
         configure_parser(parser)
         args = parser.parse_args()
     
-    host = getattr(args, 'host', '0.0.0.0')
-    port = getattr(args, 'port', 5000)
-    debug = getattr(args, 'debug', False)
+    # CLI args override config
+    host = getattr(args, 'host', None) or config.BACKBONE_HOST
+    port = getattr(args, 'port', None) or config.BACKBONE_PORT
+    debug = getattr(args, 'debug', False) or config.DEBUG
     
     print(f'Starting backbone service on {host}:{port}')
     app.run(host=host, port=port, debug=debug)
