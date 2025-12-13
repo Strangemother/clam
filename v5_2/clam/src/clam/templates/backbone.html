@@ -7,6 +7,8 @@
         textarea { width: 500px; height: 150px; font-family: monospace; background: #2d2d2d; color: #d4d4d4; border: 1px solid #555; }
         button { background: #0e639c; color: #fff; border: none; padding: 8px 16px; cursor: pointer; font-family: monospace; }
         button:hover { background: #1177bb; }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .error { color: #f48771; }
         .unit { background: #2d2d2d; padding: 10px; margin: 10px 0; border: 1px solid #3e3e3e; }
     </style>
@@ -29,7 +31,12 @@
     {% for id, unit in units.items() %}
         <div class="unit">
             <strong>ID:</strong> {{ id }}<br>
-            <strong>Data:</strong> {{ unit }}
+            <strong>Name:</strong> {{ unit.get('name', 'Unknown') }}<br>
+            <strong>Type:</strong> {{ unit.get('type', 'N/A') }}<br>
+            {% if unit.get('host') and unit.get('port') %}
+                <strong>Link:</strong> <a href="http://{{ unit.get('host') }}:{{ unit.get('port') }}" target="_blank">{{ unit.get('host') }}:{{ unit.get('port') }}</a><br>
+            {% endif %}
+            <strong>Registered:</strong> {{ unit.get('registered_at', 'N/A') }}<br>
         </div>
     {% endfor %}
 </body>
