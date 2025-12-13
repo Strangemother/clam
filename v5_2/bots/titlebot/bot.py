@@ -62,11 +62,11 @@ class FilenamerBot(ToolClient):
             })
         text = self.save_memory(d)
 
-        self.send_editor_message(
-            user_message=message,
-            bot_output=text,
-            bot_prompt=text_out,
-        )
+        # self.send_editor_message(
+        #     user_message=message,
+        #     bot_output=text,
+        #     bot_prompt=text_out,
+        # )
 
         return text
 

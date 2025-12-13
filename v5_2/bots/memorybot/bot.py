@@ -41,6 +41,8 @@ class MemoryBot(ToolClient):
                 'received': d,
             })
         self.save_memory(d)
+        text = self.easy_extract_message(d)
+        return text
 
     def save_raw(self, d):
         """Save a raw JSON File of message and response."""

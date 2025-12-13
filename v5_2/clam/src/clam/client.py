@@ -89,21 +89,48 @@ class Client:
         # return {"message":message}
         return r
 
+    def on_get_own_job(self, resp):
+        print('\n\nMy own job response', resp, '\n\n')
+        # Store this for the view test
+        self.self_work_results[resp['id']] = resp
+
     def _setup_routes(self):
         """Setup Flask routes for receiving messages."""
+        self.self_work_results = {}
+
+        @self.app.route('/result/<key>/', methods=['GET'])
+        def last_cache_data(key=None):
+            # return the result for the key.
+            return self.self_work_results.get(key)
+
+        @self.app.route('/clear/<key>/', methods=['GET'])
+        def clear_cache_data(key=None):
+            # delete the result for the key.
+            return self.self_work_results.pop(key, None)
 
         @self.app.route('/', methods=['GET', 'POST'])
         def home():
             """Home page with client info and message form."""
 
             post_result = None
+            rid = None
             if request.method == 'POST':
                 # message = request.form.get('message', '')
-                post_result = str(on_recv_message(self.process_form(request.form)))
+                d = self.process_form(request.form)
+                d['sender_url'] = f"http://{self.host}:{self.port}"
+                print(f'\n\nPOST from: {d["sender_url"]}\n\n')
+                r = on_recv_message(d)
+                rid = r['id']
+                if rid is not None:
+                    print('\nRegistering self handler', rid, '\n\n')
+                    self.add_handler(rid, self.on_get_own_job)
+                post_result = str(r)
+                print(f'Will wait for Receipt: {post_result}\n')
 
             message = self.get_template('demos/one').render()
             return render_template('home.html',
                             post_result=post_result,
+                            receipt_id=rid,
                             client_name=self.get_name(),
                             port=self.port,
                             message=message,
@@ -119,15 +146,16 @@ class Client:
         def on_recv_message(data):
             message = data.get('message', '')
             _id = data.get('id', uuid.uuid4().hex.upper()[0:10])
-            response_id = _id
+            # response_id = _id
             sender_url = data.get('sender_url', None)
 
             # Print immediate thanks response
             print(f"[{self.get_name()}] Received: {message}")
-            print(f"[{self.get_name()}] Response: thanks")
+            print(f"[{self.get_name()}] Response: thanks, will send result to")
+            print(f"[{self.get_name()}] sender_url: {sender_url}, id {_id}")
 
             # Process work in a separate thread for non-blocking behavior
-            thread = Thread(target=self._process_async, args=(message, sender_url, response_id))
+            thread = Thread(target=self._process_async, args=(message, sender_url, _id))
             thread.daemon = True
             thread.start()
 
@@ -201,10 +229,16 @@ class Client:
     def _process_async(self, message, sender_url=None, response_id=None):
         """Process work asynchronously in a separate thread."""
         # try:
+        print(f'_process_async. Will send to {sender_url} with id {response_id}')
+        print('running', str(self.work_function))
         result = self.work_function(message)
+        print('!  Result -- ', result)
+        if result is None:
+            print(f'\n\n[ISSUE]: Work function did not return a result: {self.work_function}\n')
         if result:
             # If there's a result and we know who sent the message, send it back to them
             if sender_url:
+                print(f'\n\nResult complete for {response_id}. sending to {sender_url}\n')
                 self._send_response(sender_url, result, response_id)
             else:
                 print(f"[{self.get_name()}] Completed work: {result}")
