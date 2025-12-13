@@ -101,12 +101,13 @@ class Client:
         @self.app.route('/result/<key>/', methods=['GET'])
         def last_cache_data(key=None):
             # return the result for the key.
-            return self.self_work_results.get(key)
+            return self.self_work_results.get(key, '')
 
         @self.app.route('/clear/<key>/', methods=['GET'])
         def clear_cache_data(key=None):
             # delete the result for the key.
-            return self.self_work_results.pop(key, None)
+            print('Delete key', key)
+            return self.self_work_results.pop(key, '')
 
         @self.app.route('/', methods=['GET', 'POST'])
         def home():
