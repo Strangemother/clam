@@ -5,4 +5,5 @@ BACKBONE_PORT = 5000
 DEBUG = True
 
 # clam cli -f
-DEFAULT_PROMPT_FILE = 'prompts/chicken.prompt.md'
+DEFAULT_PROMPT_FILE = 'prompts/title-bot.prompt.md'
+# DEFAULT_PROMPT_FILE = 'prompts/chicken.prompt.md'

@@ -28,3 +28,12 @@ PROMPT_DIR = './prompts'
 SERVICE_HOST = 'http://192.168.50.60:1234'
 SERVICE_COMPLETIONS_PATH = '/v1/chat/completions/'
 SERVICE_GENERATE_PATH = '/api/generate/'
+
+
+GRAPH = {
+    # 'eric': ['dave'],
+    # 'dave': 'eric',
+
+    'terminal': 'memorybot',
+    'memorybot': 'titlebot'
+}

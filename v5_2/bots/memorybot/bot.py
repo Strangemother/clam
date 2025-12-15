@@ -1,6 +1,7 @@
 """
 Memorybpt - Running on port 9383
 """
+import os
 import pathlib
 from clam.toolclient import ToolClient
 from clam.bot_pipe import (send_wait_message,
@@ -12,19 +13,19 @@ from clam.bot_pipe import (send_wait_message,
 
 class MemoryBot(ToolClient):
     name = 'memorybot'
-    
+
     @property
     def port(self):
         return self.config.MEMORYBOT_PORT
-    
+
     @port.setter
     def port(self, value):
         self.config.MEMORYBOT_PORT = value
-    
+
     @property
     def client_a_url(self):
         return self.config.CLIENT_A_URL
-    
+
     @property
     def filenamer_url(self):
         return self.config.FILENAMER_URL
@@ -51,8 +52,9 @@ class MemoryBot(ToolClient):
                 'sent': msg,
                 'received': d,
             })
-        self.save_memory(d)
+        # self.save_memory(d)
         text = self.easy_extract_message(d)
+        self.save_memory_local(d, text)
         return text
 
     def save_raw(self, d):
@@ -69,10 +71,11 @@ class MemoryBot(ToolClient):
             return
         return self.get_remote_filename(text, d)
 
-    def save_memory_local(self, d):
+    def save_memory_local(self, d, text=None):
         """Call to the llm directly through `get_filename` rather than
         the remote caller `save_memory`
         """
+        text = text or self.easy_extract_message(d)
         filename = self.get_filename(text, d)
         result = self.template_rendered('save_memory.txt', {
                 "text": text,

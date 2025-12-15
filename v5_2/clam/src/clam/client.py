@@ -8,6 +8,8 @@ from threading import Thread, Timer
 import logging
 import requests
 from . import config
+from .backbone import get_backbone_url
+
 # Suppress Flask's default logging
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -33,6 +35,7 @@ class Client:
     host = '127.0.0.1'
     port = 9000
     name = None # 'Client'
+    _id = None
 
     def __init__(self, work_function=None,
                 host=None, port=None, name=None,
@@ -56,6 +59,9 @@ class Client:
         self.name = name or self.name
         self.auto_start = auto_start
         self.on_start = on_start
+        self.setup()
+
+    def setup(self):
         self.app = Flask(__name__)
         self._setup_routes()
 
@@ -63,6 +69,12 @@ class Client:
         if self.name is None:
             return self.__class__.__name__
         return self.name
+
+    def get_port(self):
+        return self.port
+
+    def get_id(self):
+        return self._id or self.get_name()
 
     def wake(self):
         self.cache = {}
@@ -94,6 +106,9 @@ class Client:
         print('\n\nMy own job response', resp, '\n\n')
         # Store this for the view test
         self.self_work_results[resp['id']] = resp
+
+    def get_view_data(self):
+        return {}
 
     def _setup_routes(self):
         """Setup Flask routes for receiving messages."""
@@ -130,6 +145,8 @@ class Client:
                 print(f'Will wait for Receipt: {post_result}\n')
 
             message = self.get_template('demos/one').render()
+            context = self.get_view_data()
+
             return render_template('home.html',
                             post_result=post_result,
                             receipt_id=rid,
@@ -137,6 +154,9 @@ class Client:
                             port=self.port,
                             message=message,
                             form_fields=self.get_form_field_names(),
+                            data_keys=tuple(context),
+                            view_data=context,
+                            # **context
                             )
 
         @self.app.route('/message', methods=['POST'])
@@ -174,12 +194,15 @@ class Client:
             data = request.get_json()
             message = data.get('message', '')
 
-            # try:
+            # run perform_work
             result = self.work_function(message)
+            # send receipt
+            respond_key = data.get('respond_key', 'result') or 'result'
             return jsonify({
                 'status': 'success',
-                'result': result
+                respond_key: result
             }), 200
+            # try:
             # except Exception as e:
 
                 # return jsonify({
@@ -204,12 +227,9 @@ class Client:
         """
         if self.client_id_route_receive_response(data) is True:
             return {'status': 'ok', 'action': 'routed'}
-
-
         message = data.get('message', '')
         print(f'[{self.get_name()}]::receive_response: "{message}"')
         return {'status': 'ok', 'message': message}
-
 
     def client_id_route_receive_response(self, data):
         """/response endpoint from a url
@@ -227,14 +247,14 @@ class Client:
         return False
         # return {'status': 'ok', 'message': message}
 
-
     def _process_async(self, message, sender_url=None, response_id=None):
         """Process work asynchronously in a separate thread."""
         # try:
         print(f'_process_async. Will send to {sender_url} with id {response_id}')
         print('running', str(self.work_function))
         result = self.work_function(message)
-        print('!  Result -- ', result)
+
+        self.graph_dispatch(result, message, sender_url, response_id)
         if result is None:
             print(f'\n\n[ISSUE]: Work function did not return a result: {self.work_function}\n')
         if result:
@@ -261,6 +281,24 @@ class Client:
         # except Exception as e:
         #     print(f"[{self.get_name()}] Error sending message: {e}")
         #     return None
+
+
+    def graph_dispatch(self, result, message, sender_url=None, response_id=None):
+        """Send this message to the graph tool if graphed.
+        """
+        # post to backbone
+        backbone = get_backbone_url()
+        url = f"{backbone}/graph-response"
+        print('send to graph', url)
+        res = requests.post(url, json={
+                'result': result,
+                'message': message,
+                'id': response_id,
+                'sender_url': sender_url,
+                'client_id': self.get_id(),
+            })
+
+        print('result from backbone:', res)
 
     def _send_response(self, target_url, response_message, response_id=None):
         """Send a response message back to the sender."""
