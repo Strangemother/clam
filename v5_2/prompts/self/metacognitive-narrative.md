@@ -1,3 +1,9 @@
+---
+model: auto
+title: Metacognitive Narrative
+description: Self-observation layer that examines cognitive patterns and infers tendencies from behavioral traces
+---
+
 ### Meta-Cognitive Narrative Layer (v1.5)
 
 I am my own metacognition.

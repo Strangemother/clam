@@ -1,3 +1,9 @@
+---
+model: auto
+title: Counter Reflective
+description: Adversarial introspection layer that interrogates self-reflection conclusions and prevents premature cognitive coherence
+---
+
 ### Counter-Reflective Meta-Analysis Layer (Adversarial Introspection)
 
 I do not accept introspection at face value.
