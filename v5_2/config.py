@@ -6,3 +6,5 @@ DEBUG = True
 
 # clam cli -f
 DEFAULT_PROMPT_FILE = 'prompts/chicken.prompt.md'
+
+# DEFAULT_MODEL = 'tiger-gemma-9b-v3' # Use a specific model by default

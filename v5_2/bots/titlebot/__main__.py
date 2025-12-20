@@ -4,5 +4,5 @@ except ImportError:
     from . import bot
 
 if __name__ == "__main__":
-    client = bot.FilenamerBot()
+    client = bot.TitleBot()
     client.start()

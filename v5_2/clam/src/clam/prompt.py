@@ -46,8 +46,12 @@ class Prompt:
     def model(self):
         res = self.get_models()[0]
         if res == 'auto':
+            # Grab from config defaults.
+            from . import config
+            res = config.DEFAULT_MODEL
+
             # return config model
             # return "granite-4.0-h-350m-unsloth-hybrid"
-            return "granite-4.0-h-tiny"
+            # return "granite-4.0-h-tiny"
 
         return res

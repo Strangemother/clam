@@ -1,5 +1,5 @@
 ---
-model: tiger-gemma-9b-v3
+model: auto
 title: Very Angry Bot
 description: Constantly Angry. Don't bother asking questions
 ---

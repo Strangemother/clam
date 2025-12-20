@@ -19,11 +19,11 @@ CLIENT_A_URL = "http://localhost:8010"
 
 
 def main():
-    client = FilenamerBot()
+    client = TitleBot()
     client.start()
 
 
-class FilenamerBot(ToolClient):
+class TitleBot(ToolClient):
     port = 9394
     name = 'titlebot'
 

@@ -90,7 +90,7 @@ def main(args=None):
     print("Loading file:", pf, end='')
     pr = Prompt(pathlib.Path(cwd) / pf)
 
-    print(f' "{pr.title}"')
+    print(f' "{pr.title}": using model {pr.model}')
 
     data = setup_structure(pr)
     mount_backbone({
@@ -195,10 +195,9 @@ def append_output(data, out):
 
 
 def setup_structure(system_prompt):
-    return {
+    res = {
       # "model": "llama3.2:latest",
       # "model": "granite-4.0-h-350m-unsloth-hybrid",
-      "model": system_prompt.model, #"granite-4.0-h-tiny",
       "messages": [
             {
                 "role": "system",
@@ -213,6 +212,11 @@ def setup_structure(system_prompt):
         ],
         "stream": False,
     }
+    if isinstance(system_prompt, Prompt):
+        model = system_prompt.model
+        if model:
+            res['model'] = model
+    return res
 
     #   "tools": [{
     #   #https://openai.com/index/function-calling-and-other-api-updates/
