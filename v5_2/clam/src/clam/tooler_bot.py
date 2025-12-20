@@ -13,6 +13,42 @@ def kitchen_heater(state: bool):
     """
     print('Run code.')
 
+def kitchen_header_status():
+    """Get the current status of the kitchen heater
+
+    arguments:
+        None
+    """
+    return {'state': True}
+
+def definition_to_partials(definition):
+    """Given a tool definition from a message repsonse,
+    convert to a dict of partial definitions for execution:
+
+        tool_calls = [{
+            'type': 'function',
+            "id": "50395859",
+            "function": {
+                "name": "kitchen_heater",
+                "arguments": "{ \"state\": true }"
+        }]
+
+    call:
+    
+        definition_to_partials(tool_calls)
+
+    result:
+
+        {
+            "50395859": partial("loc.kitchen_heater", state=True)
+        }
+    """
+    # load tools dict.
+    partials = {
+
+    }
+    # use pydoc.locate to get function from string
+
 
 def create_tool_definition(func):
     """Given a function, return a dictionary explaining the utility for
@@ -94,3 +130,13 @@ def create_tool_definition(func):
             }
         }
     }
+
+
+TOOLS = [
+    kitchen_heater,
+    kitchen_header_status
+]
+
+tools_map = {x.__name__: x for x in TOOLS}
+
+tool_calls = [create_tool_definition(tools_map[v]) for k,v in tools_map.items()]
