@@ -12,16 +12,16 @@
     <script>
         function pollForResult(receiptId) {
             if (!receiptId) return;
-            
+
             const statusEl = document.getElementById('status');
             const responseEl = document.getElementById('response');
             const contentEl = document.getElementById('response-content');
-            
+
             const interval = setInterval(async () => {
                 try {
                     const response = await fetch(`/result/${receiptId}/`);
                     const data = await response.json();
-                    
+
                     if (data && data.message) {
                         // Response received!
                         clearInterval(interval);
@@ -29,7 +29,7 @@
                         statusEl.className = 'success';
                         responseEl.style.display = 'block';
                         contentEl.textContent = JSON.stringify(data, null, 2);
-                        
+
                         // Clear the cache
                         await fetch(`/clear/${receiptId}/`);
                     }
@@ -38,7 +38,7 @@
                 }
             }, 500); // Poll every 500ms
         }
-        
+
         {% if receipt_id %}
         // Start polling when page loads
         window.addEventListener('DOMContentLoaded', () => {
@@ -61,6 +61,12 @@
         </div>
     {% endif %}
 
+    <div>{{ data_keys }}</div>
+    <ul>
+    {% for key in data_keys %}
+        <li>{{ key }}: {{ view_data[key] }}</li>
+    {% endfor %}
+    </ul>
 
     {{ form_fields }}
     <form method="post" action="">

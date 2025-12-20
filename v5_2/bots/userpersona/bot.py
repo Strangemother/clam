@@ -11,24 +11,9 @@ from clam.bot_pipe import (send_wait_message,
                       print_payload_messages)
 
 
-class MemoryBot(ToolClient):
-    name = 'memorybot'
-
-    @property
-    def port(self):
-        return self.config.MEMORYBOT_PORT
-
-    @port.setter
-    def port(self, value):
-        self.config.MEMORYBOT_PORT = value
-
-    @property
-    def client_a_url(self):
-        return self.config.CLIENT_A_URL
-
-    @property
-    def filenamer_url(self):
-        return self.config.FILENAMER_URL
+class UserPersonaBot(ToolClient):
+    name = 'userpersona'
+    port = 9030
 
     def get_module_dir(self):
         """The template path root is this file location.
@@ -42,8 +27,10 @@ class MemoryBot(ToolClient):
         The response is saved an a messsage is sent back to
         """
         print(f'[{self.get_name()}] start work')
-        text_out = self.get_rendered_template_message(message,
-                            template_name='memorybot.v2' )
+        text_out = self.template_rendered('prompt.md', {
+                    "message": message,
+                })
+
         print("sending len:", len(text_out))
         msg = make_message(text_out)
         d = send_wait_message(msg)
@@ -54,7 +41,13 @@ class MemoryBot(ToolClient):
             })
         # self.save_memory(d)
         text = self.easy_extract_message(d)
-        self.save_memory_local(d, text)
+        print_content_response(d)
+        # self.save_memory_local(d, text)
+        filename = f"memory/{d['id']}-{d['created']}.txt"
+        p = self.as_cache_path(filename)
+        os.makedirs(p.parent, exist_ok=True)
+        p.write_text(text)
+        print("memory saved: ", p)
         return text
 
     def save_raw(self, d):

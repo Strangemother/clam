@@ -30,3 +30,11 @@ SERVICE_COMPLETIONS_PATH = '/v1/chat/completions/'
 SERVICE_GENERATE_PATH = '/api/generate/'
 
 DEFAULT_MODEL = None # Use service default model if not specified
+
+GRAPH = {
+    # 'eric': ['dave'],
+    # 'dave': 'eric',
+
+    'terminal': 'memorybot',
+    'memorybot': 'titlebot'
+}

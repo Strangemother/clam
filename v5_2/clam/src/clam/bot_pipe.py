@@ -83,6 +83,12 @@ def send_wait(content=None, role=None, model=None):
     return resp
 
 
+def send_conversation(data):
+    resp = plain_post(hurl, data)
+    # print('send_wait complete')
+    return resp
+
+
 def send_wait_message(message):
     resp = plain_post(hurl, message)
     # print('send_wait complete')

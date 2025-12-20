@@ -11,6 +11,7 @@ from jinja2 import Template
 from .client import Client
 from clam.backbone import mount
 
+
 class ToolClient(Client):
     port = 0
     name = None # 'toolclient'
@@ -23,11 +24,12 @@ class ToolClient(Client):
 
     def wake(self):
         super().wake()
+        # Tell the register.
         mount({
                 'name': self.get_name(),
-                'id': self.get_name(),
+                'id': self.get_id(),
                 'host': self.host,
-                'port': self.port,
+                'port': self.get_port(),
                 'type': 'bot',
             })
 
@@ -72,7 +74,7 @@ class ToolClient(Client):
             message=message,
             timestamp=time.time(),
             client_name=self.get_name(),
-            port=self.port,
+            port=self.get_port(),
             **info
         )
 
