@@ -13,6 +13,13 @@ from .services import get_service_endpoint
 from .backbone import get_backbone_url
 
 
+
+from .prompt import Prompt
+from .terminal_select import select_prompt
+
+import argparse
+
+
 HERE =  pathlib.Path(__file__).parent
 
 
@@ -38,11 +45,6 @@ def _post(url, payload, print_out=False):
     # print(data['choices'][0]['message']['content'])
 
 
-from .prompt import Prompt
-from .terminal_select import select_prompt
-
-import argparse
-
 def configure_parser(parser, subparsers):
     """Configure the subparser for terminal chat."""
     parser_cli = parser
@@ -50,11 +52,19 @@ def configure_parser(parser, subparsers):
         parser_cli = subparsers.add_parser("cli",
                                        help="Run terminal chat")
     parser_cli.set_defaults(func=main)
+    parser_cli.add_argument("name",
+                           type=str,
+                           nargs='?',
+                           # required=False,
+                            help="User prompt name"
+                    )
+
     parser_cli.add_argument("--prompt-file", "-f",
                            type=str,
                            required=False,
                             help="User prompt text"
                     )
+
     parser_cli.add_argument("--id",
                            type=str,
                            default=None,
@@ -81,6 +91,9 @@ def main(args=None):
 
     if pf is None:
         pf = config.DEFAULT_PROMPT_FILE
+        if args.name is not None:
+            pf = f'prompts/{args.name}.prompt.md'
+            print('Loading', pf)
 
     # Handle prompt selection
     if hasattr(args, 'select') and args.select:
@@ -89,10 +102,10 @@ def main(args=None):
         if pf is None:
             print("No prompt selected. Exiting.")
             return
-    else:
-        pf = args.prompt_file
-        if pf is None:
-            pf = config.DEFAULT_PROMPT_FILE
+    # else:
+        # pf = args.prompt_file
+        # if pf is None:
+        #     pf = config.DEFAULT_PROMPT_FILE
 
     print("Loading file:", pf, end='')
     pr = Prompt(pathlib.Path(cwd) / pf)
@@ -106,6 +119,7 @@ def main(args=None):
         "id": _id,
         # "url": "http://terminal_chat.local"
     })
+
     register_unmount()
 
     is_convo = pr.type == 'conversation'
@@ -116,10 +130,72 @@ def main(args=None):
         graph_dispatch(_id, data, out)
         print_response(out)
         data['messages'].append(out['choices'][0]['message'])
+    prime_loop(pr, is_convo, data, _id)
 
+
+def prime_loop(pr, is_convo, data, _id):
+    try:
+        primary_query_loop(pr, is_convo, data, _id)
+    except KeyboardInterrupt:
+        print('! unlooped. Insert commands')
+        command_loop(pr, is_convo, data, _id)
+
+
+def command_loop(pr, is_convo, data, _id):
+    ok = 1
+    while ok:
+        inp = input('# ')
+        ok = parse_command(pr, inp, is_convo, data, _id)
+
+
+def parse_command(pr, inp, is_convo, data, _id):
+    print('parse', inp)
+    val = inp.strip().lower()
+
+    commands = {
+        "continue": command_continue,
+        "quit": command_quit,
+        "reload": command_reload,
+        "update": command_update,
+    }
+
+    for k in commands:
+        if (k).startswith(val):
+            print('executing', k)
+            ok = commands[k](pr, inp, is_convo, data, _id)
+            return ok
+
+    print('Unknown command. Choices:', tuple(commands.keys()))
+    return command_loop(pr, is_convo, data, _id)
+
+
+def command_quit(pr, inp, is_convo, data, _id):
+    """Quit the terminal"""
+    return False
+
+
+def command_continue(pr, inp, is_convo, data, _id):
+    """continue back into chat mode"""
+    return prime_loop(pr, is_convo, data, _id)
+
+
+def command_reload(pr, inp, is_convo, data, _id):
+    """ RELOAD the conversation, new converation chain with no messages and
+    and updated system prompt """
+    data = setup_structure(pr)
+    return prime_loop(pr, is_convo, data, _id)
+
+
+def command_update(pr, inp, is_convo, data, _id):
+    """ UPDATE the conversation, the same messages and and updated system prompt """
+
+
+
+def primary_query_loop(pr, is_convo, data, _id):
     while True:
         inp = input('> ')
         msg = as_message(inp)
+
 
         if is_convo:
             data['messages'].append(msg)
@@ -171,6 +247,7 @@ def continue_conversation(res):
     })
 
     return resp
+
 
 def graph_dispatch(client_id, result, message, sender_url=None, response_id=None):
     """Send this message to the graph tool if graphed.
@@ -234,6 +311,20 @@ def append_output(data, out):
 #     return resp
 
 
+from clam.tooler import create_tool_definition
+
+
+def kitchen_heater(state:bool):
+    """Turn the kitchen header on/off
+
+    arguments:
+        state: Switch state of the heater. True == on
+
+    """
+    print('Run code.')
+
+
+
 def setup_structure(system_prompt):
     return {
       # "model": "llama3.2:latest",
@@ -248,10 +339,10 @@ def setup_structure(system_prompt):
             #   "role": "user",
             #   # "content": "Follow the white rabbit?"
             #   "content": "What is your favourite fruit? Please answer in one word"
-
             # }
         ],
         "stream": False,
+        'tools': [create_tool_definition(kitchen_heater)]
     }
 
     #   "tools": [{

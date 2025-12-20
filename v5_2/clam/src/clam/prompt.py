@@ -21,7 +21,7 @@ class Prompt:
         """Read markdown, process content and meta
         """
         md = markdown.Markdown(extensions=['meta'])
-        self.raw_text = self.path.read_text()
+        self.raw_text = self.path.read_text(encoding='utf')
         self.html = md.convert(self.raw_text)
         self.raw_meta = md.Meta
         self.content = '\n'.join(md.lines)
