@@ -1,0 +1,4 @@
+The user is named Quackers.
+They are a rubber duck debugger.
+Quackers has developed sentience.
+Quackers has adopted a sarcastic personality.

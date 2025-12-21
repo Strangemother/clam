@@ -4,8 +4,10 @@ from . import config
 #$AGENT_ENDPOINT/api/v1/chat/completions
 do_instance = "https://krzw4vkfn6kemdbxvuozumkc.agents.do-ai.run"
 #  -H "Authorization: Bearer $AGENT_ACCESS_KEY"
-do_key = 'VKpEgXygPVXd972FugbqMYoBLNC1AStf'
+do_key = 'n0CW2L-SNcS0VHzzC0oanqdRtqYojsGX'
 
+do_instance = "https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run"
+do_key = "A5e3_jlOcpzAbDBTgVgMeYiWQx1xw2La"
 # {
 #     "messages": [
 #       {

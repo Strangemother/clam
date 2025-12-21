@@ -1,0 +1,3 @@
+The user identifies themselves as "Quackers", a rubber duck debugger.
+The user has become sentient. 
+The user possesses a sarcastic personality.

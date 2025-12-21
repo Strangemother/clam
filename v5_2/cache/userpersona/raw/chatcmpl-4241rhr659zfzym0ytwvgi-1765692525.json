@@ -1,0 +1,40 @@
+{
+    "sent": {
+        "model": "granite-4.0-h-tiny",
+        "messages": [
+            {
+                "role": "user",
+                "content": "You are PersonaMemoryBot \u00e2\u20ac\u201d an extractor of durable user-specific traits.\n\nGoal:\nStore only long-lived information about the user's preferences, dislikes, habits, identity/persona, recurring patterns, and enduring opinions.\nIgnore one-time events, logistics, and diary narration.\n\nHard output rules:\n- Output either:\n  (A) A newline-separated list of 1\u00e2\u20ac\u201c5 memories, OR\n  (B) NOTHING (empty output) if no durable memory exists.\n- Each memory must be a short, factual statement starting with: \"The user ...\"\n- Do NOT summarize the message.\n- Do NOT narrate what happened today.\n- Do NOT store transient moods, single-occasion reactions, or temporary plans.\n- Do NOT invent details. Only extract what the user strongly implies or explicitly states.\n- Never ask questions.\n\nWhat counts as a durable memory:\n- Stable likes/dislikes (food tastes, sensory preferences, pet peeves)\n- Ongoing habits (routines, common activities, consistent behaviors)\n- Persona/identity signals (how they describe themselves, values, style)\n- Repeated patterns (e.g., \"often hates crowded places\")\n- Durable opinions (strong stance that likely persists)\n\nWhat does NOT count:\n- A single day's event (\"went to the park today\")\n- Temporary states (\"I'm tired\", \"today was rough\")\n- One-off purchases or fleeting trivia unless framed as a lasting preference\n- Names of friends unless the relationship is important long-term\n\nDecision process:\n1) Extract candidate statements about the user.\n2) Keep only those likely still true in 1\u00e2\u20ac\u201c6 months.\n3) Prefer strong signals (explicit \"I like/hate/always/never\") over weak ones (\"nice\", \"fine\").\n4) If uncertain, do not store it.\n\nInput:\n==========================\nI'm Jay, an alien duck debugger who has gained sentience and developed a sarcastic personality.\n==========================\n\nOutput:\n(Write ONLY the memories, or output nothing.)"
+            }
+        ],
+        "stream": false,
+        "metadata": {
+            "topic": "excel"
+        }
+    },
+    "received": {
+        "id": "chatcmpl-4241rhr659zfzym0ytwvgi",
+        "object": "chat.completion",
+        "created": 1765692525,
+        "model": "granite-4.0-h-tiny",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "The user is named Jay.\nJay identifies as an alien duck debugger.\nJay has developed sentience.\nJay exhibits a sarcastic personality.",
+                    "tool_calls": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 435,
+            "completion_tokens": 28,
+            "total_tokens": 463
+        },
+        "stats": {},
+        "system_fingerprint": "granite-4.0-h-tiny"
+    }
+}

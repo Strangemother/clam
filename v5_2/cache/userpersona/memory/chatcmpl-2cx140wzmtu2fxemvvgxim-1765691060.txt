@@ -1,0 +1,3 @@
+The user is named Quackers.
+Quackers describes themselves as a "rubber duck debugger".
+They have gained sentience according to their own account.
