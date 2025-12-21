@@ -1,15 +1,20 @@
 from multiprocessing import Process, Pipe
 import time
+import json
 from .vibevoice_say import async_run
 
 def main():
     # Create a pipe (returns two connection objects)
     p, (parent_conn, child_conn) = start_worker()
     # Send a message through the pipe
+    print("Available voices: klara, emma, dutch, italian")
+    print("Format: text | name:text")
     while True:
         try:
             value = input('> ')
-            parent_conn.send(value)
+            # Check if format is "name:text"
+            message = json.dumps({"name": "klara", "text": value})
+            parent_conn.send(message)
         except KeyboardInterrupt:
             print('exit')
             break

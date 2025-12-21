@@ -70,6 +70,11 @@ def configure_parser(parser, subparsers=None):
                            default=None,
                            required=False,
                     )
+    parser_cli.add_argument("--service-name", "-e"
+                           type=str,
+                           default=None,
+                           required=False,
+                    )
     parser_cli.add_argument("--select", "-s",
                            type=str,
                            nargs='?',
@@ -106,7 +111,8 @@ def simple_chat(args):
     _id = args.id
     tc = SpokenTerminalClient(pr, model=args.model,
                         template_context=ctx,
-                        client_id=_id)
+                        client_id=_id, service_name=args.service_name
+                        )
 
     return tc.loop()
 
@@ -226,17 +232,19 @@ class TerminalClient(TerminalClientBase):
     # replace "assistant" with the name of the prompt e.g. "kettle"
     role_replace = True
     backbone = True
+    service_name = 'lmstudio'
 
-    def __init__(self, prompt=None, model=None, template_context=None, client_id=None):
+    def __init__(self, prompt=None, model=None, template_context=None, client_id=None, **d):
         self._id = client_id
         self.prompt = prompt
         self.model = model or self.model
         self.template_context = template_context or {}
         self._filekey = None
-        self.set_input_func()
-
         self.input_ind = '>'
         self.commander_input_ind = '#'
+        self.__dict__.update(d)
+        self.set_input_func()
+
         self.conversation = self.setup_structure()
 
     def set_input_func(self, func=None):
@@ -496,8 +504,16 @@ class TerminalClient(TerminalClientBase):
         msg = { "role": "user", "content": res}
         return msg
 
+    def get_service_name(self):
+        return self.prompt.raw_meta.get('service') or self.service_name
+    
+    def get_service(self):
+        r = self.get_service_name()
+        return config.SERVICES.get(r)
+
+    
     def continue_conversation(self, res):
-        endpoint = get_service_endpoint('completions')
+        endpoint = get_service_endpoint('completions', self.get_service_name())
         resp =  self._post(endpoint, {
                 # 'model':'TinyDolphin',
                 # model='phi4:latest',
@@ -583,14 +599,17 @@ class TerminalClient(TerminalClientBase):
         print('.')
 
     def _post(self, url, payload, print_out=False):
+        service = self.get_service_name()
         AGENT_ACCESS_KEY = do_key
 
         headers = {
             'Content-Type': "application/json",
             # 'Accept': "*/*",
-            "Authorization":f"Bearer {AGENT_ACCESS_KEY}",
+            # "Authorization":f"Bearer {AGENT_ACCESS_KEY}",
             'Cache-Control': "no-cache",
-            }
+        }
+
+        headers.update(service.get('headers', {}))
 
         data = json.dumps(payload)
         print('  post', url)

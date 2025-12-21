@@ -31,10 +31,35 @@ SERVICE_GENERATE_PATH = '/api/generate/'
 
 DEFAULT_MODEL = None # Use service default model if not specified
 
+DO_INSTANCE = "https://krzw4vkfn6kemdbxvuozumkc.agents.do-ai.run"
+do_key = 'example_VKpEgXygPVXd972FugbqMYoBLNC1AStf'
+
 GRAPH = {
     # 'eric': ['dave'],
     # 'dave': 'eric',
 
     'terminal': 'memorybot',
     'memorybot': 'titlebot'
+}
+
+SERVICES = {
+    "lmstudio": {
+        "host": SERVICE_HOST,
+        "type": "network"
+    },
+
+    "digital_ocean.oss": {
+        "host": DO_INSTANCE,
+        "type": "cloud",
+        "headers": {
+            "Authorization": f"Bearer {do_key}"
+        }
+    },    
+    "digital_ocean.llama": {
+        "host": DO_INSTANCE,
+        "type": "cloud", 
+        "headers": {
+            "Authorization": f"Bearer {do_key}"
+        }
+    }
 }

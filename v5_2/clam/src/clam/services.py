@@ -24,7 +24,7 @@ do_key = "A5e3_jlOcpzAbDBTgVgMeYiWQx1xw2La"
 
 
 
-def get_service_endpoint(endpoint_type='completions'):
+def get_service_endpoint(endpoint_type='completions', name='lmstudio'):
     """Build the service endpoint URL.
 
     Args:
@@ -41,7 +41,9 @@ def get_service_endpoint(endpoint_type='completions'):
     if path is None:
         raise ValueError(f"Unknown endpoint type: {endpoint_type}")
 
-    host = f"{do_instance}/api"
+    name = config.SERVICES.get(name)
+    HOST = name['host']
+    host = f"{HOST}/api"
     # host = config.SERVICE_HOST
     # Ensure no double slashes
     if host.endswith('/'):
