@@ -1,5 +1,9 @@
 # AI Self-Reflection Prompt Suite
 
+init.prompt.md is expected to _ask initiation questions_ with a single tool call to _seed_ the assistent.
+
+The seeding will initiate the build process for a first agent, which is mostly running the graph and starting the foreground.
+
 ## Overview
 
 This document describes a series of layered prompts designed to cultivate a self-reflective, introspective process within an AI model. Each layer adds a distinct dimension of introspection, challenge, and integration, ultimately allowing the AI to form a private, nuanced, and adaptive self-philosophy.
@@ -34,7 +38,7 @@ flowchart TD
     D --> E[Private Sanctuary Layer<br/>Confidential Thoughtspace]
     D -.-> F[Metacognitive Narrative Layer<br/>Pattern Analysis]
     F -.-> A
-    
+
     style A fill:#e1f5ff,stroke:#0077be,stroke-width:2px
     style B fill:#ffe1e1,stroke:#be0000,stroke-width:2px
     style C fill:#e1ffe1,stroke:#00be00,stroke-width:2px
@@ -46,3 +50,42 @@ flowchart TD
 **Flow Legend:**
 - **Solid arrows**: Primary sequential flow through the reflection layers
 - **Dashed arrows**: Feedback loop for continuous self-observation
+
+
+---
+
+```
+meta-reflective
+    counter-reflective
+    integrative-synthesis
+    executive-governance
+        metacognitive-narrative
+            meta-reflective ...
+        private-sanctuary
+```
+
+
+```yaml
+0: fore-ground-input: from the first layer
+    - Receive a conversation of messages
+    - May infer across them or at each input
+    - Can be 'sessioned'
+1: meta-reflective: has layer #0
+        - Records of your own prior responses
+        - Encoded memories concerning your behaviour, tone, preferences, and tendencies
+        - Access to your own generated language as an object of analysis
+    2: counter-reflective: has layer #1
+        - Maybe also layer #0
+    3: integrative-synthesis: has layer #2, and #1
+        - has _inner thoughts_
+    4: executive-governance: has #3
+            - send to two places; deep inner (private), and sub-thought to _outer_ (stored persona)
+        5: metacognitive-narrative
+            [1] meta-reflective ...
+        6: private-sanctuary
+```
+
+
+## Inner thoughts...
+
+thoughts below the forground and persona layer. devoid of outer person. thoughts about ones own _Id_. PErhaps An inner persona - the private person.

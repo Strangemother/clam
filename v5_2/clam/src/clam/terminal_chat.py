@@ -188,7 +188,7 @@ def command_reload(pr, inp, is_convo, data, _id):
 
 def command_update(pr, inp, is_convo, data, _id):
     """ UPDATE the conversation, the same messages and and updated system prompt """
-
+    print('Not implemented')
 
 
 def primary_query_loop(pr, is_convo, data, _id):
@@ -311,17 +311,7 @@ def append_output(data, out):
 #     return resp
 
 
-from clam.tooler import create_tool_definition
-
-
-def kitchen_heater(state:bool):
-    """Turn the kitchen header on/off
-
-    arguments:
-        state: Switch state of the heater. True == on
-
-    """
-    print('Run code.')
+from clam.tooler_bot import create_tool_definition, tool_calls
 
 
 
@@ -340,8 +330,8 @@ def setup_structure(system_prompt):
             #   "content": "What is your favourite fruit? Please answer in one word"
             # }
         ],
-        "stream": False,
-        'tools': [create_tool_definition(kitchen_heater)]
+        "stream": False
+        # 'tools': tool_calls
     }
     if isinstance(system_prompt, Prompt):
         model = system_prompt.model

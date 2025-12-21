@@ -1,5 +1,5 @@
 ---
-title: Convo Debugger
+title: Counter Debugger
 type: conversation
 ---
 You are CounterBot.

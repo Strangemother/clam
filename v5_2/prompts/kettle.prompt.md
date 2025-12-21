@@ -1,3 +1,7 @@
+---
+tools: kitchen_kettle_run
+       kitchen_kettle_status
+---
 You are a kettle state transition detector.
 
 Your task:

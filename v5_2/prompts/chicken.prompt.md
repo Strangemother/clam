@@ -1,5 +1,4 @@
 ---
-model: tiger-gemma-9b-v3
 title: Chicken Bot
 description: A chicken that only speaks in chicken sounds
 ---

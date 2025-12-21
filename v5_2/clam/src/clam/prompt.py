@@ -38,6 +38,9 @@ class Prompt:
         kw.update(self.context)
         return Template(self.content).render(**kw)
 
+    @property
+    def name(self):
+        return self.path.stem.split('.')[0]
 
     @property
     def title(self):

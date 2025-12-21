@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 
+
 def _load_module(path):
     """Load a Python file as a module and extract UPPERCASE vars."""
     spec = importlib.util.spec_from_file_location("cfg", path)
@@ -18,6 +19,7 @@ def _load_module(path):
 _defaults_path = Path(__file__).parent / 'defaults.config.py'
 _defaults = _load_module(_defaults_path)
 globals().update(_defaults)
+
 
 def load(config_path=None):
     """Load user config from Python file, overriding defaults."""
