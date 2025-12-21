@@ -2,6 +2,7 @@ import asyncio
 import urllib.parse
 import threading
 import time
+import json
 
 import websockets
 import sounddevice as sd
@@ -11,6 +12,28 @@ TEXT = "I think I’ll meet julie tomorrow\nin the park about 3pm."
 # TEXT = "You're an idiot for even asking that stupid question. Now leave me the fuck alone."
 SAMPLE_RATE = 24000
 CHANNELS = 1
+VOICE_PRESETS = {
+    "klara": {
+        "voice": "de-Spk1_woman",
+        "cfg": 2.0,
+        "step": 5
+    },
+    "emma": {
+        "voice": "en-Emma_woman",
+        "cfg": 2.8,
+        "step": 20
+    },
+    "dutch": {
+        "voice": "nl-Spk1_woman",
+        "cfg": 2.5,
+        "step": 5
+    },
+    "italian": {
+        "voice": "it-Spk0_woman",
+        "cfg": 2.9,
+        "step": 15
+    }
+}
 
 class PCMPlayer:
     def __init__(self, samplerate=24000, channels=1):
@@ -88,16 +111,32 @@ async def main(text, debug=False):
     player = PCMPlayer(samplerate=SAMPLE_RATE, channels=CHANNELS)
     player.start()
 
+    # Default settings
     voice = "de-Spk1_woman"
-    cfg=2.50
-    step=5
-
-    # voice = "nl-Spk1_woman"
-    voice = "de-Spk1_woman"
-    cfg=2.0
-    step=5
-    # uri = f"{BASE_URL}/stream?voice=it-Spk0_woman&cfg=2.90&step=15&text={urllib.parse.quote(TEXT)}"
-    # uri = f"{BASE_URL}/stream?voice=en-Emma_woman&cfg=2.80&step=20&text={urllib.parse.quote(TEXT)}"
+    cfg = 2.0
+    step = 5
+    
+    # Try to parse as JSON to get settings
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            # Load preset if name is specified
+            preset_name = data.get('name', '').lower()
+            if preset_name in VOICE_PRESETS:
+                preset = VOICE_PRESETS[preset_name]
+                voice = preset.get('voice', voice)
+                cfg = preset.get('cfg', cfg)
+                step = preset.get('step', step)
+            
+            # Extract text and allow individual settings to override preset
+            text = data.get('text', text)
+            voice = data.get('voice', voice)
+            cfg = data.get('cfg', cfg)
+            step = data.get('step', step)
+    except (json.JSONDecodeError, TypeError):
+        # Not JSON, treat as plain text
+        pass 
+    
     uri = (f"{BASE_URL}/stream?"
             f"voice={voice}"
             f"&cfg={cfg}"
