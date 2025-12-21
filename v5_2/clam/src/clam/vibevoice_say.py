@@ -111,9 +111,8 @@ async def main(text, debug=False):
                 if debug:
                     print("log:", message)
     # 👇 key bit: let the buffer finish playing before exit
-    await player.drain()
+    await player.drain(extra_tail=0.3)  # Increased to avoid cutting off the end
     player.stop()
-    time.sleep(.4)
 
 
 if __name__ == "__main__":
