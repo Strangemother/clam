@@ -70,7 +70,7 @@ def configure_parser(parser, subparsers=None):
                            default=None,
                            required=False,
                     )
-    parser_cli.add_argument("--service-name", "-e"
+    parser_cli.add_argument("--service-name", "-e",
                            type=str,
                            default=None,
                            required=False,
@@ -505,13 +505,14 @@ class TerminalClient(TerminalClientBase):
         return msg
 
     def get_service_name(self):
-        return self.prompt.raw_meta.get('service') or self.service_name
-    
+        return self.service_name
+
     def get_service(self):
         r = self.get_service_name()
+
         return config.SERVICES.get(r)
 
-    
+
     def continue_conversation(self, res):
         endpoint = get_service_endpoint('completions', self.get_service_name())
         resp =  self._post(endpoint, {
@@ -599,7 +600,7 @@ class TerminalClient(TerminalClientBase):
         print('.')
 
     def _post(self, url, payload, print_out=False):
-        service = self.get_service_name()
+        service = self.get_service()
         AGENT_ACCESS_KEY = do_key
 
         headers = {
@@ -642,6 +643,7 @@ class SpokenTerminalClient(TerminalClient):
 
     def say(self, value):
         self.parent_conn.send(value)
+        pass
 
 
 if __name__ == '__main__':

@@ -42,12 +42,16 @@ def worker(conn):
     # Check if there's a message in the pipe
     while running:
         print('Waiting for input.')
-        msg = conn.recv()
+        d = conn.recv()
+        msg = d
+        if isinstance(d, dict):
+            msg = d['text']
+
         if msg.lower() == 'stop':
             running = 0
             continue
         print(f"Worker received: {msg}")
-        async_run(msg)
+        async_run(d)
         print('Ran async worker')
         # running = 0
     conn.close()

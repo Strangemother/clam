@@ -32,6 +32,11 @@ VOICE_PRESETS = {
         "voice": "it-Spk0_woman",
         "cfg": 2.9,
         "step": 15
+    },
+    "german": {
+        "voice": "de-Spk0_man",
+        "cfg": 2.50,
+        "step": 13
     }
 }
 
@@ -112,10 +117,10 @@ async def main(text, debug=False):
     player.start()
 
     # Default settings
-    voice = "de-Spk1_woman"
-    cfg = 2.0
-    step = 5
-    
+    voice = "de-Spk0_man"
+    cfg = 2.50
+    step = 15
+
     # Try to parse as JSON to get settings
     try:
         data = json.loads(text)
@@ -127,7 +132,7 @@ async def main(text, debug=False):
                 voice = preset.get('voice', voice)
                 cfg = preset.get('cfg', cfg)
                 step = preset.get('step', step)
-            
+
             # Extract text and allow individual settings to override preset
             text = data.get('text', text)
             voice = data.get('voice', voice)
@@ -135,8 +140,8 @@ async def main(text, debug=False):
             step = data.get('step', step)
     except (json.JSONDecodeError, TypeError):
         # Not JSON, treat as plain text
-        pass 
-    
+        pass
+
     uri = (f"{BASE_URL}/stream?"
             f"voice={voice}"
             f"&cfg={cfg}"

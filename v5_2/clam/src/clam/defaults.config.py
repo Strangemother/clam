@@ -26,13 +26,10 @@ PROMPT_DIR = './prompts'
 
 # LLM Service endpoints
 SERVICE_HOST = 'http://192.168.50.60:1234'
-SERVICE_COMPLETIONS_PATH = '/v1/chat/completions'
+SERVICE_COMPLETIONS_PATH = '/v1/chat/completions/'
 SERVICE_GENERATE_PATH = '/api/generate/'
 
 DEFAULT_MODEL = None # Use service default model if not specified
-
-DO_INSTANCE = "https://krzw4vkfn6kemdbxvuozumkc.agents.do-ai.run"
-do_key = 'example_VKpEgXygPVXd972FugbqMYoBLNC1AStf'
 
 GRAPH = {
     # 'eric': ['dave'],
@@ -44,22 +41,33 @@ GRAPH = {
 
 SERVICES = {
     "lmstudio": {
-        "host": SERVICE_HOST,
-        "type": "network"
+        "host": 'http://192.168.50.60:1234',
+        "type": "network",
+        'service_completions_path': '/v1/chat/completions/',
+        'service_generate_path': '/api/generate/',
+
     },
 
     "digital_ocean.oss": {
-        "host": DO_INSTANCE,
+        "host": "https://krzw4vkfn6kemdbxvuozumkc.agents.do-ai.run",
         "type": "cloud",
+        'service_completions_path': '/api/v1/chat/completions',
+        # 'service_generate_path': '/api/generate/',
         "headers": {
-            "Authorization": f"Bearer {do_key}"
+            "Authorization": f"Bearer 1AfU63trYozPKE0mVH_5fuKH5pXow6dW"
         }
-    },    
+    },
     "digital_ocean.llama": {
-        "host": DO_INSTANCE,
-        "type": "cloud", 
+        "host": 'https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run',
+        "type": "cloud",
+        'service_completions_path': '/api/v1/chat/completions',
+        # 'service_generate_path': '/api/generate/',
         "headers": {
-            "Authorization": f"Bearer {do_key}"
+            "Authorization": f"Bearer TfbFFXnW-yZk0HkTYCwo4l7uQXCvzl5x"
         }
+    },
+
+    "voice": {
+        'host': "ws://192.168.50.60:42003"
     }
 }

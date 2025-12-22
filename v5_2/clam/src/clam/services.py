@@ -33,17 +33,21 @@ def get_service_endpoint(endpoint_type='completions', name='lmstudio'):
     Returns:
         Full URL to the service endpoint
     """
+    unit = config.SERVICES.get(name)
+    if unit is None:
+        print('Issue: no service in config named:', name)
+        unit = {}
+
     urlmap = {
-        'completions': config.SERVICE_COMPLETIONS_PATH,
-        'generate': config.SERVICE_GENERATE_PATH,
+        'completions': unit.get('service_completions_path', config.SERVICE_COMPLETIONS_PATH),
+        'generate': unit.get('service_generate_path', config.SERVICE_GENERATE_PATH),
     }
     path = urlmap.get(endpoint_type.lower())
     if path is None:
         raise ValueError(f"Unknown endpoint type: {endpoint_type}")
 
-    name = config.SERVICES.get(name)
-    HOST = name['host']
-    host = f"{HOST}/api"
+    HOST = unit['host']
+    host = f"{HOST}"
     # host = config.SERVICE_HOST
     # Ensure no double slashes
     if host.endswith('/'):
