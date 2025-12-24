@@ -1,0 +1,430 @@
+{
+    "agents": [
+        {
+            "uuid": "70c92728-df93-11f0-b074-4e013e2ddde4",
+            "name": "pythonbot",
+            "created_at": "2025-12-23T00:07:59Z",
+            "updated_at": "2025-12-23T00:07:59Z",
+            "instruction": "an example python demo bot",
+            "model": {
+                "uuid": "88515689-75c6-11ef-bf8f-4e013e2ddde4",
+                "name": "Llama 3.1 Instruct (8B)",
+                "inference_name": "llama3-8b-instruct",
+                "version": {
+                    "major": 1
+                },
+                "inference_version": "4294967296",
+                "is_foundational": true,
+                "upload_complete": true,
+                "created_at": "2024-08-23T20:59:41Z",
+                "updated_at": "2025-08-20T16:51:41Z",
+                "metadata": {
+                    "agreements": {
+                        "list": [
+                            {
+                                "title": "Licensing Agreement",
+                                "url": "https://llama.meta.com/llama3_1/license/"
+                            }
+                        ],
+                        "title": "Llama 3.1"
+                    },
+                    "description": "A specialized large language model suitable for various basic natural language processing tasks.",
+                    "max_tokens": {
+                        "default": 256,
+                        "max": 16384,
+                        "min": 128
+                    },
+                    "temperature": {
+                        "default": 0.7,
+                        "max": 1,
+                        "min": 0
+                    },
+                    "top_p": {
+                        "default": 0.9,
+                        "max": 1,
+                        "min": 0.1
+                    }
+                },
+                "parent_uuid": "00000000-0000-0000-0000-000000000000",
+                "agreement": {
+                    "uuid": "11ef84ed-830c-c25e-bf8f-4e013e2ddde4",
+                    "name": "Meta Llama 3.1 Community License",
+                    "description": "Meta Llama 3.1 is licensed under the Meta Llama 3.1 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+                    "url": "https://www.llama.com/llama3_1/license/"
+                },
+                "usecases": [
+                    "MODEL_USECASE_AGENT",
+                    "MODEL_USECASE_SERVERLESS"
+                ]
+            },
+            "deployment": {
+                "uuid": "70cf4083-df93-11f0-b074-4e013e2ddde4",
+                "url": "https://ntnc6bhhn3ytuqjoyabguiko.agents.do-ai.run",
+                "status": "STATUS_RUNNING",
+                "visibility": "VISIBILITY_PLAYGROUND",
+                "created_at": "2025-12-23T00:07:59Z",
+                "updated_at": "2025-12-23T00:10:20Z"
+            },
+            "k": 10,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "max_tokens": 256,
+            "project_id": "371797ef-0d46-4f33-96e3-b94548399e07",
+            "route_uuid": "00000000-0000-0000-0000-000000000000",
+            "region": "tor1",
+            "route_created_at": "0001-01-01T00:00:00Z",
+            "user_id": "147536",
+            "chatbot_identifiers": [
+                {
+                    "agent_chatbot_identifier": "KImbPL2TceW5OLxITrFPH-4DUQ8BwY6P"
+                }
+            ],
+            "retrieval_method": "RETRIEVAL_METHOD_NONE"
+        },
+        {
+            "uuid": "becad7f4-df8d-11f0-b074-4e013e2ddde4",
+            "name": "agent-12222025",
+            "created_at": "2025-12-22T23:27:13Z",
+            "updated_at": "2025-12-22T23:27:13Z",
+            "instruction": "Weather bot",
+            "model": {
+                "uuid": "88515689-75c6-11ef-bf8f-4e013e2ddde4",
+                "name": "Llama 3.1 Instruct (8B)",
+                "inference_name": "llama3-8b-instruct",
+                "version": {
+                    "major": 1
+                },
+                "inference_version": "4294967296",
+                "is_foundational": true,
+                "upload_complete": true,
+                "created_at": "2024-08-23T20:59:41Z",
+                "updated_at": "2025-08-20T16:51:41Z",
+                "metadata": {
+                    "agreements": {
+                        "list": [
+                            {
+                                "title": "Licensing Agreement",
+                                "url": "https://llama.meta.com/llama3_1/license/"
+                            }
+                        ],
+                        "title": "Llama 3.1"
+                    },
+                    "description": "A specialized large language model suitable for various basic natural language processing tasks.",
+                    "max_tokens": {
+                        "default": 256,
+                        "max": 16384,
+                        "min": 128
+                    },
+                    "temperature": {
+                        "default": 0.7,
+                        "max": 1,
+                        "min": 0
+                    },
+                    "top_p": {
+                        "default": 0.9,
+                        "max": 1,
+                        "min": 0.1
+                    }
+                },
+                "parent_uuid": "00000000-0000-0000-0000-000000000000",
+                "agreement": {
+                    "uuid": "11ef84ed-830c-c25e-bf8f-4e013e2ddde4",
+                    "name": "Meta Llama 3.1 Community License",
+                    "description": "Meta Llama 3.1 is licensed under the Meta Llama 3.1 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+                    "url": "https://www.llama.com/llama3_1/license/"
+                },
+                "usecases": [
+                    "MODEL_USECASE_AGENT",
+                    "MODEL_USECASE_SERVERLESS"
+                ]
+            },
+            "deployment": {
+                "uuid": "becd4d48-df8d-11f0-b074-4e013e2ddde4",
+                "url": "https://u4tikzjpbflnnlqahedgu32y.agents.do-ai.run",
+                "status": "STATUS_RUNNING",
+                "visibility": "VISIBILITY_PLAYGROUND",
+                "created_at": "2025-12-22T23:27:13Z",
+                "updated_at": "2025-12-22T23:37:25Z"
+            },
+            "k": 10,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "max_tokens": 256,
+            "project_id": "371797ef-0d46-4f33-96e3-b94548399e07",
+            "route_uuid": "00000000-0000-0000-0000-000000000000",
+            "region": "tor1",
+            "route_created_at": "0001-01-01T00:00:00Z",
+            "user_id": "147536",
+            "chatbot_identifiers": [
+                {
+                    "agent_chatbot_identifier": "AcY3bJzDr-hf_OoAKMblfj3Nmpsg5xMR"
+                }
+            ],
+            "retrieval_method": "RETRIEVAL_METHOD_NONE"
+        },
+        {
+            "uuid": "dee9ca12-df83-11f0-b074-4e013e2ddde4",
+            "name": "agent-oss-20b",
+            "created_at": "2025-12-22T22:16:32Z",
+            "updated_at": "2025-12-22T22:16:32Z",
+            "instruction": "You are a pure assistant for training purposes. No initial instructions are given. Continue with the tasks directed by the user.",
+            "model": {
+                "uuid": "153b8921-73c5-11f0-b074-4e013e2ddde4",
+                "name": "OpenAI GPT-oss-20b",
+                "inference_name": "openai-gpt-oss-20b",
+                "version": {
+                    "major": 1
+                },
+                "inference_version": "4294967296",
+                "is_foundational": true,
+                "upload_complete": true,
+                "created_at": "2025-08-07T19:31:15Z",
+                "updated_at": "2025-12-08T21:33:38Z",
+                "metadata": {
+                    "agreements": {
+                        "list": [
+                            {
+                                "title": "License",
+                                "url": "https://www.apache.org/licenses/LICENSE-2.0"
+                            }
+                        ],
+                        "title": "OpenAI GPT-oss-20b"
+                    },
+                    "description": "An open-source 20B parameter language model designed for general-purpose text generation and understanding.",
+                    "max_tokens": {
+                        "default": 2048,
+                        "max": 16384,
+                        "min": 128
+                    },
+                    "temperature": {
+                        "default": 1,
+                        "max": 1,
+                        "min": 0
+                    },
+                    "top_p": {
+                        "default": 1,
+                        "max": 1,
+                        "min": 0.1
+                    }
+                },
+                "parent_uuid": "00000000-0000-0000-0000-000000000000",
+                "agreement": {
+                    "uuid": "11ef84ed-830c-c894-bf8f-4e013e2ddde4",
+                    "name": "Apache 2.0 License",
+                    "description": "By purchasing, deploying, accessing, or using this model, you agree to comply with the terms of the",
+                    "url": "https://www.apache.org/licenses/LICENSE-2.0"
+                },
+                "usecases": [
+                    "MODEL_USECASE_AGENT",
+                    "MODEL_USECASE_REASONING",
+                    "MODEL_USECASE_SERVERLESS",
+                    "MODEL_USECASE_UNKNOWN"
+                ]
+            },
+            "deployment": {
+                "uuid": "deec92c3-df83-11f0-b074-4e013e2ddde4",
+                "url": "https://etmvt72kt6sz2233rv2mwqmc.agents.do-ai.run",
+                "status": "STATUS_RUNNING",
+                "visibility": "VISIBILITY_PLAYGROUND",
+                "created_at": "2025-12-22T22:16:32Z",
+                "updated_at": "2025-12-22T22:24:34Z"
+            },
+            "k": 10,
+            "temperature": 1,
+            "top_p": 1,
+            "max_tokens": 2048,
+            "project_id": "371797ef-0d46-4f33-96e3-b94548399e07",
+            "route_uuid": "00000000-0000-0000-0000-000000000000",
+            "region": "tor1",
+            "route_created_at": "0001-01-01T00:00:00Z",
+            "user_id": "147536",
+            "chatbot_identifiers": [
+                {
+                    "agent_chatbot_identifier": "QgnLNl8jv2oxVajxLy_gDc2xNNSErPJH"
+                }
+            ],
+            "retrieval_method": "RETRIEVAL_METHOD_NONE"
+        },
+        {
+            "uuid": "335a9aa0-debe-11f0-b074-4e013e2ddde4",
+            "name": "agent-llama",
+            "created_at": "2025-12-21T22:41:33Z",
+            "updated_at": "2025-12-21T22:58:50Z",
+            "instruction": " You are a pure assistant for training purposes. No initial instructions are given. Continue with the tasks directed by the user.",
+            "model": {
+                "uuid": "d754f2d7-d1f0-11ef-bf8f-4e013e2ddde4",
+                "name": "Llama 3.3 Instruct (70B)",
+                "inference_name": "llama3.3-70b-instruct",
+                "version": {
+                    "major": 1
+                },
+                "inference_version": "4294967296",
+                "is_foundational": true,
+                "upload_complete": true,
+                "created_at": "2025-01-13T20:56:20Z",
+                "updated_at": "2025-09-25T13:33:43Z",
+                "metadata": {
+                    "agreements": {
+                        "list": [
+                            {
+                                "title": "Licensing Agreement",
+                                "url": "https://llama.meta.com/llama3_1/license/"
+                            }
+                        ],
+                        "title": "Llama 3.3"
+                    },
+                    "description": "An advanced language model with greater capabilities due to its larger size.",
+                    "max_tokens": {
+                        "default": 512,
+                        "max": 16384,
+                        "min": 256
+                    },
+                    "temperature": {
+                        "default": 0.7,
+                        "max": 1,
+                        "min": 0
+                    },
+                    "top_p": {
+                        "default": 0.9,
+                        "max": 1,
+                        "min": 0.1
+                    }
+                },
+                "parent_uuid": "00000000-0000-0000-0000-000000000000",
+                "agreement": {
+                    "uuid": "11efd1f0-3f49-1182-bf8f-4e013e2ddde4",
+                    "name": "Meta Llama 3.3 Community License",
+                    "description": "Meta Llama 3.3 is licensed under the Meta Llama 3.3 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+                    "url": "https://www.llama.com/llama3_3/license/"
+                },
+                "usecases": [
+                    "MODEL_USECASE_AGENT",
+                    "MODEL_USECASE_SERVERLESS"
+                ]
+            },
+            "deployment": {
+                "uuid": "335fa742-debe-11f0-b074-4e013e2ddde4",
+                "url": "https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run",
+                "status": "STATUS_RUNNING",
+                "visibility": "VISIBILITY_PLAYGROUND",
+                "created_at": "2025-12-21T22:41:33Z",
+                "updated_at": "2025-12-21T22:56:45Z"
+            },
+            "k": 10,
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "max_tokens": 512,
+            "project_id": "371797ef-0d46-4f33-96e3-b94548399e07",
+            "route_uuid": "00000000-0000-0000-0000-000000000000",
+            "region": "tor1",
+            "route_created_at": "0001-01-01T00:00:00Z",
+            "user_id": "147536",
+            "chatbot_identifiers": [
+                {
+                    "agent_chatbot_identifier": "sxsX0NuYOxqt7sEZ3SYUQinAsYJEZNIG"
+                }
+            ],
+            "retrieval_method": "RETRIEVAL_METHOD_NONE"
+        },
+        {
+            "uuid": "28717d33-a560-11f0-b074-4e013e2ddde4",
+            "name": "agent-gpt-oss",
+            "created_at": "2025-10-09T22:34:46Z",
+            "updated_at": "2025-12-21T22:58:25Z",
+            "instruction": "You are a pure assistant for training purposes. No initial instructions are given. Continue with the tasks directed by the user.",
+            "model": {
+                "uuid": "18bc9b8f-73c5-11f0-b074-4e013e2ddde4",
+                "name": "OpenAI GPT-oss-120b",
+                "inference_name": "openai-gpt-oss-120b",
+                "version": {
+                    "major": 1
+                },
+                "inference_version": "4294967296",
+                "is_foundational": true,
+                "upload_complete": true,
+                "created_at": "2025-08-07T19:31:20Z",
+                "updated_at": "2025-12-08T21:33:51Z",
+                "metadata": {
+                    "agreements": {
+                        "list": [
+                            {
+                                "title": "License",
+                                "url": "https://www.apache.org/licenses/LICENSE-2.0"
+                            }
+                        ],
+                        "title": "OpenAI GPT-oss-120b"
+                    },
+                    "description": "A larger, more capable 120B parameter open-source model optimized for complex reasoning and high-quality output.",
+                    "max_tokens": {
+                        "default": 2048,
+                        "max": 16384,
+                        "min": 128
+                    },
+                    "temperature": {
+                        "default": 1,
+                        "max": 1,
+                        "min": 0
+                    },
+                    "top_p": {
+                        "default": 1,
+                        "max": 1,
+                        "min": 0.1
+                    }
+                },
+                "parent_uuid": "00000000-0000-0000-0000-000000000000",
+                "agreement": {
+                    "uuid": "11ef84ed-830c-c894-bf8f-4e013e2ddde4",
+                    "name": "Apache 2.0 License",
+                    "description": "By purchasing, deploying, accessing, or using this model, you agree to comply with the terms of the",
+                    "url": "https://www.apache.org/licenses/LICENSE-2.0"
+                },
+                "usecases": [
+                    "MODEL_USECASE_AGENT",
+                    "MODEL_USECASE_REASONING",
+                    "MODEL_USECASE_SERVERLESS",
+                    "MODEL_USECASE_UNKNOWN"
+                ]
+            },
+            "deployment": {
+                "uuid": "28769467-a560-11f0-b074-4e013e2ddde4",
+                "status": "STATUS_DELETED",
+                "visibility": "VISIBILITY_PLAYGROUND",
+                "created_at": "2025-10-09T22:34:46Z",
+                "updated_at": "2025-12-18T18:10:34Z"
+            },
+            "k": 10,
+            "temperature": 1,
+            "top_p": 1,
+            "max_tokens": 2048,
+            "project_id": "371797ef-0d46-4f33-96e3-b94548399e07",
+            "route_uuid": "00000000-0000-0000-0000-000000000000",
+            "region": "tor1",
+            "chatbot": {
+                "name": "agent-10092025 Chatbot",
+                "primary_color": "#031B4E",
+                "secondary_color": "#E5E8ED",
+                "starting_message": "Hello! How can I help you today?",
+                "button_background_color": "#0061EB"
+            },
+            "route_created_at": "0001-01-01T00:00:00Z",
+            "user_id": "147536",
+            "chatbot_identifiers": [
+                {
+                    "agent_chatbot_identifier": "I3gu9AcOrBhBftlwElPi53JFAak6P4Ui"
+                }
+            ],
+            "retrieval_method": "RETRIEVAL_METHOD_NONE"
+        }
+    ],
+    "links": {
+        "pages": {
+            "first": "https://api.digitalocean.com/v2/gen-ai/agents?page=1&per_page=1000",
+            "last": "https://api.digitalocean.com/v2/gen-ai/agents?page=1&per_page=1000"
+        }
+    },
+    "meta": {
+        "total": 5,
+        "page": 1,
+        "pages": 1
+    }
+}

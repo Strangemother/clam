@@ -9,10 +9,11 @@ import websocket
 
 # Configuration
 WS_URL = "ws://homeassistant.local:8123/api/websocket"
+
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNmUzM2VjNzM5OTI0YTViYjMxODY2YjcwMzY2ZmUzYSIsImlhdCI6MTc2NjM2NzE4NSwiZXhwIjoyMDgxNzI3MTg1fQ.vrnuSHn11oszndB1iW_R3JWLmmQDuvOqXR0OKYwvr0o"
 
-message_id = 1
 
+message_id = 1
 
 def on_message(ws, message):
     """Handle incoming WebSocket messages"""

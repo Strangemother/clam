@@ -1,3 +1,5 @@
 env/
 __pycache__
 */prompts/gf.prompt.md
+v5_2/do-bot/creds.py
+ha/_creds.py
