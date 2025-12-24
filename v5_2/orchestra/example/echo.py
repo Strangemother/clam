@@ -13,6 +13,7 @@ class EchoClient(Client):
 
 if __name__ == '__main__':
     EchoClient(
-        port=5001,
+        port=9202,
+        host='127.0.0.1',
         backbone_url='http://localhost:5009/',
     ).run()

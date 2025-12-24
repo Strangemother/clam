@@ -7,7 +7,7 @@ import json
 import websocket
 
 WS_URL = "ws://homeassistant.local:8123/api/websocket"
-ACCESS_TOKEN = "YOUR_ACCESS_TOKEN_HERE"
+ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNmUzM2VjNzM5OTI0YTViYjMxODY2YjcwMzY2ZmUzYSIsImlhdCI6MTc2NjM2NzE4NSwiZXhwIjoyMDgxNzI3MTg1fQ.vrnuSHn11oszndB1iW_R3JWLmmQDuvOqXR0OKYwvr0o"
 
 # Connect
 ws = websocket.create_connection(WS_URL)

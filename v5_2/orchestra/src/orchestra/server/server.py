@@ -78,22 +78,26 @@ def dispatch_task():
 def receive_job_result():
     """Receive job result from a client."""
     data = request.get_data()
-    receipt_id = request.headers.get('X-Receipt-ID', 'unknown')
+    # receipt_id = request.headers.get('X-Receipt-ID', 'unknown')
     client_id = request.headers.get('X-Client-ID', 'unknown')
 
     # Resolve friendly name
     name = register.get(client_id, {}).get('name', 'unknown')
-
     # Forward to graphed clients
     dests = graph_get(name, [])
+    print('\nServer received job from', name, ' - sending to', dests)
+
     for other in dests:
         other_info = register.get(other)
         if other_info is None:
+            print('Register information for', other, 'does not exist')
             continue
         url = other_info.get('url')
         if url:
             try:
-                requests.post(url, data=data, timeout=10)
+                print(' - Dispatching job to', url)
+                res = requests.post(url, data=data, timeout=3)
+                print('Result:', res)
             except requests.RequestException:
                 pass
 
