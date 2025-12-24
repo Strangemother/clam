@@ -1,5 +1,5 @@
 """Example client that echoes jobs back."""
-from client.client import Client
+from orchestra.client import Client
 import time
 
 

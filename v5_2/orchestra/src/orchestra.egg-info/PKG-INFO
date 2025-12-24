@@ -1,3 +1,28 @@
+Metadata-Version: 2.4
+Name: orchestra
+Version: 0.1.0
+Summary: A lightweight client-server orchestration framework
+Author: Strangemother
+License: MIT
+Project-URL: Homepage, https://github.com/Strangemother/clam
+Project-URL: Repository, https://github.com/Strangemother/clam
+Keywords: orchestration,distributed,client,server
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: flask>=2.0
+Requires-Dist: requests>=2.25
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+
 # Readme
 
 Orchestra is a simple orchestration server allowing clients to communicate through a central server.

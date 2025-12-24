@@ -97,6 +97,7 @@ def home():
     """Home endpoint."""
     return jsonify(status='ok')
 
+
 @app.route('/orchestra')
 def orchestra():
     """example backbone endpoint."""
@@ -112,6 +113,7 @@ def jobs():
 from datetime import datetime
 
 @app.route('/receive', methods=['POST'])
+@app.route('/job', methods=['POST'])
 def receive():
     """Receive job (likely from the server), queue it for processing."""
     data = request.data
