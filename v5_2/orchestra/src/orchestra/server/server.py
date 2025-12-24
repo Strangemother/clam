@@ -41,6 +41,7 @@ def register_unit():
     data['id'] = unit_id
     data['registered_at'] = datetime.now(timezone.utc).isoformat()
     register[unit_id] = data
+    import pdb; pdb.set_trace()  # breakpoint 01f03555 //
 
     name = data.get('name') or unit_id
     register[name] = data
