@@ -56,7 +56,6 @@ def register_unit():
         data['url'] = f"http://{remote_ip}:{data['port']}/receive"
     
     register[unit_id] = data
-    import pdb; pdb.set_trace()  # breakpoint 01f03555 //
 
     name = data.get('name') or unit_id
     register[name] = data
