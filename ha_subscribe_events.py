@@ -9,7 +9,7 @@ import websocket
 
 # Configuration
 WS_URL = "ws://homeassistant.local:8123/api/websocket"
-ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhNDQ3ZGJjZjgzNDE0NzFkYjBiOWE1ZGQzNDRlY2Q0OSIsImlhdCI6MTc2NjM2NTM3OCwiZXhwIjoxNzY2MzY3MTc4fQ.4WkjY7xaJsCIBWc5AgXJmXsNRF33DFOuxg6sRbUvEl0"
+ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNmUzM2VjNzM5OTI0YTViYjMxODY2YjcwMzY2ZmUzYSIsImlhdCI6MTc2NjM2NzE4NSwiZXhwIjoyMDgxNzI3MTg1fQ.vrnuSHn11oszndB1iW_R3JWLmmQDuvOqXR0OKYwvr0o"
 
 message_id = 1
 
@@ -17,12 +17,12 @@ message_id = 1
 def on_message(ws, message):
     """Handle incoming WebSocket messages"""
     global message_id
-    
+
     data = json.loads(message)
     msg_type = data.get("type")
-    
+
     print(f"Received: {msg_type}")
-    
+
     if msg_type == "auth_required":
         # Step 1: Authenticate with access token
         auth_msg = {
@@ -31,7 +31,7 @@ def on_message(ws, message):
         }
         ws.send(json.dumps(auth_msg))
         print("Sent authentication")
-    
+
     elif msg_type == "auth_ok":
         # Step 2: Subscribe to all events
         subscribe_msg = {
@@ -42,10 +42,10 @@ def on_message(ws, message):
         ws.send(json.dumps(subscribe_msg))
         print(f"Subscribed to events (id: {message_id})")
         message_id += 1
-    
+
     elif msg_type == "result":
         print(f"Result: success={data.get('success')}")
-    
+
     elif msg_type == "event":
         # Step 3: Print event messages
         event = data.get("event", {})
@@ -54,7 +54,7 @@ def on_message(ws, message):
         print(f"EVENT: {event_type}")
         print(json.dumps(event, indent=2))
         print('='*50)
-    
+
     elif msg_type == "auth_invalid":
         print(f"Authentication failed: {data.get('message')}")
         ws.close()
@@ -77,7 +77,7 @@ def on_open(ws):
 
 if __name__ == "__main__":
     print(f"Connecting to {WS_URL}...")
-    
+
     ws = websocket.WebSocketApp(
         WS_URL,
         on_open=on_open,
@@ -85,6 +85,6 @@ if __name__ == "__main__":
         on_error=on_error,
         on_close=on_close
     )
-    
+
     # Run forever (blocking)
     ws.run_forever()
