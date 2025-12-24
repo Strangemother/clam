@@ -40,6 +40,21 @@ def register_unit():
     unit_id = data.get('id') or str(uuid.uuid4())
     data['id'] = unit_id
     data['registered_at'] = datetime.now(timezone.utc).isoformat()
+    
+    # Capture the client's actual IP for callback URLs
+    remote_ip = request.remote_addr
+    data['remote_addr'] = remote_ip
+    
+    # If client registered with 0.0.0.0 or no host, use the remote_addr
+    if 'url' in data:
+        url = data['url']
+        if '://0.0.0.0:' in url or '://:' in url:
+            # Replace 0.0.0.0 with actual remote IP
+            data['url'] = url.replace('://0.0.0.0:', f'://{remote_ip}:').replace('://:', f'://{remote_ip}:')
+    elif 'port' in data:
+        # Build URL from remote_addr and port
+        data['url'] = f"http://{remote_ip}:{data['port']}/receive"
+    
     register[unit_id] = data
     import pdb; pdb.set_trace()  # breakpoint 01f03555 //
 

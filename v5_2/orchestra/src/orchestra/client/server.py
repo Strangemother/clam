@@ -7,6 +7,7 @@ Runs in a subprocess, manages receipts and job tracking.
 - Listens for results from main process
 - Sends results to receipt URLs
 """
+import socket
 import threading
 import uuid
 from datetime import datetime
@@ -99,10 +100,51 @@ def receive():
     return jsonify(ok=True, count=len(pending_jobs), job_id=job_id)
 
 
+def _get_reachable_ip(backbone_url=None):
+    """
+    Get the IP address that can be used to reach this machine.
+    
+    If backbone_url is provided, determines which local IP can reach that host.
+    Otherwise, falls back to the default route IP or localhost.
+    """
+    # Try to determine which interface would be used to reach the backbone
+    if backbone_url:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(backbone_url)
+            backbone_host = parsed.hostname or 'localhost'
+            backbone_port = parsed.port or 80
+            
+            # Create a socket and connect to backbone to see which local IP is used
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                # UDP connect doesn't actually send packets, just determines route
+                s.connect((backbone_host, backbone_port))
+                return s.getsockname()[0]
+        except Exception:
+            pass
+    
+    # Fallback: get default route IP
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(('8.8.8.8', 80))
+            return s.getsockname()[0]
+    except Exception:
+        pass
+    
+    # Last resort
+    return '127.0.0.1'
+
+
 def _register_client(data):
     """Register the client with the backbone server."""
     host = data.get('host', '127.0.0.1')
     port = data.get('port', 5001)
+    backbone_url = data.get('backbone_url')
+    
+    # If host is 0.0.0.0 (listen on all), find the actual reachable IP
+    if host in ('0.0.0.0', ''):
+        host = _get_reachable_ip(backbone_url)
+    
     data.setdefault('url', f'http://{host}:{port}/receive')
 
     backbone_url = data.get('backbone_url')
