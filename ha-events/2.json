@@ -1,0 +1,1023 @@
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "245.865",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:00:14.055227+00:00",
+      "last_reported": "2025-12-22T21:00:14.055227+00:00",
+      "last_updated": "2025-12-22T21:00:14.055227+00:00",
+      "context": {
+        "id": "01KD3XSNV7CHR558Z97CBGVENW",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "245.917",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:00:24.225657+00:00",
+      "last_reported": "2025-12-22T21:00:24.225657+00:00",
+      "last_updated": "2025-12-22T21:00:24.225657+00:00",
+      "context": {
+        "id": "01KD3XSZS1W6EMPCN0JAR6AFME",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:00:24.225657+00:00",
+  "context": {
+    "id": "01KD3XSZS1W6EMPCN0JAR6AFME",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_plug_effective_voltage",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_plug_effective_voltage",
+      "state": "246.071",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Plug Effective voltage"
+      },
+      "last_changed": "2025-12-22T21:00:17.346355+00:00",
+      "last_reported": "2025-12-22T21:00:17.346355+00:00",
+      "last_updated": "2025-12-22T21:00:17.346355+00:00",
+      "context": {
+        "id": "01KD3XSS22X3NVZXXCRTT9D0NA",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_plug_effective_voltage",
+      "state": "246.372",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Plug Effective voltage"
+      },
+      "last_changed": "2025-12-22T21:00:27.345803+00:00",
+      "last_reported": "2025-12-22T21:00:27.345803+00:00",
+      "last_updated": "2025-12-22T21:00:27.345803+00:00",
+      "context": {
+        "id": "01KD3XT2THCPXTSDS09YR3QGJ3",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:00:27.345803+00:00",
+  "context": {
+    "id": "01KD3XT2THCPXTSDS09YR3QGJ3",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+      "state": "245.434",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (1)"
+      },
+      "last_changed": "2025-12-22T21:00:18.143684+00:00",
+      "last_reported": "2025-12-22T21:00:18.143684+00:00",
+      "last_updated": "2025-12-22T21:00:18.143684+00:00",
+      "context": {
+        "id": "01KD3XSSTZFSNQN9ASRQAE1821",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+      "state": "245.074",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (1)"
+      },
+      "last_changed": "2025-12-22T21:00:28.135711+00:00",
+      "last_reported": "2025-12-22T21:00:28.135711+00:00",
+      "last_updated": "2025-12-22T21:00:28.135711+00:00",
+      "context": {
+        "id": "01KD3XT3K7HKYV8173003NT1Q5",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:00:28.135711+00:00",
+  "context": {
+    "id": "01KD3XT3K7HKYV8173003NT1Q5",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+      "state": "0.022",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "A",
+        "device_class": "current",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective current (4)"
+      },
+      "last_changed": "2025-12-22T21:01:44.547209+00:00",
+      "last_reported": "2025-12-22T21:01:44.547209+00:00",
+      "last_updated": "2025-12-22T21:01:44.547209+00:00",
+      "context": {
+        "id": "01KD3XWE73ECJ8NE2TG8AQD08R",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+      "state": "0.023",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "A",
+        "device_class": "current",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective current (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.105413+00:00",
+      "last_reported": "2025-12-22T21:01:54.105413+00:00",
+      "last_updated": "2025-12-22T21:01:54.105413+00:00",
+      "context": {
+        "id": "01KD3XWQHSAH2D4YMS475WFVX9",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:01:54.105413+00:00",
+  "context": {
+    "id": "01KD3XWQHSAH2D4YMS475WFVX9",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+      "state": "1.952",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "friendly_name": "Smart Wi-Fi Power Strip Power (4)"
+      },
+      "last_changed": "2025-12-22T21:01:44.545140+00:00",
+      "last_reported": "2025-12-22T21:01:44.545140+00:00",
+      "last_updated": "2025-12-22T21:01:44.545140+00:00",
+      "context": {
+        "id": "01KD3XWE71C7WXZ2S7W2QT8BDX",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+      "state": "1.996",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "friendly_name": "Smart Wi-Fi Power Strip Power (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.105864+00:00",
+      "last_reported": "2025-12-22T21:01:54.105864+00:00",
+      "last_updated": "2025-12-22T21:01:54.105864+00:00",
+      "context": {
+        "id": "01KD3XWQHSAH54NNBWQZ7CXG71",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:01:54.105864+00:00",
+  "context": {
+    "id": "01KD3XWQHSAH54NNBWQZ7CXG71",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "244.951",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:01:44.545501+00:00",
+      "last_reported": "2025-12-22T21:01:44.545501+00:00",
+      "last_updated": "2025-12-22T21:01:44.545501+00:00",
+      "context": {
+        "id": "01KD3XWE71XDSA0Q1FC1A2B3NN",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "245.188",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.106157+00:00",
+      "last_reported": "2025-12-22T21:01:54.106157+00:00",
+      "last_updated": "2025-12-22T21:01:54.106157+00:00",
+      "context": {
+        "id": "01KD3XWQHT8FT1GRT8X3G79KP7",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:01:54.106157+00:00",
+  "context": {
+    "id": "01KD3XWQHT8FT1GRT8X3G79KP7",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+    "old_state": {
+      "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+      "state": "on",
+      "attributes": {
+        "device_class": "outlet",
+        "friendly_name": "Smart Wi-Fi Power Strip Switch (4)"
+      },
+      "last_changed": "2025-12-22T19:05:56.141649+00:00",
+      "last_reported": "2025-12-22T19:05:56.141649+00:00",
+      "last_updated": "2025-12-22T19:05:56.141649+00:00",
+      "context": {
+        "id": "01KD3Q8CNDJ86JTZEKT6MNBTCA",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+      "state": "off",
+      "attributes": {
+        "device_class": "outlet",
+        "friendly_name": "Smart Wi-Fi Power Strip Switch (4)"
+      },
+      "last_changed": "2025-12-22T21:01:57.651032+00:00",
+      "last_reported": "2025-12-22T21:01:57.651032+00:00",
+      "last_updated": "2025-12-22T21:01:57.651032+00:00",
+      "context": {
+        "id": "01KD3XWV0KZ5HXMTDFBWKDVZVH",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:01:57.651032+00:00",
+  "context": {
+    "id": "01KD3XWV0KZ5HXMTDFBWKDVZVH",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+      "state": "244.6",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (1)"
+      },
+      "last_changed": "2025-12-22T21:01:48.051347+00:00",
+      "last_reported": "2025-12-22T21:01:48.051347+00:00",
+      "last_updated": "2025-12-22T21:01:48.051347+00:00",
+      "context": {
+        "id": "01KD3XWHMKG8EA4YGPDYB649ZS",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_1",
+      "state": "245.126",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (1)"
+      },
+      "last_changed": "2025-12-22T21:01:58.661999+00:00",
+      "last_reported": "2025-12-22T21:01:58.661999+00:00",
+      "last_updated": "2025-12-22T21:01:58.661999+00:00",
+      "context": {
+        "id": "01KD3XWW05CFPXN40M9N6WR61A",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:01:58.661999+00:00",
+  "context": {
+    "id": "01KD3XWW05CFPXN40M9N6WR61A",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_battery_level",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_battery_level",
+      "state": "61",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "icon": "mdi:battery-charging-60",
+        "friendly_name": "LM-G710 Battery level"
+      },
+      "last_changed": "2025-12-22T21:01:34.348255+00:00",
+      "last_reported": "2025-12-22T21:01:34.348255+00:00",
+      "last_updated": "2025-12-22T21:01:34.348255+00:00",
+      "context": {
+        "id": "01KD3XW48CQJTACQH249QHPD3Z",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_battery_level",
+      "state": "61",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "icon": "mdi:battery-60",
+        "friendly_name": "LM-G710 Battery level"
+      },
+      "last_changed": "2025-12-22T21:01:34.348255+00:00",
+      "last_reported": "2025-12-22T21:02:00.098097+00:00",
+      "last_updated": "2025-12-22T21:02:00.098097+00:00",
+      "context": {
+        "id": "01KD3XWXD2FH8CFKXWT9F0CYVX",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:00.098097+00:00",
+  "context": {
+    "id": "01KD3XWXD2FH8CFKXWT9F0CYVX",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_battery_state",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_battery_state",
+      "state": "charging",
+      "attributes": {
+        "options": [
+          "charging",
+          "discharging",
+          "full",
+          "not_charging"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery-plus",
+        "friendly_name": "LM-G710 Battery state"
+      },
+      "last_changed": "2025-12-22T19:43:45.887678+00:00",
+      "last_reported": "2025-12-22T19:43:45.887678+00:00",
+      "last_updated": "2025-12-22T19:43:45.887678+00:00",
+      "context": {
+        "id": "01KD3SDN6ZKH3Z34J643KV77DC",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_battery_state",
+      "state": "discharging",
+      "attributes": {
+        "options": [
+          "charging",
+          "discharging",
+          "full",
+          "not_charging"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery-minus",
+        "friendly_name": "LM-G710 Battery state"
+      },
+      "last_changed": "2025-12-22T21:02:00.098373+00:00",
+      "last_reported": "2025-12-22T21:02:00.098373+00:00",
+      "last_updated": "2025-12-22T21:02:00.098373+00:00",
+      "context": {
+        "id": "01KD3XWXD2RTXDJQ3TP30B98VA",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:00.098373+00:00",
+  "context": {
+    "id": "01KD3XWXD2RTXDJQ3TP30B98VA",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_charger_type",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_charger_type",
+      "state": "ac",
+      "attributes": {
+        "options": [
+          "ac",
+          "usb",
+          "wireless",
+          "dock",
+          "none"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:power-plug",
+        "friendly_name": "LM-G710 Charger type"
+      },
+      "last_changed": "2025-12-22T19:43:45.887860+00:00",
+      "last_reported": "2025-12-22T19:43:45.887860+00:00",
+      "last_updated": "2025-12-22T19:43:45.887860+00:00",
+      "context": {
+        "id": "01KD3SDN6ZAPW45P7SD3J4TH1C",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_charger_type",
+      "state": "none",
+      "attributes": {
+        "options": [
+          "ac",
+          "usb",
+          "wireless",
+          "dock",
+          "none"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery",
+        "friendly_name": "LM-G710 Charger type"
+      },
+      "last_changed": "2025-12-22T21:02:00.098533+00:00",
+      "last_reported": "2025-12-22T21:02:00.098533+00:00",
+      "last_updated": "2025-12-22T21:02:00.098533+00:00",
+      "context": {
+        "id": "01KD3XWXD2PZX2JSJFQNBFNDSP",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:00.098533+00:00",
+  "context": {
+    "id": "01KD3XWXD2PZX2JSJFQNBFNDSP",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_2",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_2",
+      "state": "244.599",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (2)"
+      },
+      "last_changed": "2025-12-22T21:01:50.188385+00:00",
+      "last_reported": "2025-12-22T21:01:50.188385+00:00",
+      "last_updated": "2025-12-22T21:01:50.188385+00:00",
+      "context": {
+        "id": "01KD3XWKQCFMSMPYT0BCG6A3T8",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_2",
+      "state": "244.912",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (2)"
+      },
+      "last_changed": "2025-12-22T21:02:00.172104+00:00",
+      "last_reported": "2025-12-22T21:02:00.172104+00:00",
+      "last_updated": "2025-12-22T21:02:00.172104+00:00",
+      "context": {
+        "id": "01KD3XWXFC5C65GK65DQQHXCC7",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:00.172104+00:00",
+  "context": {
+    "id": "01KD3XWXFC5C65GK65DQQHXCC7",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+    "old_state": {
+      "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+      "state": "off",
+      "attributes": {
+        "device_class": "outlet",
+        "friendly_name": "Smart Wi-Fi Power Strip Switch (4)"
+      },
+      "last_changed": "2025-12-22T21:01:57.651032+00:00",
+      "last_reported": "2025-12-22T21:01:57.651032+00:00",
+      "last_updated": "2025-12-22T21:01:57.651032+00:00",
+      "context": {
+        "id": "01KD3XWV0KZ5HXMTDFBWKDVZVH",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "switch.smart_wi_fi_power_strip_switch_4",
+      "state": "on",
+      "attributes": {
+        "device_class": "outlet",
+        "friendly_name": "Smart Wi-Fi Power Strip Switch (4)"
+      },
+      "last_changed": "2025-12-22T21:02:01.181682+00:00",
+      "last_reported": "2025-12-22T21:02:01.181682+00:00",
+      "last_updated": "2025-12-22T21:02:01.181682+00:00",
+      "context": {
+        "id": "01KD3XWYEX8474Y5KJB64D8Y49",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:01.181682+00:00",
+  "context": {
+    "id": "01KD3XWYEX8474Y5KJB64D8Y49",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_3",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_3",
+      "state": "244.991",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (3)"
+      },
+      "last_changed": "2025-12-22T21:01:52.054689+00:00",
+      "last_reported": "2025-12-22T21:01:52.054689+00:00",
+      "last_updated": "2025-12-22T21:01:52.054689+00:00",
+      "context": {
+        "id": "01KD3XWNHP74P50FK4HM8RG87C",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_3",
+      "state": "245.419",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (3)"
+      },
+      "last_changed": "2025-12-22T21:02:02.196597+00:00",
+      "last_reported": "2025-12-22T21:02:02.196597+00:00",
+      "last_updated": "2025-12-22T21:02:02.196597+00:00",
+      "context": {
+        "id": "01KD3XWZEMEHVC0XY7H39MDBYG",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:02.196597+00:00",
+  "context": {
+    "id": "01KD3XWZEMEHVC0XY7H39MDBYG",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_battery_level",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_battery_level",
+      "state": "61",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "icon": "mdi:battery-60",
+        "friendly_name": "LM-G710 Battery level"
+      },
+      "last_changed": "2025-12-22T21:01:34.348255+00:00",
+      "last_reported": "2025-12-22T21:02:00.098097+00:00",
+      "last_updated": "2025-12-22T21:02:00.098097+00:00",
+      "context": {
+        "id": "01KD3XWXD2FH8CFKXWT9F0CYVX",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_battery_level",
+      "state": "61",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "icon": "mdi:battery-charging-60",
+        "friendly_name": "LM-G710 Battery level"
+      },
+      "last_changed": "2025-12-22T21:01:34.348255+00:00",
+      "last_reported": "2025-12-22T21:02:02.829162+00:00",
+      "last_updated": "2025-12-22T21:02:02.829162+00:00",
+      "context": {
+        "id": "01KD3XX02D1BXBVDAKZA99MBBN",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:02.829162+00:00",
+  "context": {
+    "id": "01KD3XX02D1BXBVDAKZA99MBBN",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_battery_state",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_battery_state",
+      "state": "discharging",
+      "attributes": {
+        "options": [
+          "charging",
+          "discharging",
+          "full",
+          "not_charging"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery-minus",
+        "friendly_name": "LM-G710 Battery state"
+      },
+      "last_changed": "2025-12-22T21:02:00.098373+00:00",
+      "last_reported": "2025-12-22T21:02:00.098373+00:00",
+      "last_updated": "2025-12-22T21:02:00.098373+00:00",
+      "context": {
+        "id": "01KD3XWXD2RTXDJQ3TP30B98VA",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_battery_state",
+      "state": "charging",
+      "attributes": {
+        "options": [
+          "charging",
+          "discharging",
+          "full",
+          "not_charging"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery-plus",
+        "friendly_name": "LM-G710 Battery state"
+      },
+      "last_changed": "2025-12-22T21:02:02.829460+00:00",
+      "last_reported": "2025-12-22T21:02:02.829460+00:00",
+      "last_updated": "2025-12-22T21:02:02.829460+00:00",
+      "context": {
+        "id": "01KD3XX02DRK7A61QET6F6GMG3",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:02.829460+00:00",
+  "context": {
+    "id": "01KD3XX02DRK7A61QET6F6GMG3",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.lm_g710_charger_type",
+    "old_state": {
+      "entity_id": "sensor.lm_g710_charger_type",
+      "state": "none",
+      "attributes": {
+        "options": [
+          "ac",
+          "usb",
+          "wireless",
+          "dock",
+          "none"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:battery",
+        "friendly_name": "LM-G710 Charger type"
+      },
+      "last_changed": "2025-12-22T21:02:00.098533+00:00",
+      "last_reported": "2025-12-22T21:02:00.098533+00:00",
+      "last_updated": "2025-12-22T21:02:00.098533+00:00",
+      "context": {
+        "id": "01KD3XWXD2PZX2JSJFQNBFNDSP",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.lm_g710_charger_type",
+      "state": "ac",
+      "attributes": {
+        "options": [
+          "ac",
+          "usb",
+          "wireless",
+          "dock",
+          "none"
+        ],
+        "device_class": "enum",
+        "icon": "mdi:power-plug",
+        "friendly_name": "LM-G710 Charger type"
+      },
+      "last_changed": "2025-12-22T21:02:02.829608+00:00",
+      "last_reported": "2025-12-22T21:02:02.829608+00:00",
+      "last_updated": "2025-12-22T21:02:02.829608+00:00",
+      "context": {
+        "id": "01KD3XX02DAVFDJPS5S1F9X328",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:02.829608+00:00",
+  "context": {
+    "id": "01KD3XX02DAVFDJPS5S1F9X328",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+      "state": "0.023",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "A",
+        "device_class": "current",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective current (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.105413+00:00",
+      "last_reported": "2025-12-22T21:01:54.105413+00:00",
+      "last_updated": "2025-12-22T21:01:54.105413+00:00",
+      "context": {
+        "id": "01KD3XWQHSAH2D4YMS475WFVX9",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_current_4",
+      "state": "0.033",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "A",
+        "device_class": "current",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective current (4)"
+      },
+      "last_changed": "2025-12-22T21:02:04.086411+00:00",
+      "last_reported": "2025-12-22T21:02:04.086411+00:00",
+      "last_updated": "2025-12-22T21:02:04.086411+00:00",
+      "context": {
+        "id": "01KD3XX19PEJE6BCJ02ECWQMMN",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:04.086411+00:00",
+  "context": {
+    "id": "01KD3XX19PEJE6BCJ02ECWQMMN",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+      "state": "1.996",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "friendly_name": "Smart Wi-Fi Power Strip Power (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.105864+00:00",
+      "last_reported": "2025-12-22T21:01:54.105864+00:00",
+      "last_updated": "2025-12-22T21:01:54.105864+00:00",
+      "context": {
+        "id": "01KD3XWQHSAH54NNBWQZ7CXG71",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_power_4",
+      "state": "3.307",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "friendly_name": "Smart Wi-Fi Power Strip Power (4)"
+      },
+      "last_changed": "2025-12-22T21:02:04.086864+00:00",
+      "last_reported": "2025-12-22T21:02:04.086864+00:00",
+      "last_updated": "2025-12-22T21:02:04.086864+00:00",
+      "context": {
+        "id": "01KD3XX19P9TDRWN34TZAENP9G",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:04.086864+00:00",
+  "context": {
+    "id": "01KD3XX19P9TDRWN34TZAENP9G",
+    "parent_id": null,
+    "user_id": null
+  }
+}
+{
+  "event_type": "state_changed",
+  "data": {
+    "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+    "old_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "245.188",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:01:54.106157+00:00",
+      "last_reported": "2025-12-22T21:01:54.106157+00:00",
+      "last_updated": "2025-12-22T21:01:54.106157+00:00",
+      "context": {
+        "id": "01KD3XWQHT8FT1GRT8X3G79KP7",
+        "parent_id": null,
+        "user_id": null
+      }
+    },
+    "new_state": {
+      "entity_id": "sensor.smart_wi_fi_power_strip_effective_voltage_4",
+      "state": "246.009",
+      "attributes": {
+        "state_class": "measurement",
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "friendly_name": "Smart Wi-Fi Power Strip Effective voltage (4)"
+      },
+      "last_changed": "2025-12-22T21:02:04.087168+00:00",
+      "last_reported": "2025-12-22T21:02:04.087168+00:00",
+      "last_updated": "2025-12-22T21:02:04.087168+00:00",
+      "context": {
+        "id": "01KD3XX19QR38KQ6P3SEEEMDSX",
+        "parent_id": null,
+        "user_id": null
+      }
+    }
+  },
+  "origin": "LOCAL",
+  "time_fired": "2025-12-22T21:02:04.087168+00:00",
+  "context": {
+    "id": "01KD3XX19QR38KQ6P3SEEEMDSX",
+    "parent_id": null,
+    "user_id": null
+  }
+}

@@ -1,0 +1,625 @@
+{
+  "models": [
+    {
+      "uuid": "18bc9b8f-73c5-11f0-b074-4e013e2ddde4",
+      "name": "OpenAI GPT-oss-120b",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-08-07T19:31:20Z",
+      "updated_at": "2025-12-08T21:33:51Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-c894-bf8f-4e013e2ddde4",
+        "name": "Apache 2.0 License",
+        "description": "By purchasing, deploying, accessing, or using this model, you agree to comply with the terms of the",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "id": "openai-gpt-oss-120b"
+    },
+    {
+      "uuid": "153b8921-73c5-11f0-b074-4e013e2ddde4",
+      "name": "OpenAI GPT-oss-20b",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-08-07T19:31:15Z",
+      "updated_at": "2025-12-08T21:33:38Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-c894-bf8f-4e013e2ddde4",
+        "name": "Apache 2.0 License",
+        "description": "By purchasing, deploying, accessing, or using this model, you agree to comply with the terms of the",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "id": "openai-gpt-oss-20b"
+    },
+    {
+      "uuid": "d754f2d7-d1f0-11ef-bf8f-4e013e2ddde4",
+      "name": "Llama 3.3 Instruct (70B)",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-01-13T20:56:20Z",
+      "updated_at": "2025-09-25T13:33:43Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11efd1f0-3f49-1182-bf8f-4e013e2ddde4",
+        "name": "Meta Llama 3.3 Community License",
+        "description": "Meta Llama 3.3 is licensed under the Meta Llama 3.3 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+        "url": "https://www.llama.com/llama3_3/license/"
+      },
+      "id": "llama3.3-70b-instruct"
+    },
+    {
+      "uuid": "88515689-75c6-11ef-bf8f-4e013e2ddde4",
+      "name": "Llama 3.1 Instruct (8B)",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2024-08-23T20:59:41Z",
+      "updated_at": "2025-08-20T16:51:41Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-c25e-bf8f-4e013e2ddde4",
+        "name": "Meta Llama 3.1 Community License",
+        "description": "Meta Llama 3.1 is licensed under the Meta Llama 3.1 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+        "url": "https://www.llama.com/llama3_1/license/"
+      },
+      "id": "llama3-8b-instruct"
+    },
+    {
+      "uuid": "b6b7ac88-e575-11ef-bf8f-4e013e2ddde4",
+      "name": "DeepSeek R1 Distill Llama 70B",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-02-07T17:05:21Z",
+      "updated_at": "2025-08-20T16:52:01Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11f0041e-dfe5-f590-bf8f-4e013e2ddde4",
+        "name": "DeepSeek license language",
+        "description": "By purchasing, deploying, accessing or using DeepSeek models, you agree to comply with the",
+        "url": "https://github.com/deepseek-ai/DeepSeek-R1/blob/main/LICENSE"
+      },
+      "id": "deepseek-r1-distill-llama-70b"
+    },
+    {
+      "uuid": "84ae55b1-6888-11f0-bf8f-4e013e2ddde4",
+      "name": "Anthropic Claude Opus 4",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-07-24T12:19:59Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-opus-4"
+    },
+    {
+      "uuid": "84ae51c6-6888-11f0-bf8f-4e013e2ddde4",
+      "name": "Anthropic Claude Sonnet 4",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-07-24T12:19:59Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-sonnet-4"
+    },
+    {
+      "uuid": "28bada65-0e66-11f0-bf8f-4e013e2ddde4",
+      "name": "Anthropic Claude 3.7 Sonnet",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-03-31T19:27:18Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-3.7-sonnet"
+    },
+    {
+      "uuid": "2bc4eb0c-d442-11ef-bf8f-4e013e2ddde4",
+      "name": "Anthropic Claude 3.5 Haiku",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-01-16T19:43:33Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-3.5-haiku"
+    },
+    {
+      "uuid": "339e07f3-d442-11ef-bf8f-4e013e2ddde4",
+      "name": "Anthropic Claude 3 Opus",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-01-16T19:43:47Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-3-opus"
+    },
+    {
+      "uuid": "1b07e52b-73c5-11f0-b074-4e013e2ddde4",
+      "name": "OpenAI GPT-5",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-08-07T19:31:24Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-5"
+    },
+    {
+      "uuid": "84ae10af-6888-11f0-bf8f-4e013e2ddde4",
+      "name": "OpenAI GPT-4.1",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-07-24T12:19:59Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-4.1"
+    },
+    {
+      "uuid": "57fc127a-5836-11f0-bf8f-4e013e2ddde4",
+      "name": "OpenAI o3",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-07-03T17:51:27Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-o3"
+    },
+    {
+      "uuid": "9a364867-f300-11ef-bf8f-4e013e2ddde4",
+      "name": "OpenAI GPT-4o",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-02-24T22:42:18Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-4o"
+    },
+    {
+      "uuid": "9a3644c7-f300-11ef-bf8f-4e013e2ddde4",
+      "name": "OpenAI GPT-4o mini",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-02-24T22:42:18Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-4o-mini"
+    },
+    {
+      "uuid": "9a36406a-f300-11ef-bf8f-4e013e2ddde4",
+      "name": "OpenAI o1",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-02-24T22:42:18Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-o1"
+    },
+    {
+      "uuid": "9a36366f-f300-11ef-bf8f-4e013e2ddde4",
+      "name": "OpenAI o3 mini",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-02-24T22:42:18Z",
+      "updated_at": "2025-08-22T21:58:27Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-o3-mini"
+    },
+    {
+      "uuid": "9fef3f5d-8db0-11f0-b074-4e013e2ddde4",
+      "name": "OpenAI GPT-5 Mini",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-09-09T19:10:18Z",
+      "updated_at": "2025-09-09T19:41:59Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-5-mini"
+    },
+    {
+      "uuid": "a23d75ac-8db0-11f0-b074-4e013e2ddde4",
+      "name": "OpenAI GPT-5 Nano",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-09-09T19:10:22Z",
+      "updated_at": "2025-09-09T19:41:59Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-5-nano"
+    },
+    {
+      "uuid": "00000000-0000-0000-0000-000000000029",
+      "name": "OpenAI GPT Image 1",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-10-01T14:51:40Z",
+      "updated_at": "2025-10-01T14:57:33Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11eff300-7792-cabe-bf8f-4e013e2ddde4",
+        "name": "OpenAI Policies",
+        "description": "By purchasing, deploying, accessing, or using any OpenAI model, you and your team are bound to, and will comply with, the relevant",
+        "url": "https://openai.com/policies/"
+      },
+      "id": "openai-gpt-image-1"
+    },
+    {
+      "uuid": "3a25f5a8-5e7d-11f0-bf8f-4e013e2ddde4",
+      "name": "Qwen3 32B",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-07-11T17:33:58Z",
+      "updated_at": "2025-12-19T15:38:14Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-c25e-bf8f-4e013e2ddde4",
+        "name": "Meta Llama 3.1 Community License",
+        "description": "Meta Llama 3.1 is licensed under the Meta Llama 3.1 Community License, Copyright \u00a9 Meta Platforms, Inc. All Rights Reserved. By purchasing, deploying, accessing, or using this model, you agree to comply with the",
+        "url": "https://www.llama.com/llama3_1/license/"
+      },
+      "id": "alibaba-qwen3-32b"
+    },
+    {
+      "uuid": "f285d2ec-769e-11ef-bf8f-4e013e2ddde4",
+      "name": "Mistral Nemo Instruct",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2024-09-19T15:50:51Z",
+      "updated_at": "2025-08-20T16:51:47Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-c894-bf8f-4e013e2ddde4",
+        "name": "Apache 2.0 License",
+        "description": "By purchasing, deploying, accessing, or using this model, you agree to comply with the terms of the",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0"
+      },
+      "id": "mistral-nemo-instruct-2407"
+    },
+    {
+      "uuid": "22653204-79ed-11ef-bf8f-4e013e2ddde4",
+      "name": "GTE Large EN v1.5",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2024-09-23T20:48:06Z",
+      "updated_at": "2025-11-26T15:13:53Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "gte-large-en-v1.5",
+      "kb_min_chunk_size": 100,
+      "kb_default_chunk_size": 750,
+      "kb_max_chunk_size": 8192
+    },
+    {
+      "uuid": "068d06ca-ab89-11f0-b074-4e013e2ddde4",
+      "name": "Fal Fast SDXL",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-10-17T18:42:25Z",
+      "updated_at": "2025-10-23T21:45:24Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "fal-ai/fast-sdxl"
+    },
+    {
+      "uuid": "069d6fe0-ab89-11f0-b074-4e013e2ddde4",
+      "name": "Fal Flux Schnell",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-10-17T18:42:25Z",
+      "updated_at": "2025-10-23T21:45:24Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "fal-ai/flux/schnell"
+    },
+    {
+      "uuid": "06dcfc89-ab89-11f0-b074-4e013e2ddde4",
+      "name": "Fal Stable Audio 2.5",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-10-17T18:42:26Z",
+      "updated_at": "2025-10-23T21:45:24Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "fal-ai/stable-audio-25/text-to-audio"
+    },
+    {
+      "uuid": "072bbbff-ab89-11f0-b074-4e013e2ddde4",
+      "name": "Fal ElevenLabs TTS Multilingual v2",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-10-17T18:42:26Z",
+      "updated_at": "2025-10-23T21:45:24Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "fal-ai/elevenlabs/tts/multilingual-v2"
+    },
+    {
+      "uuid": "22652f75-79ed-11ef-bf8f-4e013e2ddde4",
+      "name": "Multi QA MPNet Base Dot v1",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2024-09-23T20:48:06Z",
+      "updated_at": "2025-11-26T15:14:55Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "multi-qa-mpnet-base-dot-v1",
+      "kb_min_chunk_size": 100,
+      "kb_default_chunk_size": 512,
+      "kb_max_chunk_size": 512
+    },
+    {
+      "uuid": "22652c2a-79ed-11ef-bf8f-4e013e2ddde4",
+      "name": "All MiniLM L6 v2",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2024-09-23T20:48:06Z",
+      "updated_at": "2025-11-26T15:14:31Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "all-mini-lm-l6-v2",
+      "kb_min_chunk_size": 100,
+      "kb_default_chunk_size": 256,
+      "kb_max_chunk_size": 256
+    },
+    {
+      "uuid": "0b633bc1-b9bd-11f0-b074-4e013e2ddde4",
+      "name": "Anthropic Claude 4.5 Haiku",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-11-04T20:30:03Z",
+      "updated_at": "2025-11-05T19:34:50Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-4.5-haiku"
+    },
+    {
+      "uuid": "0b635cf3-b9bd-11f0-b074-4e013e2ddde4",
+      "name": "Anthropic Claude 4.1 Opus",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-11-04T20:30:03Z",
+      "updated_at": "2025-11-05T23:54:48Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-4.1-opus"
+    },
+    {
+      "uuid": "6175b01a-ba7e-11f0-b074-4e013e2ddde4",
+      "name": "Anthropic Claude 4.5 Sonnet",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-11-05T19:34:01Z",
+      "updated_at": "2025-12-19T15:38:14Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-4.5-sonnet"
+    },
+    {
+      "uuid": "df951aba-d07e-11f0-b074-4e013e2ddde4",
+      "name": "Anthropic Claude Opus 4.5",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-12-03T19:32:58Z",
+      "updated_at": "2025-12-19T15:38:14Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "agreement": {
+        "uuid": "11ef84ed-830c-ca12-bf8f-4e013e2ddde4",
+        "name": "Anthropic Terms",
+        "description": "By purchasing, deploying, accessing, or using any Anthropic Claude model, you agree you are bound to, and will comply with the",
+        "url": "https://www.anthropic.com/legal/consumer-terms"
+      },
+      "id": "anthropic-claude-opus-4.5"
+    },
+    {
+      "uuid": "bb3ab4ee-d9b5-11f0-b074-4e013e2ddde4",
+      "name": "Qwen3 Embedding 0.6B",
+      "version": {
+        "major": 1
+      },
+      "is_foundational": true,
+      "upload_complete": true,
+      "created_at": "2025-12-15T12:58:20Z",
+      "updated_at": "2025-12-16T07:10:25Z",
+      "parent_uuid": "00000000-0000-0000-0000-000000000000",
+      "id": "qwen3-embedding-0.6b",
+      "kb_min_chunk_size": 100,
+      "kb_default_chunk_size": 750,
+      "kb_max_chunk_size": 8192
+    }
+  ],
+  "links": {
+    "pages": {
+      "first": "https://api.digitalocean.com/v2/gen-ai/models?page=1&per_page=1000",
+      "last": "https://api.digitalocean.com/v2/gen-ai/models?page=1&per_page=1000"
+    }
+  },
+  "meta": {
+    "total": 34,
+    "page": 1,
+    "pages": 1
+  }
+}
