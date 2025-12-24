@@ -48,7 +48,8 @@ SERVICES = {
 
     },
 
-    "digital_ocean.oss": {
+    # digital ocean
+    "do.oss": {
         "host": "https://krzw4vkfn6kemdbxvuozumkc.agents.do-ai.run",
         "type": "cloud",
         'service_completions_path': '/api/v1/chat/completions',
@@ -57,7 +58,20 @@ SERVICES = {
             "Authorization": f"Bearer 1AfU63trYozPKE0mVH_5fuKH5pXow6dW"
         }
     },
-    "digital_ocean.llama": {
+
+    # digital ocean
+    "do.oss-20b": {
+        "host": "https://etmvt72kt6sz2233rv2mwqmc.agents.do-ai.run",
+        "type": "cloud",
+        'service_completions_path': '/api/v1/chat/completions',
+        # 'service_generate_path': '/api/generate/',
+        "headers": {
+            "Authorization": f"Bearer Mg9x91QNds7CpDKvHO-GjHnNlZw6WDAc"
+        }
+    },
+
+        # digital ocean
+    "do.llama": {
         "host": 'https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run',
         "type": "cloud",
         'service_completions_path': '/api/v1/chat/completions',
