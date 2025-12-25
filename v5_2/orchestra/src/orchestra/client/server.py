@@ -34,35 +34,40 @@ def set_connection(pipe_conn, data):
 def _result_listener():
     """Background thread that listens for results and sends to receipt URL."""
     while True:
-        try:
-            msg = conn.recv()
-            job_id = msg.pop('_job_id', None)
-            result = msg.get('result', None)
+        _loop_wait()
 
-            with pending_lock:
-                job_info = pending_jobs.pop(job_id, None)
 
-            if not job_info:
-                continue
+def _loop_wait():
+    try:
+        msg = conn.recv()
+    except EOFError:
+        return
 
-            url = job_info.get('receipt_url') or client_data.get('backbone_url')
-            if not url:
-                continue
+    job_id = msg.pop('_job_id', None)
+    result = msg.get('result', None)
 
-            url = url.rstrip('/')
-            url = f"{url}/job_result"
+    with pending_lock:
+        job_info = pending_jobs.pop(job_id, None)
 
-            headers = {
-                'X-Receipt-ID': job_id,
-                'X-Client-ID': client_data.get('id', '0'),
-            }
+    if not job_info:
+        return
 
-            try:
-                requests.post(url, data=result, timeout=10, headers=headers)
-            except requests.RequestException:
-                pass
-        except EOFError:
-            break
+    url = job_info.get('receipt_url') or client_data.get('backbone_url')
+    if not url:
+        return
+
+    url = url.rstrip('/')
+    url = f"{url}/job_result"
+
+    headers = {
+        'X-Receipt-ID': job_id,
+        'X-Client-ID': client_data.get('id', '0'),
+    }
+
+    try:
+        requests.post(url, data=result, timeout=10, headers=headers)
+    except requests.RequestException:
+        pass
 
 
 @app.route('/')
@@ -100,21 +105,22 @@ def receive():
     return jsonify(ok=True, count=len(pending_jobs), job_id=job_id)
 
 
+from urllib.parse import urlparse
+
 def _get_reachable_ip(backbone_url=None):
     """
     Get the IP address that can be used to reach this machine.
-    
+
     If backbone_url is provided, determines which local IP can reach that host.
     Otherwise, falls back to the default route IP or localhost.
     """
     # Try to determine which interface would be used to reach the backbone
     if backbone_url:
         try:
-            from urllib.parse import urlparse
             parsed = urlparse(backbone_url)
             backbone_host = parsed.hostname or 'localhost'
             backbone_port = parsed.port or 80
-            
+
             # Create a socket and connect to backbone to see which local IP is used
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 # UDP connect doesn't actually send packets, just determines route
@@ -122,7 +128,7 @@ def _get_reachable_ip(backbone_url=None):
                 return s.getsockname()[0]
         except Exception:
             pass
-    
+
     # Fallback: get default route IP
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -130,7 +136,7 @@ def _get_reachable_ip(backbone_url=None):
             return s.getsockname()[0]
     except Exception:
         pass
-    
+
     # Last resort
     return '127.0.0.1'
 
@@ -140,11 +146,11 @@ def _register_client(data):
     host = data.get('host', '127.0.0.1')
     port = data.get('port', 5001)
     backbone_url = data.get('backbone_url')
-    
+
     # If host is 0.0.0.0 (listen on all), find the actual reachable IP
     if host in ('0.0.0.0', ''):
         host = _get_reachable_ip(backbone_url)
-    
+
     data.setdefault('url', f'http://{host}:{port}/receive')
 
     backbone_url = data.get('backbone_url')

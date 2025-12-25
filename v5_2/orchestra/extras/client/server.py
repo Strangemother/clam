@@ -37,59 +37,67 @@ def set_connection(pipe_conn, client_data):
     global conn
     conn = pipe_conn
     # Start background thread to handle results
-    thread = threading.Thread(target=_result_listener, 
-                            daemon=True, 
+    thread = threading.Thread(target=_thread_result_listener,
+                            daemon=True,
                             args=(client_data,)
                         )
     thread.start()
 
 
-def _result_listener(client_data):
+def _thread_result_listener(client_data):
     """Background thread that listens for results and sends to receipt URL.
-    
+
     parent_conn.send({'result': result, '_job_id': job_id})
-    
+
     """
     while True:
         try:
-            msg = conn.recv()
-            job_id = msg.pop('_job_id', None)
-            result = msg.get('result', None)
-            print(f"[client_server] Got result for job {job_id}: {result}")
-            # Look up and remove the job from pending
-            with pending_lock:
-                job_info = pending_jobs.pop(job_id, None)
-
-            if job_info:
-                url = job_info.get('receipt_url')
-                if url is None:
-                    # send to the backbone if no receipt url
-                    url = client_data.get('backbone_url')
-                
-                if url.endswith('/'):
-                    url = url[:-1]
-                url = f"{url}/job_result"
-                if url:
-                    try:
-                        # add receipt id header
-                        headers = {
-                            'X-Receipt-ID': job_id,
-                            'X-Client-ID': client_data.get('id','0'),
-                        }
-        
-                        print(f"[client_server] Sending result to {url} with headers {headers}")   
-
-                        requests.post(url, 
-                                    data=result, 
-                                    timeout=10, 
-                                    headers=headers
-                                )
-                    except requests.RequestException:
-                        pass  # Log or handle failed delivery
-                else:
-                    print(f"[client_server] No receipt URL for job {job_id}")
+            d = thread_test(client_data)
+            print('Thread result', d)
         except EOFError:
             break
+
+
+def thread_test(client_data):
+    msg = conn.recv()
+    job_id = msg.pop('_job_id', None)
+    result = msg.get('result', None)
+    print(f"[client_server] Got result for job {job_id}: {result}")
+    # Look up and remove the job from pending
+    with pending_lock:
+        job_info = pending_jobs.pop(job_id, None)
+
+    if job_info is None:
+        print('No Job info')
+        return
+
+    url = job_info.get('receipt_url')
+    if url is None:
+        # send to the backbone if no receipt url
+        url = client_data.get('backbone_url')
+
+    if url.endswith('/'):
+        url = url[:-1]
+    url = f"{url}/job_result"
+    if not url:
+        print(f"[client_server] No receipt URL for job {job_id}")
+        return
+
+    try:
+        # add receipt id header
+        headers = {
+            'X-Receipt-ID': job_id,
+            'X-Client-ID': client_data.get('id','0'),
+        }
+
+        print(f"[client_server] Sending result to {url} with headers {headers}")
+        return requests.post(url,
+                    data=result,
+                    timeout=10,
+                    headers=headers
+                )
+    except requests.RequestException:
+        pass  # Log or handle failed delivery
 
 
 @app.route('/')
@@ -122,7 +130,7 @@ def receive():
 
     if conn is None:
         return jsonify(error='No connection'), 500
-    
+
     # Register the job
     job = register_job(job_id, receipt_url, data)
     # Send job to main process
@@ -154,7 +162,7 @@ def register_client(client_data):
     print(f"[client_server] Registering client at {host}:{port}")
     # if client has backbone url, post to it
     client_data.setdefault('url',f'http://{host}:{port}/receive')
-    backbone_url = client_data.get('backbone_url', None) or None 
+    backbone_url = client_data.get('backbone_url', None) or None
     if backbone_url is None:
         print("[client_server] No backbone URL provided, skipping registration.")
         return None
@@ -162,8 +170,8 @@ def register_client(client_data):
         url = backbone_url
         if url.endswith('/'):
             url = url[:-1]
-        res = requests.post(f'{url}/register', 
-                        json=client_data, 
+        res = requests.post(f'{url}/register',
+                        json=client_data,
                         timeout=3)
     except requests.RequestException as e:
         # requests.exceptions.ConnectionError:
