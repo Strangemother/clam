@@ -3,8 +3,14 @@ import argparse
 
 from .terminal_chat import (configure_parser as configure_terminal_chat,
                             main as terminal_main)
+from .terminal_client import configure_parser as configure_terminal_client
 from .backbone import (configure_parser as configure_backbone,
                       main as backbone_main)
+from .orchestra_client import (configure_parser as configure_orchestra_client,
+                      main as orchestra_client_main)
+from .orchestra_post import (configure_parser as configure_orchestra_post,
+                      main as orchestra_post_main)
+
 from . import config
 
 
@@ -16,6 +22,9 @@ def main():
     # cli subcommand
     configure_terminal_chat(parser, subparsers)
     configure_backbone(parser, subparsers)
+    configure_orchestra_client(parser, subparsers)
+    configure_orchestra_post(parser, subparsers)
+    configure_terminal_client(parser, subparsers)
 
     args = parser.parse_args()
     config.load(args.config)

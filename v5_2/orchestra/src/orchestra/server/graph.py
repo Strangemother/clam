@@ -1,9 +1,15 @@
 
 GRAPH = {
-    "EchoClient": ["EchoClient"]
+    "EchoClient": ["EchoClient"],
+    "foo": ["fish"],
+    "fish": "egg",
+    "egg": ["foo"],
 }
 
 
 def graph_get(client_name, default=None):
     """Get the graph destinations for a given client name."""
-    return GRAPH.get(client_name, default)
+    r = GRAPH.get(client_name, default)
+    if isinstance(r, str):
+        return [r]
+    return r

@@ -29,8 +29,9 @@ from . import backbone
 from .prompt import Prompt
 from .services import get_service_endpoint,do_key
 from .terminal_select import select_prompt
-from .tooler_bot import get_tools
+from .tooler_bot import get_tools, funcs_to_defs
 from . import voice_proc
+from . import tools as clam_tools
 
 HERE =  pathlib.Path(__file__).parent
 
@@ -39,7 +40,7 @@ def configure_parser(parser, subparsers=None):
     """Configure the subparser for terminal chat."""
     parser_cli = parser
     if subparsers:
-        parser_cli = subparsers.add_parser("cli",
+        parser_cli = subparsers.add_parser("cli2",
                                        help="Run terminal chat")
     parser_cli.set_defaults(func=main)
     parser_cli.add_argument("name",
@@ -109,7 +110,11 @@ def simple_chat(args):
 
     ctx = get_context(args)
     _id = args.id
-    tc = SpokenTerminalClient(pr, model=args.model,
+    # tc = SpokenTerminalClient(pr, model=args.model,
+    #                     template_context=ctx,
+    #                     client_id=_id, service_name=args.service_name
+    #                     )
+    tc = TerminalClient(pr, model=args.model,
                         template_context=ctx,
                         client_id=_id, service_name=args.service_name
                         )
@@ -313,7 +318,11 @@ class TerminalClient(TerminalClientBase):
 
     def collect_tools(self, prompt):
         """Read from front matter"""
-        return get_tools(prompt.raw_meta.get('tools'))
+        defs = get_tools(prompt.raw_meta.get('tools'))
+        real_funcs = clam_tools.resolve_modules(prompt.raw_meta.get('tools_modules'))
+        defs += funcs_to_defs(real_funcs)
+        # print('Functions', defs)
+        return defs
 
     def load_prompt(self, prompt):
         pass
@@ -422,6 +431,7 @@ class TerminalClient(TerminalClientBase):
         content = self.store_response(data, resp)
 
         self.print_response(content)
+
         return content
 
     def save_pre_post(self, data):
@@ -595,7 +605,7 @@ class TerminalClient(TerminalClientBase):
         tool_calls = choice.get('tool_calls') or []
         for tool in tool_calls:
             name = tool['function']['name']
-            print(f"{name}, ", end='')
+            print(f"  {name}, ", end='')
             pp(json.loads(tool['function']['arguments']))
         print('.')
 

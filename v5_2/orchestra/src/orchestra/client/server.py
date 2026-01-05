@@ -22,6 +22,7 @@ pending_jobs = {}
 pending_lock = threading.Lock()
 
 
+
 def set_connection(pipe_conn, data):
     """Set the pipe connection for communication with main process."""
     global conn, client_data
@@ -106,6 +107,54 @@ def receive():
 
 
 from urllib.parse import urlparse
+import contextlib
+import errno
+from socket import error as SocketError
+from socket import SO_REUSEADDR
+from socket import socket
+from socket import SOL_SOCKET
+
+LOCALHOST = '127.0.0.1'
+
+
+def reserve(ip=LOCALHOST, port=0):
+    """Bind to an ephemeral port, force it into the TIME_WAIT state, and unbind it.
+
+    This means that further ephemeral port alloctions won't pick this "reserved" port,
+    but subprocesses can still bind to it explicitly, given that they use SO_REUSEADDR.
+    By default on linux you have a grace period of 60 seconds to reuse this port.
+    To check your own particular value:
+    $ cat /proc/sys/net/ipv4/tcp_fin_timeout
+    60
+
+    By default, the port will be reserved for localhost (aka 127.0.0.1).
+    To reserve a port for a different ip, provide the ip as the first argument.
+    Note that IP 0.0.0.0 is interpreted as localhost.
+    """
+    port = int(port)
+    with contextlib.closing(socket()) as s:
+        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        try:
+            s.bind((ip, port))
+        except SocketError as e:
+            # socket.error: EADDRINUSE Address already in use
+            if e.errno == errno.EADDRINUSE and port != 0:
+                s.bind((ip, 0))
+            else:
+                raise
+
+        # the connect below deadlocks on kernel >= 4.4.0 unless this arg is greater than zero
+        s.listen(1)
+
+        sockname = s.getsockname()
+
+        # these three are necessary just to get the port into a TIME_WAIT state
+        with contextlib.closing(socket()) as s2:
+            s2.connect(sockname)
+            sock, _ = s.accept()
+            with contextlib.closing(sock):
+                return sockname[1]
+
 
 def _get_reachable_ip(backbone_url=None):
     """
@@ -151,6 +200,9 @@ def _register_client(data):
     if host in ('0.0.0.0', ''):
         host = _get_reachable_ip(backbone_url)
 
+    if port == 0:
+        port = data['served_port']
+
     data.setdefault('url', f'http://{host}:{port}/receive')
 
     backbone_url = data.get('backbone_url')
@@ -165,14 +217,25 @@ def _register_client(data):
         return {}
 
 
+from werkzeug.serving import make_server
+
 def run(pipe_conn, data):
     """Run the Flask server with pipe connection."""
-    host = data.get('host', '127.0.0.1')
+    host = data.get('host', LOCALHOST)
     port = data.get('port', 5001)
+    # if port == 0:
+    #     port = reserve(host)
+    print('Reserving Port:', port)
+    server = make_server(host, port, app)
+    resolved_port = server.server_port
 
+    data['served_port'] = resolved_port
+
+    print(f"Serving on {host}:{resolved_port}")
+    # send info to the backbone
     server_info = _register_client(data) or {}
+    server_info['served_port'] = data['served_port']
     data['id'] = server_info.get('id')
-
     set_connection(pipe_conn, data)
 
     pipe_conn.send({
@@ -181,4 +244,7 @@ def run(pipe_conn, data):
         'type': 'register',
     })
 
-    app.run(host=host, port=port, debug=False, use_reloader=False)
+
+    server.serve_forever()
+
+    # app.run(host=host, port=port, debug=False, use_reloader=False)

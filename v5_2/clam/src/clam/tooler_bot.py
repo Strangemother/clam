@@ -177,6 +177,14 @@ tools_map = {x.__name__: x for x in TOOLS}
 tool_calls = {k: create_tool_definition(v) for k,v in tools_map.items()}
 
 
+def funcs_to_defs(functions:list):
+    # tool_calls = {k: create_tool_definition(v) for k,v in tools_map.items()}
+    r = []
+    for f in functions:
+        r.append(create_tool_definition(f))
+    return r
+
+
 def get_tools(names=None):
     res = {}
     for name in (names or []):
