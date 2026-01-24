@@ -49,7 +49,10 @@
 <body>
     <h2>HA Event Monitor</h2>
     <div id="filters">
-        <strong>Filter:</strong> <span id="filter-list"></span>
+        <strong>Filter:</strong>
+        <button onclick="selectAll(true)">Select All</button>
+        <button onclick="selectAll(false)">Deselect All</button>
+        <span id="filter-list"></span>
     </div>
     <div id="events"></div>
     <script>
@@ -107,6 +110,13 @@
             filters.get(filterKey).visible = visible;
             document.querySelectorAll(`.event[data-filter="${filterKey}"]`).forEach(el => {
                 el.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function selectAll(checked) {
+            filters.forEach((filter, key) => {
+                filter.checkbox.checked = checked;
+                toggleFilter(key, checked);
             });
         }
 
