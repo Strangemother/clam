@@ -12,7 +12,20 @@
             margin: 0;
         }
         h2 { color: #707070; margin-top: 0; }
-        #events { max-height: 90vh; overflow-y: auto; }
+        #filters { 
+            background: #151515; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            border-radius: 3px;
+        }
+        #filters strong { color: #606060; }
+        .filter-item { 
+            margin-left: 15px; 
+            cursor: pointer; 
+            color: #5a8a7a;
+        }
+        .filter-item input { margin-right: 5px; }
+        #events { max-height: 80vh; overflow-y: auto; }
         .event { 
             background: #181818; 
             margin: 5px 0; 
@@ -20,6 +33,7 @@
             border-left: 3px solid #3a5f7a; 
             border-radius: 3px;
         }
+        .event summary { cursor: pointer; }
         .event-type { color: #5a8a7a; }
         .entity-id { color: #8a6a5a; }
         pre { color: #606060; margin: 5px 0 0 0; font-size: 11px; }
@@ -27,10 +41,38 @@
 </head>
 <body>
     <h2>HA Event Monitor</h2>
+    <div id="filters">
+        <strong>Filter:</strong> <span id="filter-list"></span>
+    </div>
     <div id="events"></div>
     <script>
         const ws = new WebSocket('ws://localhost:8765');
         const events = document.getElementById('events');
+        const filterList = document.getElementById('filter-list');
+        const eventTypes = new Map(); // eventType -> {checkbox, visible}
+        
+        function addFilter(eventType) {
+            if (eventTypes.has(eventType)) return;
+            
+            const label = document.createElement('label');
+            label.className = 'filter-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true;
+            checkbox.onchange = () => toggleFilter(eventType, checkbox.checked);
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(eventType));
+            filterList.appendChild(label);
+            
+            eventTypes.set(eventType, { checkbox, visible: true });
+        }
+        
+        function toggleFilter(eventType, visible) {
+            eventTypes.get(eventType).visible = visible;
+            document.querySelectorAll(`.event[data-type="${eventType}"]`).forEach(el => {
+                el.style.display = visible ? '' : 'none';
+            });
+        }
         
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
@@ -38,12 +80,17 @@
             const eventType = event.event_type || 'unknown';
             const entityId = event.data?.entity_id || '';
             
-            const div = document.createElement('div');
-            div.className = 'event';
-            div.innerHTML = `<span class="event-type">${eventType}</span> 
-                             <span class="entity-id">${entityId}</span>
+            addFilter(eventType);
+            const filter = eventTypes.get(eventType);
+            
+            const details = document.createElement('details');
+            details.className = 'event';
+            details.setAttribute('data-type', eventType);
+            details.style.display = filter.visible ? '' : 'none';
+            details.innerHTML = `<summary><span class="event-type">${eventType}</span> 
+                             <span class="entity-id">${entityId}</span></summary>
                              <pre>${JSON.stringify(data, null, 2)}</pre>`;
-            events.insertBefore(div, events.firstChild);
+            events.insertBefore(details, events.firstChild);
         };
         
         ws.onopen = () => console.log('Connected');
