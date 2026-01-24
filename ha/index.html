@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HA Event Monitor</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: monospace; 
+            background: #0d0d0d; 
+            color: #a0a0a0; 
+            padding: 20px; 
+            margin: 0;
+        }
+        h2 { color: #707070; margin-top: 0; }
+        #events { max-height: 90vh; overflow-y: auto; }
+        .event { 
+            background: #181818; 
+            margin: 5px 0; 
+            padding: 10px; 
+            border-left: 3px solid #3a5f7a; 
+            border-radius: 3px;
+        }
+        .event-type { color: #5a8a7a; }
+        .entity-id { color: #8a6a5a; }
+        pre { color: #606060; margin: 5px 0 0 0; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <h2>HA Event Monitor</h2>
+    <div id="events"></div>
+    <script>
+        const ws = new WebSocket('ws://localhost:8765');
+        const events = document.getElementById('events');
+        
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            const event = data.event || {};
+            const eventType = event.event_type || 'unknown';
+            const entityId = event.data?.entity_id || '';
+            
+            const div = document.createElement('div');
+            div.className = 'event';
+            div.innerHTML = `<span class="event-type">${eventType}</span> 
+                             <span class="entity-id">${entityId}</span>
+                             <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            events.insertBefore(div, events.firstChild);
+        };
+        
+        ws.onopen = () => console.log('Connected');
+        ws.onclose = () => console.log('Disconnected');
+    </script>
+</body>
+</html>
