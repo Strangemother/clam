@@ -1,4 +1,13 @@
-"""Example config for clam - just set UPPERCASE variables."""
+"""Example config for clam - just set UPPERCASE variables.
+
+Run the backbone within same directory:
+
+    (env) v5_2>clam backbone
+    Loading config config.py
+    Loaded local config True
+    Starting backbone service on 127.0.0.1:6000
+     * Serving Flask app 'clam.backbone'
+"""
 
 BACKBONE_HOST = '127.0.0.1'
 BACKBONE_PORT = 5000

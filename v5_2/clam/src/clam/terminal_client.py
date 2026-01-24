@@ -11,8 +11,15 @@
 
 Run terminal to terminal:
 
-    python -m clam.terminal_client lightbulb-hacker -g ./prompts/lightbulb.prompt.md
+    python -m clam.terminal_client \
+        lightbulb-hacker \
+        -g ./prompts/lightbulb.prompt.md
 
+    clam cli2 rgb -e lmstudio
+
+Start the orchestra for the backbone
+
+    py -m orchestra.server --port 5000
 """
 
 import os
@@ -521,7 +528,6 @@ class TerminalClient(TerminalClientBase):
         r = self.get_service_name()
 
         return config.SERVICES.get(r)
-
 
     def continue_conversation(self, res):
         endpoint = get_service_endpoint('completions', self.get_service_name())

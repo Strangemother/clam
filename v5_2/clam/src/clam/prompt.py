@@ -7,7 +7,7 @@ from jinja2 import Template
 HERE =  pathlib.Path(__file__).parent
 
 
-class Prompt:
+class PromptFile:
     """Is a file with extras.
     """
     def __init__(self, path, context=None):
@@ -73,3 +73,9 @@ class Prompt:
     def __str__(self):
         v = str(self.path.relative_to(self.path.parent))
         return f'<{self.__class__.__name__}("{v}")>'
+
+
+
+class Prompt(PromptFile):
+    pass
+
