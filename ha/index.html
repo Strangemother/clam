@@ -23,7 +23,9 @@
             margin-left: 15px; 
             cursor: pointer; 
             color: #5a8a7a;
+            transition: color 0.5s ease;
         }
+        .filter-item.flash { color: #9aead0; }
         .filter-item input { margin-right: 5px; }
         #events { max-height: 80vh; overflow-y: auto; }
         .event { 
@@ -49,26 +51,44 @@
         const ws = new WebSocket('ws://localhost:8765');
         const events = document.getElementById('events');
         const filterList = document.getElementById('filter-list');
-        const filters = new Map(); // filterKey -> {checkbox, visible}
+        const filters = new Map(); // filterKey -> {checkbox, visible, label}
         
         function getFilterKey(eventType, entityId) {
             return entityId ? `${eventType}:${entityId}` : eventType;
         }
         
         function addFilter(filterKey) {
-            if (filters.has(filterKey)) return;
+            if (filters.has(filterKey)) {
+                flashFilter(filterKey);
+                return;
+            }
             
             const label = document.createElement('label');
             label.className = 'filter-item';
+            label.setAttribute('data-key', filterKey);
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
             checkbox.onchange = () => toggleFilter(filterKey, checkbox.checked);
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(filterKey));
-            filterList.appendChild(label);
             
-            filters.set(filterKey, { checkbox, visible: true });
+            filters.set(filterKey, { checkbox, visible: true, label });
+            sortFilters();
+            flashFilter(filterKey);
+        }
+        
+        function sortFilters() {
+            const sorted = [...filters.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+            filterList.innerHTML = '';
+            sorted.forEach(([key, {label}]) => filterList.appendChild(label));
+        }
+        
+        function flashFilter(filterKey) {
+            const filter = filters.get(filterKey);
+            if (!filter) return;
+            filter.label.classList.add('flash');
+            setTimeout(() => filter.label.classList.remove('flash'), 500);
         }
         
         function toggleFilter(filterKey, visible) {
