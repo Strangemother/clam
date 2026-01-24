@@ -49,27 +49,31 @@
         const ws = new WebSocket('ws://localhost:8765');
         const events = document.getElementById('events');
         const filterList = document.getElementById('filter-list');
-        const eventTypes = new Map(); // eventType -> {checkbox, visible}
+        const filters = new Map(); // filterKey -> {checkbox, visible}
         
-        function addFilter(eventType) {
-            if (eventTypes.has(eventType)) return;
+        function getFilterKey(eventType, entityId) {
+            return entityId ? `${eventType}:${entityId}` : eventType;
+        }
+        
+        function addFilter(filterKey) {
+            if (filters.has(filterKey)) return;
             
             const label = document.createElement('label');
             label.className = 'filter-item';
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
-            checkbox.onchange = () => toggleFilter(eventType, checkbox.checked);
+            checkbox.onchange = () => toggleFilter(filterKey, checkbox.checked);
             label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(eventType));
+            label.appendChild(document.createTextNode(filterKey));
             filterList.appendChild(label);
             
-            eventTypes.set(eventType, { checkbox, visible: true });
+            filters.set(filterKey, { checkbox, visible: true });
         }
         
-        function toggleFilter(eventType, visible) {
-            eventTypes.get(eventType).visible = visible;
-            document.querySelectorAll(`.event[data-type="${eventType}"]`).forEach(el => {
+        function toggleFilter(filterKey, visible) {
+            filters.get(filterKey).visible = visible;
+            document.querySelectorAll(`.event[data-filter="${filterKey}"]`).forEach(el => {
                 el.style.display = visible ? '' : 'none';
             });
         }
@@ -79,13 +83,14 @@
             const event = data.event || {};
             const eventType = event.event_type || 'unknown';
             const entityId = event.data?.entity_id || '';
+            const filterKey = getFilterKey(eventType, entityId);
             
-            addFilter(eventType);
-            const filter = eventTypes.get(eventType);
+            addFilter(filterKey);
+            const filter = filters.get(filterKey);
             
             const details = document.createElement('details');
             details.className = 'event';
-            details.setAttribute('data-type', eventType);
+            details.setAttribute('data-filter', filterKey);
             details.style.display = filter.visible ? '' : 'none';
             details.innerHTML = `<summary><span class="event-type">${eventType}</span> 
                              <span class="entity-id">${entityId}</span></summary>
