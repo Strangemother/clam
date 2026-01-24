@@ -27,6 +27,7 @@
         }
         .filter-item.flash { color: #9aead0; }
         .filter-item input { margin-right: 5px; }
+        .filter-count { color: #8a5a5a; margin-left: 5px; font-size: 11px; }
         #events { max-height: 80vh; overflow-y: auto; }
         .event {
             background: #181818;
@@ -63,6 +64,9 @@
 
         function addFilter(filterKey) {
             if (filters.has(filterKey)) {
+                const filter = filters.get(filterKey);
+                filter.count++;
+                filter.countSpan.textContent = `(${filter.count})`;
                 flashFilter(filterKey);
                 return;
             }
@@ -74,10 +78,14 @@
             checkbox.type = 'checkbox';
             checkbox.checked = true;
             checkbox.onchange = () => toggleFilter(filterKey, checkbox.checked);
+            const countSpan = document.createElement('span');
+            countSpan.className = 'filter-count';
+            countSpan.textContent = '(1)';
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(filterKey));
+            label.appendChild(countSpan);
 
-            filters.set(filterKey, { checkbox, visible: true, label });
+            filters.set(filterKey, { checkbox, visible: true, label, countSpan, count: 1 });
             sortFilters();
             flashFilter(filterKey);
         }
