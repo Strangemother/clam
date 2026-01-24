@@ -6,7 +6,7 @@ import time
 from ws_server import broadcast, start_server, CLIENTS
 
 # Set to True to test UI without Home Assistant connection
-MOCK_MODE = True
+MOCK_MODE = False
 
 
 class MonitorWithUI:
@@ -25,7 +25,7 @@ class MonitorWithUI:
         ws_thread = threading.Thread(target=self.start_ws_server, daemon=True)
         ws_thread.start()
         print("Open ha/index.html in browser to view events")
-        
+
         if MOCK_MODE:
             self.mock_loop()
         else:
