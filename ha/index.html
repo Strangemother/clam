@@ -4,43 +4,41 @@
     <title>HA Event Monitor</title>
     <style>
         * { box-sizing: border-box; }
-        body {
-            font-family: monospace;
-            background: #0d0d0d;
-            color: #a0a0a0;
-            padding: 20px;
+        body { 
+            font-family: monospace; 
+            background: #0d0d0d; 
+            color: #a0a0a0; 
+            padding: 20px; 
             margin: 0;
         }
         h2 { color: #707070; margin-top: 0; }
-        #filters {
-            background: #151515;
-            padding: 10px;
-            margin-bottom: 10px;
+        #filters { 
+            background: #151515; 
+            padding: 10px; 
+            margin-bottom: 10px; 
             border-radius: 3px;
         }
         #filters strong { color: #606060; }
-        .filter-item {
-            margin-left: 15px;
-            cursor: pointer;
+        .filter-item { 
+            margin-left: 15px; 
+            cursor: pointer; 
             color: #5a8a7a;
+            transition: color 0.5s ease;
         }
+        .filter-item.flash { color: #9aead0; }
         .filter-item input { margin-right: 5px; }
         #events { max-height: 80vh; overflow-y: auto; }
-        .event {
-            background: #181818;
-            margin: 5px 0;
-            padding: 10px;
-            border-left: 3px solid #3a5f7a;
+        .event { 
+            background: #181818; 
+            margin: 5px 0; 
+            padding: 10px; 
+            border-left: 3px solid #3a5f7a; 
             border-radius: 3px;
         }
         .event summary { cursor: pointer; }
         .event-type { color: #5a8a7a; }
         .entity-id { color: #8a6a5a; }
         pre { color: #606060; margin: 5px 0 0 0; font-size: 11px; }
-        span#filter-list {
-            display: flex;
-            flex-direction: column;
-        }
     </style>
 </head>
 <body>
@@ -53,55 +51,73 @@
         const ws = new WebSocket('ws://localhost:8765');
         const events = document.getElementById('events');
         const filterList = document.getElementById('filter-list');
-        const filters = new Map(); // filterKey -> {checkbox, visible}
-
+        const filters = new Map(); // filterKey -> {checkbox, visible, label}
+        
         function getFilterKey(eventType, entityId) {
             return entityId ? `${eventType}:${entityId}` : eventType;
         }
-
+        
         function addFilter(filterKey) {
-            if (filters.has(filterKey)) return;
-
+            if (filters.has(filterKey)) {
+                flashFilter(filterKey);
+                return;
+            }
+            
             const label = document.createElement('label');
             label.className = 'filter-item';
+            label.setAttribute('data-key', filterKey);
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
             checkbox.onchange = () => toggleFilter(filterKey, checkbox.checked);
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(filterKey));
-            filterList.appendChild(label);
-
-            filters.set(filterKey, { checkbox, visible: true });
+            
+            filters.set(filterKey, { checkbox, visible: true, label });
+            sortFilters();
+            flashFilter(filterKey);
         }
-
+        
+        function sortFilters() {
+            const sorted = [...filters.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+            filterList.innerHTML = '';
+            sorted.forEach(([key, {label}]) => filterList.appendChild(label));
+        }
+        
+        function flashFilter(filterKey) {
+            const filter = filters.get(filterKey);
+            if (!filter) return;
+            filter.label.classList.add('flash');
+            setTimeout(() => filter.label.classList.remove('flash'), 500);
+        }
+        
         function toggleFilter(filterKey, visible) {
             filters.get(filterKey).visible = visible;
             document.querySelectorAll(`.event[data-filter="${filterKey}"]`).forEach(el => {
                 el.style.display = visible ? '' : 'none';
             });
         }
-
+        
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
             const event = data.event || {};
             const eventType = event.event_type || 'unknown';
             const entityId = event.data?.entity_id || '';
             const filterKey = getFilterKey(eventType, entityId);
-
+            
             addFilter(filterKey);
             const filter = filters.get(filterKey);
-
+            
             const details = document.createElement('details');
             details.className = 'event';
             details.setAttribute('data-filter', filterKey);
             details.style.display = filter.visible ? '' : 'none';
-            details.innerHTML = `<summary><span class="event-type">${eventType}</span>
+            details.innerHTML = `<summary><span class="event-type">${eventType}</span> 
                              <span class="entity-id">${entityId}</span></summary>
                              <pre>${JSON.stringify(data, null, 2)}</pre>`;
             events.insertBefore(details, events.firstChild);
         };
-
+        
         ws.onopen = () => console.log('Connected');
         ws.onclose = () => console.log('Disconnected');
     </script>
