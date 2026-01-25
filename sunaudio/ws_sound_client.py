@@ -137,6 +137,24 @@ def parse_command(line: str) -> dict:
         filename = parts[1] if len(parts) > 1 else 'assets/test.sunvox'
         return {'action': 'play_file', 'file': filename}
     
+    elif cmd == 'load':
+        filename = parts[1] if len(parts) > 1 else 'assets/sounds.sunvox'
+        return {'action': 'load_file', 'file': filename}
+    
+    elif cmd == 'modules':
+        return {'action': 'list_modules'}
+    
+    elif cmd == 'modnote' or cmd == 'mn':
+        # modnote <module> <note> [duration] [file]
+        # e.g., modnote Alpha C4 0.3 assets/sounds.sunvox
+        module = parts[1] if len(parts) > 1 else 'Alpha'
+        note = parts[2] if len(parts) > 2 else 'C4'
+        dur = float(parts[3]) if len(parts) > 3 else 0.3
+        result = {'action': 'play_module_note', 'module': module, 'note': note, 'duration': dur}
+        if len(parts) > 4:
+            result['file'] = parts[4]
+        return result
+    
     elif cmd == 'stop':
         return {'action': 'stop'}
     
@@ -190,6 +208,9 @@ Available commands:
   off / note_off             - Stop current note
   beep <note> [duration]     - Play a beep (e.g., 'beep C4 0.5')
   play <file>                - Play a SunVox file
+  load <file>                - Load a SunVox file (for module playback)
+  modules                    - List modules in loaded file
+  modnote <mod> <note> [dur] - Play note on module (e.g., 'modnote Alpha C4 0.3')
   stop                       - Stop playback
   volume <0.0-1.0>           - Set volume
   device <event> [device]    - Trigger a device event

@@ -45,6 +45,8 @@ class SoundEventHandler:
         self.module = None
         self.notes = Notes()
         self._running = False
+        self._loaded_file = None  # Track currently loaded file
+        self._module_cache = {}   # Cache module IDs by name
         
         # Map device/event names to sounds
         self.event_sound_map = {
@@ -103,6 +105,25 @@ class SoundEventHandler:
             return note
         return int(note_value)
     
+    @property
+    def action_handlers(self) -> dict:
+        """Map of action names to handler functions."""
+        return {
+            'note': self._handle_note,
+            'note_off': self._handle_note_off,
+            'beep': self._handle_beep,
+            'play_file': self._handle_play_file,
+            'play_module_note': self._handle_play_module_note,
+            'load_file': self._handle_load_file,
+            'list_modules': self._handle_list_modules,
+            'stop': self._handle_stop,
+            'volume': self._handle_volume,
+            'device_event': self._handle_device_event,
+            'map_event': self._handle_map_event,
+            'list_mappings': lambda data: {'status': 'ok', 'mappings': self.event_sound_map},
+            'ping': lambda data: {'status': 'ok', 'message': 'pong'},
+        }
+
     async def handle_event(self, event_data: dict) -> dict:
         """
         Handle a sound event.
@@ -119,26 +140,13 @@ class SoundEventHandler:
         action = event_data.get('action', '').lower()
         
         try:
-            if action == 'note':
-                return await self._handle_note(event_data)
-            elif action == 'note_off':
-                return await self._handle_note_off(event_data)
-            elif action == 'beep':
-                return await self._handle_beep(event_data)
-            elif action == 'play_file':
-                return await self._handle_play_file(event_data)
-            elif action == 'stop':
-                return await self._handle_stop(event_data)
-            elif action == 'volume':
-                return await self._handle_volume(event_data)
-            elif action == 'device_event':
-                return await self._handle_device_event(event_data)
-            elif action == 'map_event':
-                return await self._handle_map_event(event_data)
-            elif action == 'list_mappings':
-                return {'status': 'ok', 'mappings': self.event_sound_map}
-            elif action == 'ping':
-                return {'status': 'ok', 'message': 'pong'}
+            handler = self.action_handlers.get(action)
+            if handler:
+                result = handler(event_data)
+                # Handle both async and sync handlers
+                if asyncio.iscoroutine(result):
+                    return await result
+                return result
             else:
                 return {'status': 'error', 'message': f'Unknown action: {action}'}
                 
@@ -187,6 +195,102 @@ class SoundEventHandler:
         """Stop playback."""
         self.player.stop()
         return {'status': 'ok', 'action': 'stop'}
+    
+    async def _handle_load_file(self, data: dict) -> dict:
+        """Load a SunVox file without playing it."""
+        filename = data.get('file', 'assets/sounds.sunvox')
+        
+        if not Path(filename).exists():
+            return {'status': 'error', 'message': f'File not found: {filename}'}
+        
+        self.player.load_file(self.player.slotnr, filename)
+        self._loaded_file = filename
+        self._module_cache = {}  # Clear cache when loading new file
+        
+        return {'status': 'ok', 'action': 'load_file', 'file': filename}
+    
+    async def _handle_list_modules(self, data: dict) -> dict:
+        """List all modules in the currently loaded file."""
+        if not self._loaded_file:
+            return {'status': 'error', 'message': 'No file loaded. Use load_file first.'}
+        
+        modules = []
+        num_modules = self.player.sv_get_number_of_modules()
+        
+        for i in range(num_modules):
+            flags = self.player.sv_get_module_flags(i)
+            # Check if module exists (SV_MODULE_FLAG_EXISTS = 1)
+            if flags & 1:
+                name = self.player.sv_get_module_name(i)
+                if name:
+                    name = name.decode('utf-8') if isinstance(name, bytes) else name
+                    modules.append({'id': i, 'name': name})
+        
+        return {'status': 'ok', 'action': 'list_modules', 'modules': modules}
+    
+    def _find_module_by_name(self, module_name: str) -> int:
+        """Find a module ID by name, with caching."""
+        if module_name in self._module_cache:
+            return self._module_cache[module_name]
+        
+        module_id = self.player.svlib.sv_find_module(
+            self.player.slotnr,
+            module_name.encode('utf-8')
+        )
+        
+        if module_id >= 0:
+            self._module_cache[module_name] = module_id
+        
+        return module_id
+    
+    async def _handle_play_module_note(self, data: dict) -> dict:
+        """
+        Play a note on a named module from a loaded SunVox file.
+        
+        Example:
+            {"action": "play_module_note", "file": "assets/sounds.sunvox", 
+             "module": "Alpha", "note": "C4", "duration": 0.3}
+        """
+        filename = data.get('file')
+        module_name = data.get('module', 'Alpha')
+        note = self.parse_note(data.get('note', 'C4'))
+        velocity = data.get('velocity', 129)
+        duration = data.get('duration', 0.3)
+        track = data.get('track', 0)
+        
+        # Load file if specified and different from current
+        if filename and filename != self._loaded_file:
+            if not Path(filename).exists():
+                return {'status': 'error', 'message': f'File not found: {filename}'}
+            self.player.load_file(self.player.slotnr, filename)
+            self._loaded_file = filename
+            self._module_cache = {}
+        
+        if not self._loaded_file:
+            return {'status': 'error', 'message': 'No file loaded. Specify "file" or use load_file first.'}
+        
+        # Find module by name
+        module_id = self._find_module_by_name(module_name)
+        
+        if module_id < 0:
+            return {'status': 'error', 'message': f'Module not found: {module_name}'}
+        
+        # Play note on that module
+        self.player.sv_send_event(track, note, velocity, module_id)
+        
+        if duration > 0:
+            await asyncio.sleep(duration)
+            self.player.sv_send_event(track, self.notes.NOTE_OFF, 129, module_id)
+        
+        return {
+            'status': 'ok',
+            'action': 'play_module_note',
+            'file': self._loaded_file,
+            'module': module_name,
+            'module_id': module_id,
+            'note': note,
+            'duration': duration
+        }
     
     async def _handle_volume(self, data: dict) -> dict:
         """Set volume (0.0 to 1.0)."""
@@ -302,6 +406,10 @@ class WebSocketSoundServer:
         print('  {"action": "map_event", "event": "my_event", "sound_action": "beep", "sound_params": {"note": "D4"}}')
         print('  {"action": "list_mappings"}')
         print('  {"action": "ping"}')
+        print("\nModule playback (for custom .sunvox files):")
+        print('  {"action": "load_file", "file": "assets/sounds.sunvox"}')
+        print('  {"action": "list_modules"}')
+        print('  {"action": "play_module_note", "file": "assets/sounds.sunvox", "module": "Alpha", "note": "C4", "duration": 0.3}')
         print("\nWaiting for connections...")
         
         try:
