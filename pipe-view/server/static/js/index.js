@@ -53,7 +53,7 @@ const keyMap = {
     }
 }
 
-const createWindowApp = function(windowApp) {
+const createWindowApp = function(windowApp, conf) {
 
     let WindowAppConf = {
         textStatus: 'No Status'
@@ -154,6 +154,10 @@ const createWindowApp = function(windowApp) {
             )
         }
 
+        , initConfig() {
+            return conf
+        }
+
     }
 
     const WindowApp = PetiteVue.createApp(WindowAppConf)
@@ -166,6 +170,12 @@ const createWindowApp = function(windowApp) {
     windowApp.vueApp = WindowAppConf
 };
 
+
+const dispatchRequestDrawEvent = function(data={}){
+    document.dispatchEvent(new CustomEvent('requestdraw', {
+        detail: data
+    }))
+}
 
 const createMiniApp = function() {
 
@@ -196,18 +206,23 @@ const createMiniApp = function() {
                             .getElementById("window_content")
                             .cloneNode(true)
                 , root: document.querySelector("main")
-
+                
                 ,  onclose: function(force){
                     console.log('Unmount app')
                     this.vueApp.unmount()
                     return force;
                     // return !confirm("Close window?");
-                },
+                }
+                ,  onmove: function(x, y){
+                    // console.log('Moved to', x, y)
+                    dispatchRequestDrawEvent()
+                }
 
             };
             Object.assign(winapp, conf);
             let _window = new WinBox(name, winapp);
-            createWindowApp(_window)
+            
+            createWindowApp(_window, conf)
             this.windowMap[name] = _window
             return _window
         }

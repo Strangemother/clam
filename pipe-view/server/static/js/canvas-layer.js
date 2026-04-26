@@ -10,6 +10,7 @@ const perfLog = PERF_DEBUG ? console.log.bind(console) : ()=>{}
 
 class CanvasLayerGroup {
     // const clItems = new CanvasLayerGroup(cl1, cl2)
+    targetFPS = 50
     constructor(...layers) {
         this.layers = layers
         document.addEventListener('connectnodes', this.connectNodesEvent.bind(this))
@@ -57,14 +58,73 @@ class CanvasLayerGroup {
                 , senderUnit
                 , receiverUnit
             }
+
+            dispatchRequestDrawEvent()
         } else {
             // Append to existing one
             perfLog('Already have connection', _id, store)
             // The sender unit and receiver unit should be the same, but the pipIndex may differ, so we add these.
+        }
+    }
 
+    animDraw(...args) {
+        /*
+        Perform animated draw of the connections. 
+        This method runs the canvas in animation mode, calling draw().
+        It only draws when a change occurs, at a target fps (30 default), and is intended to be used in the main app loop.
+
+        To use this, call animDraw() once to start the loop. 
+        To stop the drawing, call stopAnimDraw().
+
+        Draws will only occur if the view is _dirty_:
+
+        - When a new connection is made (connectNodes is called)
+        - When a connection is removed (not implemented yet)
+        - When a node moves.
+
+        this is done though an event `requestDraw` that should be emitted whenever a redraw is needed.
+        The animDraw method listens will render at a timely interval (default 30fps) when a draw is requested.
+        */
+
+        if(this._runTimer != null) {
+            console.warn('Already running animDraw.')
+            return
+        }
+        
+        this._dirty = false
+        document.addEventListener('requestdraw', ()=>{
+            perfLog('Draw requested')
+            this._dirty = true
+        });
+
+        const targetFPS = this.targetFPS
+        const frameDuration = 1000 / targetFPS
+        let lastFrameTime = 0
+
+        const loop = (timestamp) => {
+            if(this._dirty && (timestamp - lastFrameTime) >= frameDuration) {
+                perfLog('Animating draw')
+                this.draw(...args)
+                this._dirty = false
+                lastFrameTime = timestamp
+            }
+            this._runTimer = requestAnimationFrame(loop)
         }
 
+        this._runTimer = requestAnimationFrame(loop)
+
     }
+
+    stopAnimDraw() {
+        if(this._runTimer == null) {
+            console.warn('animDraw is not running.')
+            return
+        }
+        cancelAnimationFrame(this._runTimer)
+        this._runTimer = null
+
+    }
+
     resolveLineConfig(obj={}) {
         const line = obj.line || {}
         const style = obj.style || {}
@@ -81,6 +141,7 @@ class CanvasLayerGroup {
     }
 
     draw(){
+        
         this.renderConnections()
         requestAnimationFrame(this.renderFrame.bind(this));
     }
@@ -254,8 +315,18 @@ class CanvasLayer {
         }
 
         if(PERF_DEBUG) {
-            perfLog('frame(ms)', (performance.now() - frameStart).toFixed(2), 'lines', lineItems.length)
+            perfLog('frame(ms)', 
+                (performance.now() - frameStart).toFixed(2), 'lines', lineItems.length)
         }
+
+        let oldFillStyle = ctx.fillStyle
+        // Every frame flips the color of the tiny circle from red to white.
+        ctx.fillStyle = (delta / 100) % 2 > 1 ? 'red' : 'white'
+        ctx.beginPath();
+        ctx.arc(10, 10, 5, 0, Math.PI * 2, false);
+        ctx.fill();
+        ctx.fillStyle = oldFillStyle
+
     }
 
     toLineArray(lines=this.lines) {

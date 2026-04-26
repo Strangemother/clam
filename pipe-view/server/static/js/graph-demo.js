@@ -7,25 +7,26 @@ const spawnDemoWindows = function(appRef) {
         return `${Math.floor(Math.random() * (max + 1))}%`
     }
 
-    let names = [
-        'apples',
-        'banana',
-        'cherry',
-        'date',
-        'elderberry',
-        'fig',
-        'grape',
-        'honeydew',
-        'kiwi',
-        'lemon'
+    let nodes = [
+        { name: 'apples', x: 60, y: 60 }
+        , { name: 'banana'}
+        , { name: 'cherry'}
+        , { name: 'date'}
+        , { name: 'elderberry'}
+        , { name: 'fig'}
+        , { name: 'grape'}
+        , { name: 'honeydew'}
+        , { name: 'kiwi'}
+        , { name: 'lemon'}
     ]
 
-    names.forEach((name)=>{
-        appRef.spawnWindow({
-            name,
-            x: randomPercent(),
-            y: randomPercent()
-        })
+    nodes.forEach((item)=>{
+        appRef.spawnWindow(
+            Object.assign({    
+                x: randomPercent()
+                , y: randomPercent()
+            }, item)
+        )
     })
 }
 
@@ -58,19 +59,10 @@ const bootDemoGraph = function(appRef=app, layerGroup=clItems) {
     }
 
     spawnDemoWindows(appRef)
-    setTimeout(()=>{
-        autoConnectDemoNodes(layerGroup)
-    }, 300)
+    // setTimeout(()=>{
+    //     autoConnectDemoNodes(layerGroup)
+    // }, 300)
 }
-
-
-
-bootDemoGraph()
-
-
-window.bootDemoGraph = bootDemoGraph
-window.spawnDemoWindows = spawnDemoWindows
-window.autoConnectDemoNodes = autoConnectDemoNodes
 
 
 class GraphHighlighter {
@@ -81,9 +73,11 @@ class GraphHighlighter {
         this.highlightClass = conf.highlightClass || 'node-highlight'
         this.cycleClass = conf.cycleClass || 'node-cycle'
         this._highlighted = new Set()
-        this._cycleQueue = []
-        this._cycleIndex = 0
+        this._cycleFrontier = []
+        this._cyclePrev = null
+        this._cycleStart = null
         this._cycleStarted = false
+        this._runTimer = null
     }
 
     _getWin(name) {
@@ -113,62 +107,163 @@ class GraphHighlighter {
         this.highlight(node)
     }
 
-    /* Sets up a walk starting from node, collecting reachable nodes via BFS.
-       Call stepLights() repeatedly to walk through them. */
+    /* Sets up a walk starting from node. Each stepLights() call dynamically
+       computes the next frontier from the current one, so cycles are followed
+       naturally rather than being cut off at setup time. */
     cycleFrom(node) {
         this.clearCycle()
-
-        const visited = new Set()
-        const queue = [node]
-        const order = []
-
-        while(queue.length > 0) {
-            const current = queue.shift()
-            if(visited.has(current)) { continue }
-            visited.add(current)
-            order.push(current)
-            const outgoing = this.walker.getOutgoingIds(current)
-            for(const next of outgoing) {
-                if(!visited.has(next)) { queue.push(next) }
-            }
-        }
-
-        this._cycleQueue = order
-        this._cycleIndex = 0
+        this._cycleStart = node
+        this._cycleFrontier = [node]
+        this._cyclePrev = null
         this._cycleStarted = false
     }
 
-    /* Advances the cycle by one node, lighting the current and un-lighting
-       the previous. Does not affect regular highlights. */
-    stepLights() {
-        if(this._cycleQueue.length === 0) { return }
+    /* Advances the cycle by one frontier level:
+       - Removes the cycle class from the previous frontier.
+       - Applies the cycle class to every node in the current frontier.
+       - Computes the next frontier from outgoing connections (live, no
+         cross-step visited tracking, so loops are followed naturally).
+       wrap=false (default): stops only when the next frontier is empty,
+         i.e. all branches have genuinely no outgoing connections.
+       wrap=true: when all branches terminate, resets to the start node. */
+    stepLights(wrap=false) {
+        if(this._cycleFrontier.length === 0) { return }
 
-        if(this._cycleStarted) {
-            const prevIndex = (this._cycleIndex - 1 + this._cycleQueue.length) % this._cycleQueue.length
-            const prev = this._cycleQueue[prevIndex]
-            const prevWin = this._getWin(prev)
-            if(prevWin) { prevWin.removeClass(this.cycleClass) }
+        // Remove previous frontier's class
+        if(this._cyclePrev) {
+            for(const name of this._cyclePrev) {
+                const win = this._getWin(name)
+                if(win) { win.removeClass(this.cycleClass) }
+            }
         }
 
-        const current = this._cycleQueue[this._cycleIndex]
-        const win = this._getWin(current)
-        if(win) { win.addClass(this.cycleClass) }
+        // Light the current frontier
+        for(const name of this._cycleFrontier) {
+            const win = this._getWin(name)
+            if(win) { win.addClass(this.cycleClass) }
+        }
 
-        this._cycleIndex = (this._cycleIndex + 1) % this._cycleQueue.length
+        // Compute next frontier dynamically from outgoing connections
+        const seen = new Set()
+        const nextFrontier = []
+        for(const name of this._cycleFrontier) {
+            const outgoing = this.walker.getOutgoingIds(name)
+            for(const next of outgoing) {
+                if(!seen.has(next)) {
+                    seen.add(next)
+                    nextFrontier.push(next)
+                }
+            }
+        }
+
+        this._cyclePrev = this._cycleFrontier
         this._cycleStarted = true
+
+        if(nextFrontier.length === 0) {
+            // No outgoing connections — all branches are terminal
+            this._cycleFrontier = wrap ? [this._cycleStart] : []
+        } else {
+            this._cycleFrontier = nextFrontier
+        }
     }
 
-    /* Removes cycle class from all nodes in the current cycle and resets state. */
-    clearCycle() {
-        for(const name of this._cycleQueue) {
-            const win = this._getWin(name)
-            if(win) { win.removeClass(this.cycleClass) }
+    /* Returns true if the cycle has a non-empty frontier to advance through. */
+    _hasCycleSteps() {
+        return this._cycleFrontier.length > 0
+    }
+
+    /* Runs the full cycle from node automatically, advancing one BFS level per
+       interval until no steps remain, then stops.
+       options.delay   — ms between steps (default 400)
+       options.wrap    — whether to loop indefinitely (default false)
+       options.onDone  — optional callback fired when sequence ends */
+    runLights(node, options={}) {
+        const delay = options.delay ?? options.timeout ?? 400
+        const wrap = options.wrap ?? false
+        const onDone = options.onDone
+
+        this.stopLights()
+        this.cycleFrom(node)
+
+        const tick = () => {
+            this.stepLights(wrap)
+            if(!wrap && !this._hasCycleSteps()) {
+                this._runTimer = null
+                if(onDone) { onDone() }
+                return
+            }
+            this._runTimer = setTimeout(tick, delay)
         }
-        this._cycleQueue = []
-        this._cycleIndex = 0
+
+        this._runTimer = setTimeout(tick, delay)
+    }
+
+    /* Cancels a running runLights sequence. */
+    stopLights() {
+        if(this._runTimer != null) {
+            clearTimeout(this._runTimer)
+            this._runTimer = null
+        }
+    }
+
+    /* Removes cycle class from all active frontier nodes and resets state. */
+    clearCycle() {
+        for(const group of [this._cyclePrev, this._cycleFrontier]) {
+            if(!group) { continue }
+            for(const name of group) {
+                const win = this._getWin(name)
+                if(win) { win.removeClass(this.cycleClass) }
+            }
+        }
+        this._cycleFrontier = []
+        this._cyclePrev = null
+        this._cycleStart = null
         this._cycleStarted = false
     }
 }
 
 
+class PipesTool {
+    //  user tool to access all the bits easily.
+    filename = 'pipes-tool-graph'
+    constructor(conf={}) {
+        this.app = conf.app || app
+        this.walker = conf.walker || new LocalStorageGraphWalker()
+        this.lights = new GraphHighlighter({ app: this.app, walker: this.walker })
+        this.layerGroup = conf.layerGroup || clItems
+    }
+
+    draw(){
+        this.layerGroup.draw.apply(this.layerGroup, arguments)
+    }
+
+
+    save(name = this.filename) {
+        // simple save method 
+        this.walker.saveToLocalStorage(name)
+    }
+
+    restore(name = this.filename) {
+        this.walker.restoreFromLocalStorage(name)
+        this.walker.restorePositions(name)
+        setTimeout(() => {
+            this.draw()    
+        }, 300);
+    }
+
+    animDraw(){
+        this.layerGroup.animDraw()
+    }
+}
+
+const pipesTool = new PipesTool();
+
+
+window.PipesTool = PipesTool
+window.pipesTool = pipesTool
 window.GraphHighlighter = GraphHighlighter
+window.bootDemoGraph = bootDemoGraph
+window.spawnDemoWindows = spawnDemoWindows
+window.autoConnectDemoNodes = autoConnectDemoNodes
+
+bootDemoGraph()

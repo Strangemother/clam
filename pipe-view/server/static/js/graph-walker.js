@@ -120,12 +120,36 @@ class GraphWalker {
 		}
 	}
 
+    getWindow(name) {
+        // Returns the window object for the given name, or null if not found.
+        if(name == undefined) {
+            return null
+        }
+        
+        const win = this.windows[name]
+        return win || null
+
+    }
+
+    getNode(name) {
+        // return the app within the node.
+        const win = this.getWindow(name)
+        if(win == null) {
+            return null
+        }
+        
+        return win.vueApp || null
+    }
 }
+
 
 class LocalStorageGraphWalker extends GraphWalker {
 	exportJSON(indent=2) {
 		let graph = {
-			windows: Object.keys(this.windows),
+			windows: Object.keys(this.windows).map((name) => {
+				const win = this.windows[name]
+				return { name, x: win.x, y: win.y }
+			}),
 			connections: []
 		}
 
@@ -178,27 +202,34 @@ class LocalStorageGraphWalker extends GraphWalker {
 			this.clearConnections()
 		}
 
-		const windowNames = new Set(Array.isArray(graph.windows) ? graph.windows : [])
+		// Normalise window entries: support both legacy strings and { name, x, y } objects
+		const windowEntries = (Array.isArray(graph.windows) ? graph.windows : []).map((entry) =>
+			typeof entry === 'string' ? { name: entry } : entry
+		)
+		const windowMap = new Map(windowEntries.map((e) => [e.name, e]))
 		const connections = Array.isArray(graph.connections) ? graph.connections : []
 
 		for(let i = 0; i < connections.length; i++) {
 			let connection = connections[i]
 			let senderLabel = connection?.sender?.label
 			let receiverLabel = connection?.receiver?.label
-			if(senderLabel != undefined) {
-				windowNames.add(senderLabel)
+			if(senderLabel != undefined && !windowMap.has(senderLabel)) {
+				windowMap.set(senderLabel, { name: senderLabel })
 			}
-			if(receiverLabel != undefined) {
-				windowNames.add(receiverLabel)
+			if(receiverLabel != undefined && !windowMap.has(receiverLabel)) {
+				windowMap.set(receiverLabel, { name: receiverLabel })
 			}
 		}
 
-		windowNames.forEach((name)=>{
-			if(name == undefined || this.windows[name] != undefined) {
+		windowMap.forEach((entry) => {
+			if(entry.name == undefined || this.windows[entry.name] != undefined) {
 				return
 			}
 
-			app.spawnWindow({ name })
+			const conf = { name: entry.name }
+			if(entry.x != undefined) { conf.x = entry.x }
+			if(entry.y != undefined) { conf.y = entry.y }
+			app.spawnWindow(conf)
 		})
 
 		for(let i = 0; i < connections.length; i++) {
@@ -238,6 +269,34 @@ class LocalStorageGraphWalker extends GraphWalker {
 		}
 
 		return this.importJSON(json, replace)
+	}
+
+	/* Reads saved window positions from localStorage and moves any already-open
+	   windows to their stored x/y. If the key does not exist, does nothing. */
+	restorePositions(storageKey='pipe-view-graph') {
+		const json = localStorage.getItem(storageKey)
+		if(json == null) {
+			return
+		}
+
+		let graph
+		try {
+			graph = JSON.parse(json)
+		} catch(error) {
+			console.error('restorePositions: invalid JSON', error)
+			return
+		}
+
+		const entries = Array.isArray(graph?.windows) ? graph.windows : []
+		for(const entry of entries) {
+			if(typeof entry !== 'object' || entry.x == undefined || entry.y == undefined) {
+				continue
+			}
+			const win = this.windows[entry.name]
+			if(win != undefined) {
+				win.move(entry.x, entry.y)
+			}
+		}
 	}
 }
 
