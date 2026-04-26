@@ -7,10 +7,13 @@ import atexit
 import os
 
 
-lib_root = '../../sunvox_lib-2.0e/sunvox_lib/'
+lib_root = './sunvox_lib-2.0e/sunvox_lib/'
 lib_target = 'windows/lib_x86_64'
 lib_path = Path(lib_root) / lib_target
 lib_name = lib_path / "sunvox.dll"
+
+print('LIB', lib_name)
+
 
 from modules import Generator
 from notes import Notes

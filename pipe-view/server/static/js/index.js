@@ -61,7 +61,6 @@ const createWindowApp = function(windowApp, conf) {
         , pipsInbound: []
         , pipsOutbound: []
         , viewInfo: reactive({ words: "None"})
-
         , addInboundPip(){
             let pip = {
                 index:this.pipsInbound.length
@@ -207,7 +206,7 @@ const createMiniApp = function() {
                             .getElementById("window_content")
                             .cloneNode(true)
                 , root: document.querySelector("main")
-                
+
                 ,  onclose: function(force){
                     console.log('Unmount app')
                     this.vueApp.unmount()
@@ -222,7 +221,7 @@ const createMiniApp = function() {
             };
             Object.assign(winapp, conf);
             let _window = new WinBox(name, winapp);
-            
+
             createWindowApp(_window, conf)
             this.windowMap[name] = _window
             return _window

@@ -23,5 +23,6 @@ DEFAULT_MODEL = "gpt-oss-120b-distill-qwen3-4b-thinking-i1"
 
 GRAPH = {
     'terminal': 'memorybot',
-    'memorybot': 'titlebot'
+    'memorybot': 'titlebot',
+    'chicken': 'memorybot',
 }
