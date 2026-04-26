@@ -241,7 +241,7 @@ const createMiniApp = function() {
 };
 
 
-class MyInfiniteDrag extends InfiniteDrag {
+class MyInfiniteDrag extends ZoomableInfiniteDrag {
     dragComplete() {
         // rebind all winbox move events to trigger a redraw, since the positions have changed
         // winbox.move("center", "center");
@@ -260,7 +260,34 @@ class MyInfiniteDrag extends InfiniteDrag {
 
     }
 
+    moveAllNodes(scale, prevScale, origin) {
+        const ratio = scale / prevScale
+        const rect = this.element.getBoundingClientRect()
+        const mouseX = origin.x - rect.left
+        const mouseY = origin.y - rect.top
+
+        for (let winName in pipesTool.app.windowMap) {
+            let win = pipesTool.app.windowMap[winName]
+            const left = parseFloat(win.g.style.left) || 0
+            const top  = parseFloat(win.g.style.top)  || 0
+            if (left === 0 && top === 0) continue  // skip unpositioned windows
+
+            const newLeft   = mouseX + (left   - mouseX) * ratio
+            const newTop    = mouseY + (top    - mouseY) * ratio
+            const newWidth  = win.g.offsetWidth  * ratio
+            const newHeight = win.g.offsetHeight * ratio
+
+            win.move(newLeft, newTop)
+            win.resize(newWidth, newHeight)
+
+            const scalePercent = Math.round(scale * 100 / 10) * 10
+            win.g.className = win.g.className.replace(/\binf-drag-zoom-scale-\d+\b/g, '')
+            win.g.classList.add(`inf-drag-zoom-scale-${scalePercent}`)
+        }
+    }
+
 }
+
 
 const app = createMiniApp();
 

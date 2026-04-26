@@ -95,3 +95,34 @@ class InfiniteDrag {
         document.removeEventListener('mouseup', this._onMouseUp)
     }
 }
+
+
+class ZoomableInfiniteDrag extends InfiniteDrag {
+    constructor(selector) {
+        super(selector)
+        this._onWheel = this._onWheel.bind(this)
+        this.element.addEventListener('wheel', this._onWheel, { passive: false })
+    }
+
+    _onWheel(event) {
+        event.preventDefault()
+        this.onWheel(event)
+    }
+
+    onWheel(event) {
+        const prevScale = this.scale || 1
+        this.scale = prevScale * (event.deltaY > 0 ? 0.9 : 1.1)
+        this.origin = { x: event.clientX, y: event.clientY }
+        this.moveAllNodes(this.scale, prevScale, this.origin)
+    }
+
+    moveAllNodes() {
+       // callback.
+    }
+
+    destroy() {
+        super.destroy()
+        this.element.removeEventListener('wheel', this._onWheel)
+    }
+
+}
