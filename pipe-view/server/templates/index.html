@@ -16,11 +16,11 @@
                         font-pack-lexend+deca-500
                         font-lexend+deca-500 letter-spacing-.1px'>
 
-
     <header class='primary background-#111'>
         <div class="logo padding-1em
                     font-size-1rem">Logo</div>
     </header>
+
     <div class="layer-space">
 
         <div class="canvas-container back">
@@ -30,7 +30,6 @@
             </div>
         </div>
 
-        {% raw %}
         <main>
             <header>
                 <h1 class="title
@@ -41,66 +40,7 @@
             </header>
 
             <div class="display-none">
-                <div class="example-window" id="window_content">
-
-                    <div class="display-panel">
-
-                        <div class="header">
-                            <!--  <h2>Header</h2>  -->
-                        </div>
-                        <div class="content">
-                            <div class="inbound pips">
-                                <ul>
-                                    <li class="pip" v-for="pip in pipsInbound">
-                                        <div class="draggable-pip"
-                                            draggable=true
-                                            @dragstart='pipStartDrag(event, "inbound", pip.index)'
-                                            @dragend='pipEndDrag(event, "inbound", pip.index)'
-                                            @dragover='pipOverDrag(event, "inbound", pip.index)'
-                                            @drop='pipDrop(event, "inbound", pip.index)'
-                                            :id="label + '-inbound-'+pip.index"
-                                            >
-                                            {{ pip.index }}
-                                        </div>
-                                    </li>
-                                    <li class="add-pip">
-                                        <a href="javascript:;"
-                                            @click='addInboundPip()'>+</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="content-value" v-text="viewInfo.words">
-                                Content
-                            </div>
-                            <div class="outbound pips">
-                                <ul>
-                                    <li class="pip"
-                                        v-for="pip in pipsOutbound">
-                                        <div class="draggable-pip"
-                                            draggable=true
-                                            @dragstart='pipStartDrag(event, "outbound", pip.index)'
-                                            @dragend='pipEndDrag(event, "outbound", pip.index)'
-                                            @dragover='pipOverDrag(event, "outbound", pip.index)'
-                                            @drop='pipDrop(event, "outbound", pip.index)'
-                                            :id="label + '-outbound-'+pip.index"
-                                            >
-                                            {{ pip.index }}
-                                        </div>
-                                    </li>
-                                    <li class="add-pip">
-                                        <a href="javascript:;"
-                                            @click='addOutboundPip()'>+</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="footer">
-                            <div class="status-bar" v-text=textStatus>
-                                Status Text
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% include "./cell-template.html" %}
             </div>
         </main>
 
@@ -111,10 +51,11 @@
                 <div class="test-indicator"></div>
             </div>
         </div>
-
     </div>
+
+    {% raw %}
     <div class="admin-bar" id="mini_app">
-        
+
         <div>
             <label>
                 <input v-model='animateLines' @change="animateLinesCheckChange($event)" type="checkbox">
@@ -126,7 +67,7 @@
             <input v-model='newPanelName' type="text" name="panel_name" id="panel_name">
             <a href="javascript:;" @click="spawnWindow()">Spawn</a>
         </div>
-        
+
         <a href="javascript:;" @click="restoreButton()">Restore</a>
 
         <div class="spacer"></div>
@@ -134,14 +75,23 @@
     </div>
     {% endraw %}
 
-    <script src="./static/js/winbox.min.js"></script>
-    <script src="./static/js/petite-vue.iife.js"></script>
-    <script src="./static/js/canvas-layer.js"></script>
-    <script src="./static/js/infinite-drag.js"></script>
+    <script src="./static/js/vendor/winbox.min.js"></script>
+    <script src="./static/js/vendor/petite-vue.iife.js"></script>
 
-    <script src="./static/js/index.js"></script>
-    <script src="./static/js/graph-walker.js"></script>
+    <script src="./static/js/src/canvas-layer.js"></script>
+    <script src="./static/js/src/standalone/infinite-drag.js"></script>
+    <script src="./static/js/src/standalone/winbox-infinite-drag.js"></script>
+
+    <script src="./static/js/src/graph-walker.js"></script>
+    <script src="./static/js/src/graph-highlighter.js"></script>
+    <script src="./static/js/src/graph-executor.js"></script>
+    <script src="./static/js/src/pipes-tool.js"></script>
+
+    <script src="./static/js/src/pipes-winbox-app.js"></script>
+
     <script src="./static/js/graph-demo.js"></script>
+    <script src="./static/js/pipes-ui-app.js"></script>
+    <script src="./static/js/index.js"></script>
 
 </body>
 </html>

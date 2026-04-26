@@ -8,6 +8,7 @@ const pipeData = {
 const PERF_DEBUG = false
 const perfLog = PERF_DEBUG ? console.log.bind(console) : ()=>{}
 
+
 class CanvasLayerGroup {
     // const clItems = new CanvasLayerGroup(cl1, cl2)
     targetFPS = 50
@@ -69,11 +70,11 @@ class CanvasLayerGroup {
 
     animDraw(...args) {
         /*
-        Perform animated draw of the connections. 
+        Perform animated draw of the connections.
         This method runs the canvas in animation mode, calling draw().
         It only draws when a change occurs, at a target fps (30 default), and is intended to be used in the main app loop.
 
-        To use this, call animDraw() once to start the loop. 
+        To use this, call animDraw() once to start the loop.
         To stop the drawing, call stopAnimDraw().
 
         Draws will only occur if the view is _dirty_:
@@ -90,7 +91,7 @@ class CanvasLayerGroup {
             console.warn('Already running animDraw.')
             return
         }
-        
+
         this._dirty = false
         document.addEventListener('requestdraw', ()=>{
             perfLog('Draw requested')
@@ -141,7 +142,7 @@ class CanvasLayerGroup {
     }
 
     draw(){
-        
+
         this.renderConnections()
         requestAnimationFrame(this.renderFrame.bind(this));
     }
@@ -315,7 +316,7 @@ class CanvasLayer {
         }
 
         if(PERF_DEBUG) {
-            perfLog('frame(ms)', 
+            perfLog('frame(ms)',
                 (performance.now() - frameStart).toFixed(2), 'lines', lineItems.length)
         }
 

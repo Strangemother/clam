@@ -125,7 +125,7 @@ class GraphWalker {
         if(name == undefined) {
             return null
         }
-        
+
         const win = this.windows[name]
         return win || null
 
@@ -137,7 +137,7 @@ class GraphWalker {
         if(win == null) {
             return null
         }
-        
+
         return win.vueApp || null
     }
 }
@@ -301,4 +301,3 @@ class LocalStorageGraphWalker extends GraphWalker {
 }
 
 
-window.GraphWalker = LocalStorageGraphWalker
