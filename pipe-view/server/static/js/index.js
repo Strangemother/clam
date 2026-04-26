@@ -45,7 +45,11 @@ const runIndexApp = function() {
     window.app = app;
 
     // from pipes-winbox-app.js
-    runPipes()
+    runPipes({
+        backLayerSelector: '.canvas-container.back canvas'
+        , foreLayerSelector: '.canvas-container.fore canvas'
+        , dragspaceSelector: 'main'
+    })
 
     // from graph-demo.js
     bootDemoGraph()

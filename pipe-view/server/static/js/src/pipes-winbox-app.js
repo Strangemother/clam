@@ -24,11 +24,17 @@ const dispatchFocusNodeEvent = function(data={}){
 }
 
 
-const createWindowApp = function(windowApp, conf) {
-    /* Ran by the app `index.js`
+const listenEvent = function(name, callback, opts={ passive: true }) {
+    document.addEventListener(name, callback, opts)
+}
+
+
+
+const createWinboxVueApp = function(windowApp, conf) {
+    /* Ran by the app `pipes-ui-app.js`
 
         let _window = new WinBox(name, winappObj);
-        createWindowApp(_window, conf)
+        createWinboxVueApp(_window, conf)
 
     Then we create a vue app for the internal.
     This exists within the `winbox.vueApp`
@@ -120,8 +126,11 @@ const createWindowApp = function(windowApp, conf) {
             this.connect(sender, self)
 
         }
+
         , randomColor() {
-            let cols = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6',]
+            let cols = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8',
+                        '#f58231', '#911eb4', '#46f0f0', '#f032e6',
+                        ]
             return cols[Math.floor(Math.random() * cols.length)]
         }
 
@@ -156,15 +165,18 @@ const createWindowApp = function(windowApp, conf) {
 
 
 
-const runPipes = function() {
+const runPipes = function(conf) {
     /* A run-all function for the tool. One ran, pipes is ready to use.
 
     - create canvas layers
     - create group tool
     - spawn addons (dragging, utils)
     */
-    const backLayer = new CanvasLayer('.canvas-container.back canvas')
-    const foreLayer = new CanvasLayer('.canvas-container.fore canvas')
+   let backName = conf.backLayerSelector || '.canvas-container.back canvas'
+   let foreName = conf.foreLayerSelector || '.canvas-container.fore canvas'
+
+    const backLayer = new CanvasLayer(backName)
+    const foreLayer = new CanvasLayer(foreName)
 
     // dirty for now.
     const clItems = new CanvasLayerGroup(backLayer, foreLayer)
@@ -172,7 +184,7 @@ const runPipes = function() {
 
 
     // Drag and zoom functionality.
-    const infiniteDrag = new WinboxInfiniteDrag('main')
+    const infiniteDrag = new WinboxInfiniteDrag(conf.dragspaceSelector || 'main')
 
     /* Convenience tool. */
     const pipesTool = new PipesTool();

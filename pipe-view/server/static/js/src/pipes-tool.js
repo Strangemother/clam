@@ -1,3 +1,16 @@
+/*
+The PipeTool is the convience wrapper to capture all assets for the view.
+
+- app: the view app
+- walker: An executor
+- lights: the highlighter tool
+- layerGroup: the canvas manager
+
+Then some convenience tools.
+
+The vue app executes functonality through this.
+*/
+
 class PipesTool {
     //  user tool to access all the bits easily.
     filename = 'pipes-tool-graph'

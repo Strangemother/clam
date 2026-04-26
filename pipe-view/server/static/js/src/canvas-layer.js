@@ -1,4 +1,13 @@
+/*
 
+The canvas manager and layer managers.
+
+These handle the presented lines between nodes.
+
+---
+
+It needs to change. The AI some of this - I'll refactor slowly
+*/
 /* Store incoming connection, for future storage */
 const pipeData = {
     raw: []

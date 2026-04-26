@@ -1,3 +1,17 @@
+/*
+
+Graph highlighter runs the graph and to add/remove css classes.
+Use this directory or use the pipeTools convenience tool
+
+In all cases this adds a css class.
+
+- highlight a node `node-highlight`
+- run a cycle `cycleFrom`
+- `runLights` timely runs the graph paths.
+
+
+*/
+
 
 class GraphHighlighter {
 

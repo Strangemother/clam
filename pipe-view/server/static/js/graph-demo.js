@@ -93,6 +93,14 @@ const spawnDemoWindows = function(appRef) {
 
 
 const autoConnectDemoNodes = function(layerGroup) {
+    /* An example of some cheap connection
+
+        setTimeout(()=>{
+            autoConnectDemoNodes(layerGroup)
+        }, 300)
+
+    run it in `bootDemoGraph` for an example.
+    */
     if(layerGroup == undefined) {
         return
     }
@@ -120,7 +128,5 @@ const bootDemoGraph = function(appRef=app, layerGroup=clItems) {
     }
 
     spawnDemoWindows(appRef)
-    // setTimeout(()=>{
-    //     autoConnectDemoNodes(layerGroup)
-    // }, 300)
+
 }

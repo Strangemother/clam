@@ -1,3 +1,13 @@
+/*
+
+The GraphExecutor extends LocalStorageGraphWalker to provide _execution_ methods.
+
+- Call to run code setup on a node
+- Each step is a call to `executeNode(name, data)`
+- then it steps to the next nodes
+
+ */
+
 class GraphExecutor extends LocalStorageGraphWalker {
     // Walk with code execution
     constructor(conf={}) {

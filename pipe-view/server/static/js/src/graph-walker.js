@@ -1,3 +1,15 @@
+
+/*
+
+The graph walker discovers _from_ and _to_ connections for nodes.
+Each node within the graph is essentially an ID.
+
+The data attached to the node is the exection code.
+
+- get and create connections: as an id list
+- get node - the vue app within the winbox window
+
+ */
 class GraphWalker {
 	constructor(conf={}) {
 		this.connections = conf.connections || pipeData.connections
