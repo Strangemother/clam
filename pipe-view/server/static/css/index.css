@@ -238,10 +238,11 @@ ul.socket-info {
 }
 
 .display-panel .pips ul li {
-    background: #8d8d8d;
+    background: #9f9416;
     /* width: 0.7em; */
     /* height: 0.7em; */
     /* border-radius: 3em; */
+    color: black;
     /* padding: 0 0.5em; */
 }
 
@@ -254,7 +255,7 @@ ul.socket-info {
     gap: 0.5rem;
 }
 
-.display-panel .inbound.pips {border-right: solid 1px #111;padding: 0.5em 0.5em;}
+.display-panel .inbound.pips {border-right: solid 1px #111;padding: 0.5em 0.5em 0 0;}
 
 .display-panel {
     display: flex;
@@ -269,7 +270,7 @@ ul.socket-info {
 }
 
 .display-panel .outbound.pips {
-    padding: 0.5em .5em;
+    padding: .5em 0 0.5em .5em;
     border-left: solid 1px #111;
 }
 
@@ -359,3 +360,15 @@ html.layer-space-container {
 }
 
 .canvas-container.fore {position: relative;z-index: 5;pointer-events: none;}
+
+.inbound.pips ul li {border-radius: 0 0.3em 0.3em 0em;}
+
+.outbound.pips ul li {
+    border-radius: 0.3em 0 0 0.3em;
+}
+
+
+.node-highlight .display-panel {
+    outline: solid 2px #07ff08;
+    outline-offset: -2px;
+}
