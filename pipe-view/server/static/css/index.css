@@ -368,7 +368,18 @@ html.layer-space-container {
 }
 
 
-.node-highlight .display-panel {
+.node-highlight .display-panel  {
     outline: solid 2px #07ff08;
+    outline-offset: -2px;
+}
+
+
+.node-cycle .display-panel {
+    outline: solid 2px #ff7707;
+    outline-offset: -2px;
+}
+
+.node-cycle.node-highlight .display-panel {
+    outline: solid 2px #c007ff;
     outline-offset: -2px;
 }
