@@ -35,7 +35,7 @@ class CanvasLayerGroup {
         let senderUnit = app.getTip(obj.sender.label, obj.sender.direction, obj.sender.pipIndex)
         let receiverUnit = app.getTip(obj.receiver.label, obj.receiver.direction, obj.receiver.pipIndex)
 
-        let _id = `${obj.sender.label}-${obj.receiver.label}`
+        let _id = `${obj.sender.label}-${obj.sender.pipIndex}-${obj.receiver.label}-${obj.receiver.pipIndex}`
 
         let store = pipeData.connections[_id];
 
