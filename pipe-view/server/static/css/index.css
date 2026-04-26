@@ -305,7 +305,7 @@ li.add-pip a {
     padding: 0 0.4em;
 }
 
-body.layer-space-container {outline: solid 1px red;outline-offset: -1px;height: 100%;display: grid;grid-template-rows: auto 1fr;}
+body.layer-space-container {outline: solid 1px red;outline-offset: -1px;height: 99%;display: grid;/* overflow: hidden; */grid-template-rows: auto 1fr auto;}
 
 html.layer-space-container {
     height: 100%;
@@ -383,3 +383,19 @@ html.layer-space-container {
     outline: solid 2px #c007ff;
     outline-offset: -2px;
 }
+
+.admin-bar {
+    display: flex;
+    background: #111;
+    padding: 1em;
+    gap: 1em;
+}
+
+.admin-bar a {
+    color: inherit;
+}
+
+.admin-bar .spacer {
+    flex-grow: 1;
+}
+

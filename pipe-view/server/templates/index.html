@@ -40,11 +40,6 @@
                 </h1>
             </header>
 
-            <div id="mini_app">
-                <input v-model='newPanelName' type="text" name="panel_name" id="panel_name">
-                <a href="javascript:;" @click="spawnWindow()">Spawn</a>
-            </div>
-
             <div class="display-none">
                 <div class="example-window" id="window_content">
 
@@ -117,6 +112,19 @@
             </div>
         </div>
 
+    </div>
+
+    <div class="admin-bar">
+
+        <div id="mini_app">
+            <input v-model='newPanelName' type="text" name="panel_name" id="panel_name">
+            <a href="javascript:;" @click="spawnWindow()">Spawn</a>
+        </div>
+
+        <a href="javascript:;">Restore</a>
+
+        <div class="spacer"></div>
+        <a href="javascript:;">Save</a>
     </div>
     {% endraw %}
 
