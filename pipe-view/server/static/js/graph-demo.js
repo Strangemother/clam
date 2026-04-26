@@ -9,45 +9,48 @@ class WorkTasks {
 
     banana(config, data) {
         console.log('Banana task executed', config)
-        return data + 2
+        return this.defaultTask(config, data)
     }
 
-    cherry(){
+    cherry(config, data){
         console.log('cherry');
-        return 2
+        return this.defaultTask(config, data)
     }
-    date(){
+    date(config, data){
         console.log('date');
-        return 2
+        return this.defaultTask(config, data)
     }
-    elderberry(){
+    elderberry(config, data){
         console.log('elderberry');
-        return 2
+        return this.defaultTask(config, data)
     }
-    fig(){
+    fig(config, data){
        console.log('fig');
-       return 2 
+       return this.defaultTask(config, data) 
     }
-    grape(){
+    grape(config, data){
         console.log('grape');
-        return 2
+        return this.defaultTask(config, data)
     }
-    honeydew(){
+    honeydew(config, data){
         console.log('honeydew');
-        return 2
+        return this.defaultTask(config, data)
     }
-    kiwi(){
+    kiwi(config, data){
         console.log('kiwi');
-        return 2
+        return this.defaultTask(config, data)
     }
-    lemon(){
+    lemon(config, data){
         console.log('lemon');
-        return 2
+        return this.defaultTask(config, data)
     }
 
-    defaultTask(config) {
+    defaultTask(config, data) {
         // If a task is not coded, this is executed. 
         console.log('Default task executed', config)
+        let res = data + 2
+        config.viewInfo.words = res;
+        return res; 
     }
 }
     
@@ -291,7 +294,8 @@ class GraphExecutor extends LocalStorageGraphWalker {
         }
 
         const taskName = nodeName // node.task || 'default'
-        const taskFunc = this.taskMap[taskName] || this.taskMap['defaultTask']
+        let taskFunc = this.taskMap[taskName] || this.taskMap['defaultTask']
+        taskFunc = taskFunc.bind(this.taskMap)
         if(typeof taskFunc !== 'function') {
             console.warn(`No task function found for task ${taskName} on node ${nodeName}`)
             return

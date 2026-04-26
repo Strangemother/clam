@@ -60,7 +60,7 @@ const createWindowApp = function(windowApp, conf) {
         , label: windowApp.title
         , pipsInbound: []
         , pipsOutbound: []
-        , words: "None"
+        , viewInfo: reactive({ words: "None"})
 
         , addInboundPip(){
             let pip = {
