@@ -137,13 +137,18 @@ const createWindowApp = function(windowApp) {
             this.connect(sender, self)
 
         }
-
-        , connect(sender, receiver) {
+        , randomColor() {
+            let cols = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6',]
+            return cols[Math.floor(Math.random() * cols.length)]
+        }
+        , connect(sender, receiver, line={}) {
             // console.log('Connect from', sender, 'to: ', receiver)
+            line.color = line.color || this.randomColor()
             document.dispatchEvent(new CustomEvent('connectnodes', {
                     detail: {
                         sender
                         , receiver
+                        , line
                     }
                 })
             )

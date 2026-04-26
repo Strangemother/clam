@@ -21,7 +21,14 @@ class CanvasLayerGroup {
     }
 
     connectNodes(obj) {
+        if(obj?.sender == undefined || obj?.receiver == undefined) {
+            console.error('Cannot connect without sender/receiver payload.', obj)
+            return
+        }
+
         perfLog('connectNodes', obj)
+        const resolvedLine = this.resolveLineConfig(obj)
+        obj.line = { ...(obj.line || {}), ...resolvedLine }
         pipeData.raw.push(obj)
 
 
@@ -57,6 +64,20 @@ class CanvasLayerGroup {
 
         }
 
+    }
+    resolveLineConfig(obj={}) {
+        const line = obj.line || {}
+        const style = obj.style || {}
+
+        const color = line.color ?? style.color ?? obj.color
+        const design = line.design
+                        ?? line.style
+                        ?? style.design
+                        ?? style.lineDesign
+                        ?? obj.lineDesign
+                        ?? obj.lineStyle
+
+        return { color, design }
     }
 
     draw(){
@@ -100,17 +121,34 @@ class CanvasLayerGroup {
 
         for(let _id in pipeData.connections) {
             let conn = pipeData.connections[_id]
+            let senderDirection = conn.obj?.sender?.direction
+            let receiverDirection = conn.obj?.receiver?.direction
 
-            let senderNode = conn.senderUnit.node
-            let receiverNode = conn.receiverUnit.node
+            let senderUnit = conn.senderUnit
+            let receiverUnit = conn.receiverUnit
+
+            // Canonicalize orientation at draw-time so we always render
+            // outbound -> inbound regardless how the user performed the drag.
+            if(senderDirection == 'inbound' && receiverDirection == 'outbound') {
+                senderUnit = conn.receiverUnit
+                receiverUnit = conn.senderUnit
+                senderDirection = 'outbound'
+                receiverDirection = 'inbound'
+            }
+
+            let senderNode = senderUnit.node
+            let receiverNode = receiverUnit.node
 
             let a = getCenter(senderNode)
             let b = getCenter(receiverNode)
+            let lineConfig = conn.obj?.line || {}
 
-            perfLog('From', conn.senderUnit, 'to', conn.receiverUnit)
+            perfLog('From', senderUnit, 'to', receiverUnit)
             this.drawLine(_id, a, b, {
-                senderDirection: conn.obj?.sender?.direction,
-                receiverDirection: conn.obj?.receiver?.direction
+                senderDirection,
+                receiverDirection,
+                lineColor: lineConfig.color,
+                lineDesign: lineConfig.design
             })
         }
 
@@ -126,7 +164,9 @@ class CanvasLayerGroup {
                 a,
                 b,
                 senderDirection: directions.senderDirection,
-                receiverDirection: directions.receiverDirection
+                receiverDirection: directions.receiverDirection,
+                lineColor: directions.lineColor,
+                lineDesign: directions.lineDesign
             }
             perfLog('Installing line.')
             this.layers[1].addLine(tidyLine)
@@ -137,6 +177,8 @@ class CanvasLayerGroup {
         tidyLine.b = b
         tidyLine.senderDirection = directions.senderDirection
         tidyLine.receiverDirection = directions.receiverDirection
+        tidyLine.lineColor = directions.lineColor
+        tidyLine.lineDesign = directions.lineDesign
     }
 
 }
@@ -194,40 +236,91 @@ class CanvasLayer {
         this.clear(ctx)
         perfLog('renderFrame', delta)
 
-        const lineKeys = Object.keys(this.lines)
-        if(lineKeys.length == 0) {
+        const lineItems = this.toLineArray(this.lines)
+        if(lineItems.length == 0) {
             return
         }
 
-        if(this.lineStyle == 'straight') {
-            this.drawStraightLines(ctx, this.lines)
-        } else if(this.lineStyle == 'curve') {
-            this.drawSCurveLines(ctx, this.lines)
-        } else {
-            this.drawSCurveLinesWithTipDirection(ctx, this.lines)
+        let groups = this.groupLinesByDesignAndColor(lineItems)
+        for(let groupKey in groups) {
+            let group = groups[groupKey]
+            if(group.design == 'straight') {
+                this.drawStraightLines(ctx, group.lines, group.color)
+            } else if(group.design == 'curve') {
+                this.drawSCurveLines(ctx, group.lines, group.color)
+            } else {
+                this.drawSCurveLinesWithTipDirection(ctx, group.lines, group.color)
+            }
         }
 
         if(PERF_DEBUG) {
-            perfLog('frame(ms)', (performance.now() - frameStart).toFixed(2), 'lines', lineKeys.length)
+            perfLog('frame(ms)', (performance.now() - frameStart).toFixed(2), 'lines', lineItems.length)
         }
     }
 
-    drawStraightLines(ctx=this.ctx, lines=this.lines) {
-        ctx.strokeStyle = 'purple';
+    toLineArray(lines=this.lines) {
+        if(lines == undefined) {
+            return []
+        }
+
+        if(Array.isArray(lines)) {
+            return lines
+        }
+
+        return Object.values(lines)
+    }
+
+    getLineDesign(line) {
+        const design = line?.lineDesign ?? line?.design ?? line?.lineStyle ?? this.lineStyle
+        if(design == 'straight' || design == 'curve' || design == 'curve-tip') {
+            return design
+        }
+
+        return this.lineStyle
+    }
+
+    getLineColor(line) {
+        return line?.lineColor ?? line?.color ?? 'purple'
+    }
+
+    groupLinesByDesignAndColor(lines) {
+        let groups = {}
+        for(let i = 0; i < lines.length; i++) {
+            let line = lines[i]
+            let design = this.getLineDesign(line)
+            let color = this.getLineColor(line)
+            let key = `${design}::${color}`
+
+            if(groups[key] == undefined) {
+                groups[key] = {
+                    design,
+                    color,
+                    lines: []
+                }
+            }
+
+            groups[key].lines.push(line)
+        }
+
+        return groups
+    }
+
+    drawStraightLines(ctx=this.ctx, lines=this.lines, color='purple') {
+        ctx.strokeStyle = color;
         ctx.lineWidth = 3;
 
-        const lineKeys = Object.keys(lines)
+        const lineItems = this.toLineArray(lines)
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             ctx.moveTo(o.a.x, o.a.y)
             ctx.lineTo(o.b.x, o.b.y)
         }
         ctx.stroke();
 
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             ctx.moveTo(o.a.x + 5, o.a.y)
             ctx.arc(o.a.x, o.a.y, 5, 0, Math.PI * 2, false)
 
@@ -237,17 +330,17 @@ class CanvasLayer {
         ctx.fill();
     }
 
-    drawSCurveLines(ctx=this.ctx, lines=this.lines) {
-        ctx.strokeStyle = 'purple';
+    drawSCurveLines(ctx=this.ctx, lines=this.lines, color='purple') {
+        ctx.strokeStyle = color;
         ctx.lineWidth = 3;
 
-        const lineKeys = Object.keys(lines)
+        const lineItems = this.toLineArray(lines)
         const minHandle = 24
         const handleFactor = 0.35
 
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             const dx = o.b.x - o.a.x
             const sign = dx >= 0 ? 1 : -1
             const handle = Math.max(minHandle, Math.abs(dx) * handleFactor)
@@ -260,8 +353,8 @@ class CanvasLayer {
         ctx.stroke();
 
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             ctx.moveTo(o.a.x + 5, o.a.y)
             ctx.arc(o.a.x, o.a.y, 5, 0, Math.PI * 2, false)
 
@@ -271,11 +364,11 @@ class CanvasLayer {
         ctx.fill();
     }
 
-    drawSCurveLinesWithTipDirection(ctx=this.ctx, lines=this.lines) {
-        ctx.strokeStyle = 'purple';
+    drawSCurveLinesWithTipDirection(ctx=this.ctx, lines=this.lines, color='purple') {
+        ctx.strokeStyle = color;
         ctx.lineWidth = 3;
 
-        const lineKeys = Object.keys(lines)
+        const lineItems = this.toLineArray(lines)
         const minHandle = 24
         const handleFactor = 0.35
 
@@ -290,8 +383,8 @@ class CanvasLayer {
         }
 
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             const dx = o.b.x - o.a.x
             const handle = Math.max(minHandle, Math.abs(dx) * handleFactor)
             const fallbackSenderSign = dx >= 0 ? 1 : -1
@@ -308,8 +401,8 @@ class CanvasLayer {
         ctx.stroke();
 
         ctx.beginPath();
-        for(let i = 0; i < lineKeys.length; i++) {
-            const o = lines[lineKeys[i]]
+        for(let i = 0; i < lineItems.length; i++) {
+            const o = lineItems[i]
             ctx.moveTo(o.a.x + 5, o.a.y)
             ctx.arc(o.a.x, o.a.y, 5, 0, Math.PI * 2, false)
 

@@ -40,8 +40,6 @@ class GraphWalker {
 			return []
 		}
 
-		const sourceKey = outbound ? 'sender' : 'receiver'
-		const targetKey = outbound ? 'receiver' : 'sender'
 		let res = []
 		for(let connectionId in this.connections) {
 			let connection = this.connections[connectionId]
@@ -49,19 +47,27 @@ class GraphWalker {
 				continue
 			}
 
-			let sourceLabel = connection.obj[sourceKey]?.label
-			if(sourceLabel == name) {
-				let targetLabel = connection.obj[targetKey]?.label
-				if(targetLabel != undefined) {
-					res.push(targetLabel)
-				}
+			let sender = connection.obj?.sender
+			let receiver = connection.obj?.receiver
+
+			let outboundLabel = sender?.label
+			let inboundLabel = receiver?.label
+			if(sender?.direction == 'inbound' && receiver?.direction == 'outbound') {
+				outboundLabel = receiver?.label
+				inboundLabel = sender?.label
+			}
+
+			let sourceLabel = outbound ? outboundLabel : inboundLabel
+			let targetLabel = outbound ? inboundLabel : outboundLabel
+			if(sourceLabel == name && targetLabel != undefined) {
+				res.push(targetLabel)
 			}
 		}
 
 		return [...new Set(res)]
 	}
 
-	createConnection(fromName, toName, senderPipIndex=0, receiverPipIndex=0) {
+	createConnection(fromName, toName, senderPipIndex=0, receiverPipIndex=0, line={}) {
 		if(fromName == undefined || toName == undefined) {
 			return null
 		}
@@ -71,6 +77,11 @@ class GraphWalker {
 		if(senderWindow == undefined || receiverWindow == undefined) {
 			console.error('Cannot create connection; unknown window label.', { fromName, toName })
 			return null
+		}
+
+		const lineConfig = {
+			color: line?.color,
+			design: line?.design ?? line?.style ?? line?.lineDesign
 		}
 
 		const connection = {
@@ -83,7 +94,8 @@ class GraphWalker {
 				label: toName,
 				direction: 'inbound',
 				pipIndex: receiverPipIndex
-			}
+			},
+			line: lineConfig
 		}
 
 		document.dispatchEvent(new CustomEvent('connectnodes', {
@@ -124,7 +136,7 @@ class LocalStorageGraphWalker extends GraphWalker {
 				continue
 			}
 
-			graph.connections.push({
+			let exportedConnection = {
 				sender: {
 					label: obj.sender?.label,
 					direction: obj.sender?.direction || 'outbound',
@@ -134,8 +146,14 @@ class LocalStorageGraphWalker extends GraphWalker {
 					label: obj.receiver?.label,
 					direction: obj.receiver?.direction || 'inbound',
 					pipIndex: obj.receiver?.pipIndex ?? 0
+				},
+				line: {
+					color: obj.line?.color,
+					design: obj.line?.design
 				}
-			})
+			}
+
+			graph.connections.push(exportedConnection)
 		}
 
 		return JSON.stringify(graph, null, indent)
@@ -187,6 +205,7 @@ class LocalStorageGraphWalker extends GraphWalker {
 			let connection = connections[i]
 			let sender = connection?.sender
 			let receiver = connection?.receiver
+			let line = connection?.line
 			let fromName = sender?.label
 			let toName = receiver?.label
 
@@ -198,7 +217,8 @@ class LocalStorageGraphWalker extends GraphWalker {
 				fromName,
 				toName,
 				sender?.pipIndex ?? 0,
-				receiver?.pipIndex ?? 0
+				receiver?.pipIndex ?? 0,
+				line
 			)
 		}
 
