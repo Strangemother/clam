@@ -37,11 +37,21 @@ class CanvasLayerGroup {
 
         let _id = `${obj.sender.label}-${obj.receiver.label}`
 
-        console.log('Stashed', _id)
-        pipeData.connections[_id] = {
-            obj
-            , senderUnit
-            , receiverUnit
+        let store = pipeData.connections[_id];
+
+        if(store == undefined) {
+            // make a new one
+            console.log('Stashed', _id)
+            pipeData.connections[_id] = {
+                obj
+                , senderUnit
+                , receiverUnit
+            }
+        } else {
+            // Append to existing one
+            console.log('Already have connection', _id, store)
+            // The sender unit and receiver unit should be the same, but the pipIndex may differ, so we add these.
+            
         }
 
     }
@@ -58,29 +68,46 @@ class CanvasLayerGroup {
     }
 
     renderConnections(){
+        /* Re-read the canvas position here so all point math is done once,
+           converting viewport-absolute DOMRect coords into canvas-local ones
+           before anything is stored or drawn.
+           scaleX/Y corrects for any mismatch between the canvas attribute
+           dimensions and its CSS-rendered size — without this, offsets grow
+           increasingly wrong the further a node is from the origin. */
+        const cvs = this.layers[1].canvas
+        const canvasRect = cvs.getBoundingClientRect()
+        const scaleX = cvs.width  / canvasRect.width
+        const scaleY = cvs.height / canvasRect.height
+
         for(let _id in pipeData.connections) {
             let conn = pipeData.connections[_id]
 
             let senderNode = conn.senderUnit.node
             let receiverNode = conn.receiverUnit.node
 
-            let senderRect = senderNode.getBoundingClientRect()
-            let receiverRect = receiverNode.getBoundingClientRect()
+            let sr = senderNode.getBoundingClientRect()
+            let rr = receiverNode.getBoundingClientRect()
+
+            // Canvas-local centre points
+            let a = {
+                x: (sr.x + sr.width  * 0.5 - canvasRect.left) * scaleX
+                , y: (sr.y + sr.height * 0.5 - canvasRect.top) * scaleY
+            }
+            let b = {
+                x: (rr.x + rr.width  * 0.5 - canvasRect.left) * scaleX
+                , y: (rr.y + rr.height * 0.5 - canvasRect.top) * scaleY
+            }
 
             console.log('From', conn.senderUnit, 'to', conn.receiverUnit)
-            this.drawLine(_id, senderRect, receiverRect)
+            this.drawLine(_id, a, b)
         }
 
     }
 
-    drawLine(_id, senderRect, receiverRect) {
-        console.log('From', senderRect, 'to', receiverRect)
+    drawLine(_id, a, b) {
+        console.log('From', a, 'to', b)
 
-        let tidyLine = {
-            _id
-            , a: senderRect
-            , b: receiverRect
-        }
+        let tidyLine = { _id, a, b }
         console.log('Installing line.')
         this.layers[1].addLine(tidyLine)
     }
@@ -153,28 +180,34 @@ class CanvasLayer {
         /* draw a polyline from a to b. */
         console.log('renderLine', tidyLine)
 
+        this.straightLine(tidyLine, ctx)
+    }
+
+    straightLine(tidyLine, ctx=this.ctx){
+        
+        // Points are already canvas-local, computed in renderConnections.
         let offsetA_X = tidyLine.a.x
-        let offsetA_Y = tidyLine.a.y - tidyLine.a.height - (this.dimensions.top)
+        let offsetA_Y = tidyLine.a.y
 
         let offsetB_X = tidyLine.b.x
-        let offsetB_Y = tidyLine.b.y - tidyLine.b.height - (this.dimensions.top)
+        let offsetB_Y = tidyLine.b.y
+
+        // Dots at each end
+        ctx.beginPath();
+        ctx.arc(offsetA_X, offsetA_Y, 5, 0, Math.PI * 2, false);
+        ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(offsetA_X
-                , offsetA_Y
-                , 10
-                , 0
-                , Math.PI * 2
-                , false); // Earth orbit
-
-
-        ctx.arc(offsetB_X
-                , offsetB_Y
-                , 10
-                , 0
-                , Math.PI * 2
-                , false); // Earth orbit
+        ctx.arc(offsetB_X, offsetB_Y, 5, 0, Math.PI * 2, false);
         ctx.fill();
+
+        // Line between them
+        ctx.beginPath();
+        ctx.moveTo(offsetA_X, offsetA_Y);
+        ctx.lineTo(offsetB_X, offsetB_Y);
+        ctx.strokeStyle = 'purple';
+        ctx.lineWidth = 3;
+        ctx.stroke();
     }
 
     stickCanvasSize(canvas=this.canvas){
