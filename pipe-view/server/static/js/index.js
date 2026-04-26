@@ -173,7 +173,7 @@ const createMiniApp = function() {
         // })
         newPanelName: "Strange Apple"
         , windowMap: {}
-        , spawnWindow(conf=this.newPanelName) {
+        , spawnWindow(conf={name: this.newPanelName}) {
             let name = conf.name;
             let winapp = {
                 class: [
@@ -217,51 +217,8 @@ const createMiniApp = function() {
     const res = PetiteVue.createApp(app)
 
     res.mount('#mini_app')
-
-    app.spawnWindow({name: 'apples', x: '20%'})
-    app.spawnWindow({name:'cherry', x: '60%'})
-
-    setTimeout(autoConnectNodes, 300)
     return app
 };
-
-
-
-const autoConnectNodes = function() {
-
-    /*
-    Connect nodes without doing it by hand
-     */
-    let inverted = {
-        "sender": {
-            "label": "apples",
-            "direction": "inbound",
-            "pipIndex": 0
-        },
-        "receiver": {
-            "label": "cherry",
-            "direction": "outbound",
-            "pipIndex": 0
-        }
-    }
-
-    // clItems.connectNodes(connectEvent)
-
-    let ordered = {
-        "sender": {
-            "label": "apples",
-            "direction": "outbound",
-            "pipIndex": 0
-        },
-        "receiver": {
-            "label": "cherry",
-            "direction": "inbound",
-            "pipIndex": 0
-        }
-    }
-
-    clItems.connectNodes(ordered)
-}
 
 
 const app = createMiniApp();
