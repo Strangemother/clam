@@ -219,8 +219,8 @@ const createMiniApp = function() {
             let name = conf.name;
             let winapp = {
                 class: [
-                    // "no-min"
-                    // , "no-max"
+                    "no-min"
+                    , "no-max"
                     , "no-full"
                     // , "no-resize"
                     // , "no-move"
@@ -236,7 +236,7 @@ const createMiniApp = function() {
 
                 ,  onclose: function(force){
                     console.log('Unmount app')
-                    this.vueApp.unmount()
+                    // this.vueApp.unmount()
                     return force;
                     // return !confirm("Close window?");
                 }
@@ -327,6 +327,12 @@ class MyInfiniteDrag extends ZoomableInfiniteDrag {
             const scalePercent = Math.round(scale * 100 / 10) * 10
             el.className = el.className.replace(/\binf-drag-zoom-scale-\d+\b/g, '')
             el.classList.add(`inf-drag-zoom-scale-${scalePercent}`)
+
+            // Note: we could also apply a CSS transform: scale() here instead of resizing, but that would make the content blurry. Resizing keeps it crisp.
+            //Use polyclass for font size management
+            const fontSizeScale = ( Math.round(scale * 100 / 10) * .1).toFixed(1)
+            el.className = el.className.replace(/\bfont-size-\d+(\.\d+)?em\b/g, '')
+            el.classList.add(`font-size-${fontSizeScale}em`)
         }
     }
 
