@@ -106,7 +106,30 @@ const createUIApp = function(mountSelector='#mini_app') {
                     this._animating = null
             }
         }
+
         , stepOnceHighlighted(){
+
+            let start = false;
+
+            if(this._stepHighlightEntry == undefined) {
+                // start
+                // console.log('stepOnceHighlighted start', this.focusNode)
+                start = true
+            } else {
+
+                if(this._stepHighlightEntry.name != this.focusNode.name) {
+                    console.log('Node change.')
+                    pipesTool.lights.clearCycle()
+                    start = true
+                }
+            }
+
+            if(start == true) {
+                pipesTool.lights.cycleFrom(this.focusNode.name)
+                this._stepHighlightEntry = this.focusNode
+            }
+
+            // console.log('stepOnceHighlighted continue', this.focusNode)
             pipesTool.lights.stepLights()
         }
 
@@ -132,6 +155,7 @@ const createUIApp = function(mountSelector='#mini_app') {
             pipesTool.lights.stopLights()
             this._stepHighlightEntry = undefined
         }
+
         , spawnWindow(conf={name: this.newPanelName}) {
 
             let r = this.windowMap[conf.name] = spawnWindow(conf)
@@ -142,6 +166,25 @@ const createUIApp = function(mountSelector='#mini_app') {
             let windowApp = this.windowMap[label]
             let unit = windowApp.vueApp.getTip(direction, index)
             return unit
+        }
+
+        , startExecuteLoop(startNode=this.focusNode) {
+            if(this._walkerExecution != undefined) {
+                this.stopExecuteLoop()
+            }
+
+            this._walkerExecution = pipesTool.walker.executeLoop(startNode.name, 2)
+        }
+
+        , stopExecuteLoop(){
+            if(this._walkerExecution == undefined) {
+                console.log('No executor to stop.')
+                return false;
+            }
+
+            this._walkerExecution.stop()
+            this._walkerExecution = undefined;
+            return true
         }
     }
 

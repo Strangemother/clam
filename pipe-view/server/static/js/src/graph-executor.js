@@ -22,21 +22,38 @@ class GraphExecutor extends LocalStorageGraphWalker {
             return
         }
 
+        let win = node.getWinboxWindow()
+        let winBoxClasses = win.window.classList;
+
+        win.window.parentElement
+            .querySelectorAll('.winbox.executed')
+            .forEach(e=>{
+                e.classList.remove('executed')
+            });
+
+        winBoxClasses.add('executing')
+
         const taskName = nodeName // node.task || 'default'
         let taskFunc = this.taskMap[taskName] || this.taskMap['defaultTask']
         taskFunc = taskFunc.bind(this.taskMap)
+
         if(typeof taskFunc !== 'function') {
             console.warn(`No task function found for task ${taskName} on node ${nodeName}`)
             return
         }
 
+        let result = undefined;
+
         try {
-            let result = taskFunc(node, data)
-            return result;
+            result = taskFunc(node, data)
 
         } catch (err) {
             console.error(`Error executing task ${taskName} for node ${nodeName}:`, err)
         }
+
+        winBoxClasses.remove('executing')
+        winBoxClasses.add('executed')
+        return result;
 
     }
 

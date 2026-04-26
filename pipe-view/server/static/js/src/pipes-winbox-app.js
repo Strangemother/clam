@@ -49,7 +49,10 @@ const createWinboxVueApp = function(windowApp, conf) {
         , label: windowApp.title
         , pipsInbound: []
         , pipsOutbound: []
-        , viewInfo: reactive({ words: "None"})
+        , viewInfo: reactive({ words: "--"})
+        , getWinboxWindow() {
+            return windowApp
+        }
         , addInboundPip(){
             let pip = {
                 index:this.pipsInbound.length
