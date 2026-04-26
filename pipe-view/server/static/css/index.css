@@ -305,14 +305,21 @@ li.add-pip a {
     padding: 0 0.4em;
 }
 
-body.layer-space-container {outline: solid 1px red;outline-offset: -1px;height: 99%;display: grid;/* overflow: hidden; */grid-template-rows: auto 1fr auto;}
+body.layer-space-container {
+    outline: solid 1px orange;
+    outline-offset: -1px;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
 
 html.layer-space-container {
     height: 100%;
 }
 
 .layer-space {
-    /* height: 100%; */
+    min-height: 0;
+    overflow: hidden;
     outline: solid 1px green;
     outline-offset: -2px;
     display: grid;

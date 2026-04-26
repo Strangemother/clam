@@ -60,6 +60,7 @@ const createWindowApp = function(windowApp, conf) {
         , label: windowApp.title
         , pipsInbound: []
         , pipsOutbound: []
+        , words: "None"
 
         , addInboundPip(){
             let pip = {
@@ -241,9 +242,31 @@ const createMiniApp = function() {
 };
 
 
+class MyInfiniteDrag extends InfiniteDrag {
+    dragComplete() {
+        // rebind all winbox move events to trigger a redraw, since the positions have changed
+        // winbox.move("center", "center");
+        // pipesTool.app.windowMap['apples'].move('100px', '100px')
+        for (let winName in pipesTool.app.windowMap) {
+            let win = pipesTool.app.windowMap[winName]
+            // Read the actual CSS position we moved to, not WinBox's stale internal values.
+            const left = parseFloat(win.g.style.left) || 0
+            const top = parseFloat(win.g.style.top) || 0
+            if(left > 0 && top > 0) {
+                // winbox force locks 0,0
+                // so only reseat visible windows. Otherwise offscreen windows will be snapped to 0,0.
+                win.move(left, top)
+            }
+        }
+
+    }
+
+}
+
 const app = createMiniApp();
 
 const backLayer = new CanvasLayer('.canvas-container.back canvas')
 const foreLayer = new CanvasLayer('.canvas-container.fore canvas')
 const clItems = new CanvasLayerGroup(backLayer, foreLayer)
 
+const infiniteDrag = new MyInfiniteDrag('main')
