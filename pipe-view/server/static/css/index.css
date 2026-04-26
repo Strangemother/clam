@@ -1,0 +1,361 @@
+label {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}
+
+label span.label {
+    display: flex;
+}
+
+form input[type=text], form textarea {
+    background: inherit;
+    color: inherit;
+    border: solid 1px black;
+    font: inherit;
+    padding: 0.3em 0.7em;
+}
+
+ul.form-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+li.form-list-item {
+    padding: 0.3em 1em;
+}
+
+ul.available-list {
+    list-style: none;
+    padding: 0;
+}
+
+li.available-list-item a {
+    color: inherit;
+    text-decoration: none;
+    line-height: 1.5em;
+}
+
+
+.model-item a[data-running="true"] {
+    /* border-color: #3c563c; */
+    /* background: #1a241f; */
+    /* gap: 0.5em; */
+    /* align-items: center; */
+}
+
+.model-item a {
+    border: solid 2px;
+    padding: 0.4em 0.7em;
+    display: flex;
+    margin: 0em 0;
+    border-color: #0a0a0a;
+    background: #111;
+    border-radius: 0.3em;
+    gap: 0.5em;
+    align-items: center;
+}
+
+span.running-indicator {
+    /* border: solid 2px #444; */
+    width: 0.9em;
+    height: 0.9em;
+    display: block;
+    border-radius: 10em;
+    margin: 0 0.4em;
+    background: #333;
+}
+
+
+*[data-running=true] span.running-indicator {
+    background: #329932;
+}
+
+
+ul.models {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em 0.7em;
+}
+
+.model-item span.info {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-item span.info .model-model {
+    color: #777;
+}
+
+
+li.message-item {
+    /* border: solid 1px #111; */
+    background: #111;
+    border-radius: 0.6em;
+    margin: 0.4em 1em;
+    /* min-width: 40em; */
+}
+
+div#presenter {
+    padding: 0.6em 1em;
+}
+
+ul.message-list {
+    /* margin: 0; */
+    list-style: auto;
+    flex-direction: row-reverse;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+
+.connected-indicator > * {
+    display: none;
+}
+
+.connected-indicator {
+    background: #000;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    padding: 0;
+    margin: 0;
+    border-radius: 5em;
+}
+
+.socket-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+}
+
+input[type=text], textarea {
+    background: #333;
+    color: inherit;
+    border: none;
+    font: inherit;
+}
+
+.connected-indicator[data-connected="true"] {
+    background: green;
+}
+
+.socket-info input[type=text] {
+    padding: 0.4em 0.5em;
+}
+
+input[type=text]:focus, textarea:focus {
+    outline: none;
+    background: #222;
+}
+
+.message-item .type {
+    border-radius: 0.6em 0.6em 0em 0em;
+    background: #0a0a0a;
+    padding: 0.3em 0.8em;
+    color: #555;
+}
+
+.message-item > span, #presenter {
+    padding: 0.5em 1em 0.7em;
+    display: flex;
+    white-space: break-spaces;
+    color: hsl(199deg 27% 59%);
+}
+
+li.message-item.assistant {
+    margin-left: 33%;
+}
+
+li.message-item.user {
+    margin-right: 33%;
+}
+
+.widthed {
+    max-width: 72rem;
+    margin: auto;
+}
+
+
+li.presenter-item.waiting {
+    display: none;
+}
+
+.presenter-item textarea {
+    padding: 0.4em 0em 0.5em;
+    /* border-radius: 0em 0 0.7em 0.7em; */
+    width: 95%;
+    margin: 0 1em;
+    background: inherit;
+}
+
+.presenter-item textarea:focus {
+    background: #0b0b0b;
+}
+
+select#model-choice {
+    color: inherit;
+    background: inherit;
+    font: inherit;
+    padding: 0.2em 0.6em 0.2em 0.4em;
+    border-radius: 0.4em;
+    max-width: 18em;
+}
+
+option {
+    background-color: #222;
+}
+
+ul.socket-info {
+    list-style: none;
+}
+
+
+.message-list li.message-item.system {
+    background: transparent;
+}
+
+.message-list li.message-item.system .type {
+    background: inherit;
+}
+
+.display-panel .header {
+    /* padding: 0.5em 1.6rem; */
+}
+
+.display-panel .content {
+    display: flex;
+    flex-grow: 1;
+}
+
+.display-panel .content-value {
+    flex-grow: 1;
+    padding: 0em 1em;
+}
+
+.display-panel .pips ul li {
+    background: #8d8d8d;
+    /* width: 0.7em; */
+    /* height: 0.7em; */
+    /* border-radius: 3em; */
+    /* padding: 0 0.5em; */
+}
+
+.display-panel .pips ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0.5rem;
+}
+
+.display-panel .inbound.pips {border-right: solid 1px #111;padding: 0.5em 0.5em;}
+
+.display-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+    /* outline: solid; */
+}
+
+.example-window {
+    height: 100%;
+}
+
+.display-panel .outbound.pips {
+    padding: 0.5em .5em;
+    border-left: solid 1px #111;
+}
+
+li.add-pip a {
+    line-height: inherit;
+    color: inherit;
+    text-decoration: none;
+    padding: 0.5em;
+}
+
+.display-panel .pips {
+    padding-top: .5em;
+}
+
+.display-panel .footer {
+    border-top: solid 1px #111;
+    font-size: 0.8em;
+    color: #555;
+    padding: 0.2rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.draggable-pip.dragging {
+    color: black;
+    background: #05ab5e;
+    /* border-radius: 1em; */
+}
+
+.draggable-pip {
+    cursor: grab;
+    padding: 0 0.4em;
+}
+
+body.layer-space-container {outline: solid 1px red;outline-offset: -1px;height: 100%;display: grid;grid-template-rows: auto 1fr;}
+
+html.layer-space-container {
+    height: 100%;
+}
+
+.layer-space {
+    /* height: 100%; */
+    outline: solid 1px green;
+    outline-offset: -2px;
+    display: grid;
+}
+
+.layer-space > * {
+    grid-area: 1/1/1/1;
+}
+
+.test-indicator {
+    width: 2em;
+    height: 2em;
+    background: darkred;
+    border-radius: 2em;
+}
+
+.canvas-container {display: grid;}
+
+.canvas-container > * {
+    grid-area: 1/1/1/1;
+    width: 100%;
+    height: 100%;
+}
+
+.test-indicator-container {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.fore .test-indicator {
+    background: orange;
+    width: 1em;
+    height: 1em;
+}
+
+.layer-space main {
+    z-index: 3;
+    position: relative;
+}
+
+.canvas-container.back {
+    position: relative;
+    z-index: 2;
+}
+
+.canvas-container.fore {position: relative;z-index: 5;pointer-events: none;}
