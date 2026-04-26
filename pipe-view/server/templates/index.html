@@ -113,17 +113,24 @@
         </div>
 
     </div>
-    <div class="admin-bar">
+    <div class="admin-bar" id="mini_app">
+        
+        <div>
+            <label>
+                <input v-model='animateLines' @change="animateLinesCheckChange($event)" type="checkbox">
+                <span class="label">Animate Draw</span>
+            </label>
+        </div>
 
-        <div id="mini_app">
+        <div>
             <input v-model='newPanelName' type="text" name="panel_name" id="panel_name">
             <a href="javascript:;" @click="spawnWindow()">Spawn</a>
         </div>
-
-        <a href="javascript:;">Restore</a>
+        
+        <a href="javascript:;" @click="restoreButton()">Restore</a>
 
         <div class="spacer"></div>
-        <a href="javascript:;">Save</a>
+        <a href="javascript:;" @click="saveButton()">Save</a>
     </div>
     {% endraw %}
 

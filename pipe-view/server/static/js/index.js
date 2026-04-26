@@ -141,6 +141,7 @@ const createWindowApp = function(windowApp, conf) {
             let cols = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6',]
             return cols[Math.floor(Math.random() * cols.length)]
         }
+
         , connect(sender, receiver, line={}) {
             // console.log('Connect from', sender, 'to: ', receiver)
             line.color = line.color || this.randomColor()
@@ -187,7 +188,33 @@ const createMiniApp = function() {
         //     , counter: 0
         // })
         newPanelName: "Strange Apple"
+        , animateLines: false
+
         , windowMap: {}
+        
+        , saveButton() {
+            // save the view to localstore.
+            pipesTool.save()
+        }
+
+        , restoreButton() {
+            // restore the view from localstore.
+            pipesTool.restore()
+        }
+
+        , animateLinesCheckChange(event) {
+            let checked = event.target.checked
+            if(checked) {
+                if(this._animating) {
+                    console.log('Already animating', this._animating)
+                }
+                this._animating = pipesTool.animDraw()
+            } else {
+                    console.log('Stopping anim', this._animating)
+                    pipesTool.layerGroup.stopAnimDraw()
+                    this._animating = null
+            }
+        }
         , spawnWindow(conf={name: this.newPanelName}) {
             let name = conf.name;
             let winapp = {
@@ -257,33 +284,63 @@ class MyInfiniteDrag extends ZoomableInfiniteDrag {
                 win.move(left, top)
             }
         }
-
+        this.resetZoomBase()
     }
 
     moveAllNodes(scale, prevScale, origin) {
-        const ratio = scale / prevScale
         const rect = this.element.getBoundingClientRect()
         const mouseX = origin.x - rect.left
         const mouseY = origin.y - rect.top
 
         for (let winName in pipesTool.app.windowMap) {
             let win = pipesTool.app.windowMap[winName]
-            const left = parseFloat(win.g.style.left) || 0
-            const top  = parseFloat(win.g.style.top)  || 0
-            if (left === 0 && top === 0) continue  // skip unpositioned windows
+            const el = win.g
 
-            const newLeft   = mouseX + (left   - mouseX) * ratio
-            const newTop    = mouseY + (top    - mouseY) * ratio
-            const newWidth  = win.g.offsetWidth  * ratio
-            const newHeight = win.g.offsetHeight * ratio
+            // Snapshot the unzoomed position+size the first time we see this node,
+            // or whenever the zoom is reset to 1 externally.
+            if (el.dataset.zoomBaseLeft === undefined) {
+                const left = parseFloat(el.style.left) || 0
+                const top  = parseFloat(el.style.top)  || 0
+                if (left === 0 && top === 0) continue  // not yet positioned
+
+                el.dataset.zoomBaseLeft   = left
+                el.dataset.zoomBaseTop    = top
+                el.dataset.zoomBaseWidth  = el.offsetWidth
+                el.dataset.zoomBaseHeight = el.offsetHeight
+            }
+
+            // Always derive from the stored base — never from the current scaled value.
+            // Use the live mouse position each tick so the pivot follows the cursor.
+            const baseLeft   = parseFloat(el.dataset.zoomBaseLeft)
+            const baseTop    = parseFloat(el.dataset.zoomBaseTop)
+            const baseWidth  = parseFloat(el.dataset.zoomBaseWidth)
+            const baseHeight = parseFloat(el.dataset.zoomBaseHeight)
+
+            const newLeft   = mouseX + (baseLeft - mouseX) * scale
+            const newTop    = mouseY + (baseTop  - mouseY) * scale
+            const newWidth  = baseWidth  * scale
+            const newHeight = baseHeight * scale
 
             win.move(newLeft, newTop)
             win.resize(newWidth, newHeight)
 
             const scalePercent = Math.round(scale * 100 / 10) * 10
-            win.g.className = win.g.className.replace(/\binf-drag-zoom-scale-\d+\b/g, '')
-            win.g.classList.add(`inf-drag-zoom-scale-${scalePercent}`)
+            el.className = el.className.replace(/\binf-drag-zoom-scale-\d+\b/g, '')
+            el.classList.add(`inf-drag-zoom-scale-${scalePercent}`)
         }
+    }
+
+    // Call this after a drag completes or any external move, so the stored base
+    // positions are refreshed to match the new layout at the current scale.
+    resetZoomBase() {
+        for (let winName in pipesTool.app.windowMap) {
+            const el = pipesTool.app.windowMap[winName].g
+            delete el.dataset.zoomBaseLeft
+            delete el.dataset.zoomBaseTop
+            delete el.dataset.zoomBaseWidth
+            delete el.dataset.zoomBaseHeight
+        }
+        this.scale = 1
     }
 
 }
