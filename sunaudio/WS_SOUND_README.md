@@ -43,7 +43,7 @@ asyncio.run(play_sound())
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Network Devices │────▶│  Event Bridge    │────▶│  Sound Server   │
+│ Network Devices │───▶│  Event Bridge    │────▶│  Sound Server   │
 │  (IoT, HA, etc) │     │  (HTTP/MQTT)     │     │  (WebSocket)    │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                                           │
@@ -134,13 +134,13 @@ import asyncio
 async def my_device_handler():
     client = SoundClient('localhost', 8765)
     await client.connect()
-    
+
     # Map custom events to sounds
     await client.map_event('sensor_triggered', 'beep', {'note': 'E5', 'duration': 0.1})
-    
+
     # When sensor triggers:
     await client.device_event('sensor_triggered', 'my_sensor')
-    
+
     await client.disconnect()
 
 asyncio.run(my_device_handler())
