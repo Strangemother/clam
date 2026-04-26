@@ -137,13 +137,18 @@ const createWindowApp = function(windowApp) {
             this.connect(sender, self)
 
         }
-
-        , connect(sender, receiver) {
+        , randomColor() {
+            let cols = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6',]
+            return cols[Math.floor(Math.random() * cols.length)]
+        }
+        , connect(sender, receiver, line={}) {
             // console.log('Connect from', sender, 'to: ', receiver)
+            line.color = line.color || this.randomColor()
             document.dispatchEvent(new CustomEvent('connectnodes', {
                     detail: {
                         sender
                         , receiver
+                        , line
                     }
                 })
             )
@@ -173,7 +178,7 @@ const createMiniApp = function() {
         // })
         newPanelName: "Strange Apple"
         , windowMap: {}
-        , spawnWindow(conf=this.newPanelName) {
+        , spawnWindow(conf={name: this.newPanelName}) {
             let name = conf.name;
             let winapp = {
                 class: [
@@ -217,51 +222,8 @@ const createMiniApp = function() {
     const res = PetiteVue.createApp(app)
 
     res.mount('#mini_app')
-
-    app.spawnWindow({name: 'apples', x: '20%'})
-    app.spawnWindow({name:'cherry', x: '60%'})
-
-    setTimeout(autoConnectNodes, 300)
     return app
 };
-
-
-
-const autoConnectNodes = function() {
-
-    /*
-    Connect nodes without doing it by hand
-     */
-    let inverted = {
-        "sender": {
-            "label": "apples",
-            "direction": "inbound",
-            "pipIndex": 0
-        },
-        "receiver": {
-            "label": "cherry",
-            "direction": "outbound",
-            "pipIndex": 0
-        }
-    }
-
-    // clItems.connectNodes(connectEvent)
-
-    let ordered = {
-        "sender": {
-            "label": "apples",
-            "direction": "outbound",
-            "pipIndex": 0
-        },
-        "receiver": {
-            "label": "cherry",
-            "direction": "inbound",
-            "pipIndex": 0
-        }
-    }
-
-    clItems.connectNodes(ordered)
-}
 
 
 const app = createMiniApp();
