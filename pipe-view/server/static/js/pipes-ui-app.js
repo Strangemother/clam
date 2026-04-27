@@ -22,7 +22,7 @@ const spawnWindow = function(conf={}) {
             ]
         , x: "center"
         , y: "center"
-        , width: "20%"
+        , width: "10%"
         , height: "20%"
         , mount: document
                     .getElementById("window_content")
@@ -36,7 +36,7 @@ const spawnWindow = function(conf={}) {
             // return !confirm("Close window?");
         }
         , onfocus(){
-            console.log('Focus', confName)
+            // console.log('Focus', confName)
             dispatchFocusNodeEvent({ name: confName})
         }
         ,  onmove: function(x, y){
@@ -84,7 +84,7 @@ const createUIApp = function(mountSelector='#mini_app') {
         }
 
         , onFocusNode(event) {
-            console.log('onFocusNode', event.detail)
+            // console.log('onFocusNode', event.detail)
             this.focusNode = event.detail
         }
 
@@ -100,11 +100,13 @@ const createUIApp = function(mountSelector='#mini_app') {
                     console.log('Already animating', this._animating)
                 }
                 this._animating = pipesTool.animDraw()
+                dispatchRequestDrawEvent()
             } else {
                     console.log('Stopping anim', this._animating)
                     pipesTool.layerGroup.stopAnimDraw()
                     this._animating = null
             }
+
         }
 
         , stepOnceHighlighted(){

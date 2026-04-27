@@ -25,7 +25,7 @@
 
         <div class="canvas-container back">
             <canvas id="back_canvas"></canvas>
-            <div class="test-indicator-container">
+            <div class="test-indicator-container display-none">
                 <div class="test-indicator"></div>
             </div>
         </div>
@@ -35,9 +35,12 @@
                 <h1 class="title
                             text-align-center
                             font-size-2rem">
-                    Bubble View
+                    Pipes View
                 </h1>
             </header>
+            <div class="page-content">
+                <p>This example is a simple <em>adder</em>. every step adds 1 to the input value.</p>
+            </div>
 
             <div class="display-none">
                 {% include "./cell-template.html" %}
@@ -47,66 +50,22 @@
 
         <div class="canvas-container fore">
             <canvas id="fore_canvas"></canvas>
-            <div class="test-indicator-container">
+            <div class="test-indicator-container display-none">
                 <div class="test-indicator"></div>
             </div>
         </div>
     </div>
 
-    {% raw %}
-    <div class="admin-bar" id="mini_app">
-
-        <div class="group">
-            <label>
-                <input v-model='animateLines' @change="animateLinesCheckChange($event)" type="checkbox">
-                <span class="label">Animate Draw</span>
-            </label>
-
-            <div>
-                <a href="javascript:;" @click="redrawCanvas()">Draw</a>
-            </div>
-        </div>
-
-
-        <div class="group">
-
-            <div class="inline-input">
-                <input v-model='newPanelName' type="text" name="panel_name" id="panel_name">
-                <a href="javascript:;" @click="spawnWindow()">Spawn</a>
-            </div>
-        </div>
-
-        <div class="spacer"></div>
-
-        <div class="group">
-            <div class="label">Lights</div>
-            <a href="javascript:;" @click="stopStepHighlighted()">Stop</a>
-            <a href="javascript:;" @click="stepOnceHighlighted()">Step</a>
-            <a href="javascript:;" @click="startStepHighlighted()">Run</a>
-        </div>
-
-        <div class="group">
-            <div class="label">Execute</div>
-            <a href="javascript:;" @click="startExecuteLoop()">Start</a>
-            <a href="javascript:;" @click="stopExecuteLoop()">Stop</a>
-
-        </div>
-
-        <div class="spacer"></div>
-
-        <div class="group">
-            <a href="javascript:;" @click="restoreButton()">Restore</a>
-
-            <div class="spacer"></div>
-            <a href="javascript:;" @click="saveButton()">Save</a>
-        </div>
-    </div>
-    {% endraw %}
+    {% include "./mini-app.html" %}
 
     <script src="./static/js/vendor/winbox.min.js"></script>
     <script src="./static/js/vendor/petite-vue.iife.js"></script>
 
     <script src="./static/js/src/canvas-layer.js"></script>
+    <script src="./static/js/src/pens/straight-lines.js"></script>
+    <script src="./static/js/src/pens/curve-lines.js"></script>
+    <script src="./static/js/src/pens/s-curve-lines.js"></script>
+
     <script src="./static/js/src/standalone/infinite-drag.js"></script>
     <script src="./static/js/src/standalone/winbox-infinite-drag.js"></script>
 

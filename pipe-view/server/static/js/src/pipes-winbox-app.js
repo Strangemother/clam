@@ -49,7 +49,10 @@ const createWinboxVueApp = function(windowApp, conf) {
         , label: windowApp.title
         , pipsInbound: []
         , pipsOutbound: []
-        , viewInfo: reactive({ words: "--"})
+        , viewInfo: reactive({
+            words: "--"
+            , textStatus: 'No Status'
+        })
         , getWinboxWindow() {
             return windowApp
         }
@@ -58,13 +61,13 @@ const createWinboxVueApp = function(windowApp, conf) {
                 index:this.pipsInbound.length
             }
             this.pipsInbound.push(pip)
-            this.textStatus = `New inbound pip: ${pip.index}`
+            this.viewInfo.textStatus = `New inbound pip: ${pip.index}`
         }
 
         , addOutboundPip(){
             let pip = { index:this.pipsOutbound.length }
             this.pipsOutbound.push(pip)
-            this.textStatus = `New outbound pip: ${pip.index}`
+            this.viewInfo.textStatus = `New outbound pip: ${pip.index}`
         }
 
         , getTip(direction, index=0) {

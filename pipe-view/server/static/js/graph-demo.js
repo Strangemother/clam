@@ -16,43 +16,10 @@ class WorkTasks {
         return this.defaultTask(config, data)
     }
 
-    cherry(config, data){
-        console.log('cherry');
-        return this.defaultTask(config, data)
-    }
-    date(config, data){
-        console.log('date');
-        return this.defaultTask(config, data)
-    }
-    elderberry(config, data){
-        console.log('elderberry');
-        return this.defaultTask(config, data)
-    }
-    fig(config, data){
-       console.log('fig');
-       return this.defaultTask(config, data)
-    }
-    grape(config, data){
-        console.log('grape');
-        return this.defaultTask(config, data)
-    }
-    honeydew(config, data){
-        console.log('honeydew');
-        return this.defaultTask(config, data)
-    }
-    kiwi(config, data){
-        console.log('kiwi');
-        return this.defaultTask(config, data)
-    }
-    lemon(config, data){
-        console.log('lemon');
-        return this.defaultTask(config, data)
-    }
-
     defaultTask(config, data) {
         // If a task is not coded, this is executed.
         console.log('Default task executed', config)
-        let res = data + 2
+        let res = data + 1
         config.viewInfo.words = res;
         return res;
     }

@@ -31,14 +31,17 @@ class GraphExecutor extends LocalStorageGraphWalker {
             return
         }
 
-        if(options.resetState ?? true) {
-            this.clearExecutionState()
-        }
+        // if(options.resetState ?? true) {
+            // this.clearExecutionState()
+        // }
 
         let win = node.getWinboxWindow()
         let winBoxClasses = win.window.classList;
 
         winBoxClasses.add('executing')
+
+        let lightTimeout = options.lightTimeout == undefined? options.delay: options.lightTimeout;
+        lightTimeout = lightTimeout == undefined? 400: lightTimeout
 
         const taskName = nodeName // node.task || 'default'
         let taskFunc = this.taskMap[taskName] || this.taskMap['defaultTask']
@@ -53,13 +56,16 @@ class GraphExecutor extends LocalStorageGraphWalker {
 
         try {
             result = taskFunc(node, data)
-
+            setTimeout(()=>{
+                winBoxClasses.remove('executing')
+            }, lightTimeout)
         } catch (err) {
             console.error(`Error executing task ${taskName} for node ${nodeName}:`, err)
         }
 
-        winBoxClasses.remove('executing')
-        winBoxClasses.add('executed')
+        // winBsoxClasses.remove('executing')
+        // winBoxClasses.add('executed')
+
         return result;
 
     }
@@ -86,10 +92,12 @@ class GraphExecutor extends LocalStorageGraphWalker {
         // All pending timeout IDs — stop() drains this to cancel the chain.
         const timers = new Set()
 
+
         this.clearExecutionState()
 
         const step = (nodeName, data) => {
-            const [result, nextIds] = this.executeAndExpected(nodeName, data, { resetState: false })
+            const [result, nextIds] = this.executeAndExpected(nodeName, data, conf)
+
             if(nextIds.length === 0) {
                 // Terminal node — valid end of a pipeline branch.
                 return

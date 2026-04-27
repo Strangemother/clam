@@ -481,3 +481,8 @@ html.layer-space-container {
 .winbox.executed {
     border: solid 1px orange;
 }
+
+.page-content {
+    max-width: 1000px;
+    margin: auto;
+}
