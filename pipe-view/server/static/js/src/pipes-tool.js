@@ -25,7 +25,6 @@ class PipesTool {
         this.layerGroup.draw.apply(this.layerGroup, arguments)
     }
 
-
     save(name = this.filename) {
         // simple save method
         this.walker.saveToLocalStorage(name)
@@ -37,6 +36,21 @@ class PipesTool {
         setTimeout(() => {
             this.draw()
         }, 300);
+    }
+
+    clear(){
+        /* Wipe from interface. */
+        this.walker.clearConnections()
+        this.draw()
+        for(let k in this.app.windowMap) {
+            let _winbox = this.app.windowMap[k]
+            delete this.walker.windows[k]
+            _winbox.unmount()
+            _winbox.close()
+
+        }
+
+        this.app.windowMap = {}
     }
 
     animDraw(){

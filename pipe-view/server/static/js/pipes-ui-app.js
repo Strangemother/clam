@@ -83,6 +83,11 @@ const createUIApp = function(mountSelector='#mini_app') {
             pipesTool.restore()
         }
 
+        , clearButton() {
+            // clear the view
+            pipesTool.clear()
+        }
+
         , onFocusNode(event) {
             // console.log('onFocusNode', event.detail)
             this.focusNode = event.detail

@@ -19,7 +19,13 @@ class WorkTasks {
     defaultTask(config, data) {
         // If a task is not coded, this is executed.
         console.log('Default task executed', config)
-        let res = data + 1
+
+        /*
+            notice here we switch from a passive node to a persistent node.
+         */
+        // let res = data + 1
+        let res = data + (parseInt(config.viewInfo.words) || 0)
+
         config.viewInfo.words = res;
         return res;
     }
