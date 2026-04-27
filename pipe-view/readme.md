@@ -1,6 +1,8 @@
 # Pipe view.
 
 
+![screenshot](screenshot.png)
+
 ## Update
 
 It works great:
@@ -10,7 +12,7 @@ It works great:
 - mini wrap of windows with vue js
 - Step execution through simple execute/step process.
 
-UI Choices:
+### UI Choices:
 
 - pipes is a canvas layer drawing node to node
 - Zooming is managed independently
@@ -28,13 +30,19 @@ In pipes, the x/y is the only focus. Winbox has extras:
 
 Note: Some AI was used; I regret it now. I thought it would save me some time.
 
-**next**
+### next
 
 Now refactored I will implement missing features
 
 - execute highlight: To show what's running.
-- back/fore pipe draw swap
+- back/fore pipe draw swap: The canvas currently runs one layer - we want more than one.
     - and also an animate layer
+
+
+### Links
+
+- winbox: https://nextapps-de.github.io/winbox/
+- petite vue: https://github.com/vuejs/petite-vue
 
 ---
 
