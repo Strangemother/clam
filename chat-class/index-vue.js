@@ -20,6 +20,7 @@ function makePanel(endpoint, model) {
 }
 
 /* ── app ──────────────────────────────────────────────────────────────────── */
+dragHost = new DragSolo()
 
 createApp({
 
@@ -28,7 +29,7 @@ createApp({
             newEndpoint: DEFAULT_ENDPOINT,
             modelIds:    [],
             fetching:    false,
-            panels:      [ makePanel() ],
+            panels:      [],
         }
     },
 
@@ -52,8 +53,20 @@ createApp({
             }
         },
 
-        addPanel()    { this.panels.push(makePanel(this.newEndpoint)) },
-        removePanel(i){ this.panels.splice(i, 1) },
+        addPanel()    {
+            let panel = makePanel(this.newEndpoint)
+            this.panels.push(panel)
+
+            setTimeout(()=>{
+                let n = this._.refs[`panel-${panel.id}`][0]
+                stickAll(n)
+                dragHost.enable(n)
+            }, 100)
+        },
+
+        removePanel(i){
+            this.panels.splice(i, 1)
+        },
 
         /* Return (or recreate) the Chat instance for a panel.
            Recreates if the endpoint has changed since last call. */
