@@ -1,16 +1,24 @@
 # Pipe view.
 
-
 ![screenshot](screenshot.png)
 
-## Update
+## Overview
 
-It works great:
+Pipe view is a visual graph of windows. It allows you to connect windows together with pipes, and execute them in a sequence.
+
+Under the hood we currently use winbox for the windows, and petite vue for the UI. The pipes are drawn on a canvas layer.
+
+
+
+## Update 0.1
+
+It works great. 
 
 - Pipes connected through the view, drag drop connections
 - zoomable and draggable
 - mini wrap of windows with vue js
 - Step execution through simple execute/step process.
+- Execute highlight: To show what's running.
 
 ### UI Choices:
 
@@ -18,26 +26,15 @@ It works great:
 - Zooming is managed independently
 - The view is WinBox
 
-I thought winbox would be super useful here (I love it). However I quickly noticed it's more than I need.
+I thought winbox would be super useful here as I really like the libraryy. However I quickly noticed it's more than I need. I will replace it with a simple div with absolute positioning. This will allow me to have more control over the UI and remove unnecessary features.
 
-In pipes, the x/y is the only focus. Winbox has extras:
-
-- bound X/Y: I would like the infinite drag to plot minus position without caring for winbox locking
-- min/max/full (buttons): pipes doesnt need those
-    - X/y can be a simple dragging (solodrag)
-    - with a CSS handle for width
-
-
-Note: Some AI was used; I regret it now. I thought it would save me some time.
-
-### next
+### Next Steps
 
 Now refactored I will implement missing features
 
-- execute highlight: To show what's running.
-- back/fore pipe draw swap: The canvas currently runs one layer - we want more than one.
+- Back/fore pipe draw swap: The canvas currently runs one layer - we want more than one.
     - and also an animate layer
-
+- Rewrite the graph executor: The existing logic is a bit messy and doesn't handle all cases well. 
 
 ### Links
 
@@ -45,6 +42,10 @@ Now refactored I will implement missing features
 - petite vue: https://github.com/vuejs/petite-vue
 
 ---
+
+## Old
+
+### What is it:
 
 A point to point graph of windows.
 
@@ -64,7 +65,7 @@ A Panel is a window.js div. Has:
 - locality.
 
 
-## Nodes
+### Nodes
 
 A panel has pips as input or output nodes. By default _one_.
 A node is connected to another using a line.
@@ -89,6 +90,6 @@ Multiple pips can run in index, waiting for the first to resolve.
 Same with input.
 
 
-## Lines
+### Lines
 
 The graph will be a dict, rendered lines with canvas for each point. probably bezier curves because they're easy
