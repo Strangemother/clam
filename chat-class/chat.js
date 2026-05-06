@@ -28,6 +28,9 @@ class Chat {
         this.lastError     = null
         this._responseId   = null     // previous_response_id for conversation chaining
         this._handlers     = {}
+
+        // Override to handle responses your way. Default prints to console.
+        this.onResponse    = (msg) => console.log(`[${msg.role}]`, msg.content)
     }
 
     // ── public API ────────────────────────────────────────────────────────────
@@ -152,6 +155,7 @@ class Chat {
 
         this._setState('idle')
         this._emit('response', msg)
+        this.onResponse(msg)
         return msg
     }
 
