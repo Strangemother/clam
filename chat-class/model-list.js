@@ -17,6 +17,9 @@ class ModelList {
         this.modelsUrl = `${this.baseUrl}/v1/models`
 
         this.models = []   // cached after first fetch
+
+        // Override to handle model list updates. Default prints to console.
+        this.onResult = (models) => console.log('[ModelList]', models.map(m => m.id))
     }
 
     /** Fetch and return the full list of model objects. Caches locally. */
@@ -25,6 +28,7 @@ class ModelList {
         if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
         const data = await res.json()
         this.models = data.data ?? data   // OpenAI wraps in { data: [...] }
+        this.onResult(this.models)
         return this.models
     }
 
