@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link rel="stylesheet" href="index-vue.css">
+</head>
+<body>
+<div id="app">
+
+    <div id="toolbar">
+        <input v-model="newEndpoint" placeholder="endpoint" />
+        <button @click="addPanel">+ Panel</button>
+        <button class="ghost" @click="fetchModels" :disabled="fetching">
+            {{ fetching ? 'Loading…' : 'Refresh Models' }}
+        </button>
+        <span class="model-count">{{ modelIds.length }} model(s)</span>
+    </div>
+
+    <div id="panels">
+        <div class="panel" v-for="(panel, i) in panels" :key="panel.id">
+
+            <div class="panel-head">
+                <input v-model="panel.endpoint" placeholder="endpoint" />
+                <select v-model="panel.model">
+                    <option value="">— model —</option>
+                    <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                </select>
+                <button class="ghost" @click="removePanel(i)">✕</button>
+            </div>
+
+            <div class="messages" :ref="'msgs-' + panel.id">
+                <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
+                    {{ m.content }}
+                </div>
+                <div v-if="panel.state === 'pending'" class="msg status">thinking…</div>
+            </div>
+
+            <div class="panel-input">
+                <textarea
+                    v-model="panel.input"
+                    placeholder="Type a message…"
+                    @keydown.enter.exact.prevent="sendMessage(panel)"
+                ></textarea>
+                <button @click="sendMessage(panel)" :disabled="panel.state === 'pending'">Send</button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="chat.js"></script>
+<script src="model-list.js"></script>
+<script src="index-vue.js"></script>
+</body>
+</html>
