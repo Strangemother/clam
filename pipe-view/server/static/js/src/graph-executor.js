@@ -12,7 +12,11 @@ class GraphExecutor extends LocalStorageGraphWalker {
     // Walk with code execution
     constructor(conf={}) {
         super(conf)
-        this.taskMap = conf.taskMap || {}
+        this.conf = conf
+    }
+
+    get taskMap() {
+        return this.conf.taskMap || {}
     }
 
     clearExecutionState() {

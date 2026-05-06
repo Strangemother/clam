@@ -13,7 +13,12 @@ The data attached to the node is the exection code.
 class GraphWalker {
 	constructor(conf={}) {
 		this.connections = conf.connections || pipeData.connections
-		this.windows = conf.windows || app.windowMap
+		this.conf = conf
+		// this.windows = conf.windows || app.windowMap
+	}
+
+	get windows() {
+		return this.conf.windows || app.windowMap
 	}
 
 	getConnections(name) {

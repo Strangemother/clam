@@ -38,6 +38,7 @@ let connectSocket = function(endpoint) {
     return ws
 }
 
+
 const runIndexApp = function() {
 
     // from pipes-ui-app.js
