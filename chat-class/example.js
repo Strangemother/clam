@@ -4,6 +4,7 @@ const defaults = {
 }
 
 const chat = new Chat(defaults)
+const ml   = new ModelList(defaults)
 
 // Override to do something more interesting later, e.g. push to Vue data.
 // chat.onResponse = (msg) => { myApp.reply = msg.content }
