@@ -20,8 +20,11 @@
 </head>
 <body>
     <p>// chat.js loaded — open the console to interact</p>
-    <p>// <code>chat = new Chat({ endpoint: '...', model: '...' })</code></p>
-    <p>// <code>await chat.send('Hello')</code></p>
+    <p>// <code>chat = new Chat({ model: 'granite-4-micro', system: 'You are helpful.' })</code></p>
+    <p>// <code>await chat.send('Hello')   // chained conversation</code></p>
+    <p>// <code>await chat.prompt('...')   // one-shot, no history</code></p>
+    <p>// <code>chat.lastResponse.content  // last reply text</code></p>
+    <p>// <code>chat.reset()               // clear conversation</code></p>
 
     <script src="chat.js"></script>
 </body>

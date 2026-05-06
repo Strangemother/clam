@@ -1,86 +1,96 @@
 /**
- * Chat — wraps a single LLM conversation against an OpenAI-compatible endpoint.
-      
-       const chat = new Chat({ endpoint: 'http://localhost:1234/v1/chat/completions/', model: 'llama3.2:latest' })
-       await chat.send('Hello')
-       await chat.prompt('One-shot question, no history')
+ * Chat — wraps a single LLM conversation against the LM Studio native API.
+ *
+ * POST /api/v1/chat
+ * Conversation history is tracked server-side via previous_response_id.
+ * Local this.messages is a client-side display log only.
+ *
+ *   const chat = new Chat({ model: 'granite-4-micro', system: 'You are helpful.' })
+ *   await chat.send('Hello')        // continues the conversation
+ *   await chat.prompt('One-shot')   // no history, no side-effects
  */
 class Chat {
 
     constructor(options = {}) {
         this.options = {
-            endpoint:     '/v1/chat/completions/',
-            model:        '',
-            system:       '',
-            stream:       false,
-            history:      true,
-            maxHistory:   0,
-            metadata:     {},
-            pollInterval: 500,
+            endpoint: 'http://localhost:1234/api/v1/chat',
+            model:    '',
+            system:   '',
+            stream:   false,
+            metadata: {},
             ...options,
         }
 
-        this.messages     = []
-        this.state        = 'idle'
-        this.lastResponse = null
-        this.lastError    = null
-        this._handlers    = {}
+        this.messages      = []       // local display log: [{ role, content }, ...]
+        this.state         = 'idle'
+        this.lastResponse  = null     // last assistant message { role, content }
+        this.lastRaw       = null     // full raw API response
+        this.lastError     = null
+        this._responseId   = null     // previous_response_id for conversation chaining
+        this._handlers     = {}
     }
 
     // ── public API ────────────────────────────────────────────────────────────
 
-    /** Append user message to history, post, append reply. Returns assistant Message. */
+    /**
+     * Send a message, continuing the conversation.
+     * Appends user + assistant turns to local this.messages.
+     * Returns the assistant message { role, content }.
+     */
     async send(text) {
-        if (this.options.history) {
-            this.messages.push({ role: 'user', content: text })
-        }
+        this.messages.push({ role: 'user', content: text })
 
-        const payload = this.buildPayload()
+        const payload = this.buildPayload(text, { chain: true })
         const reply   = await this._post(payload)
 
-        if (this.options.history) {
-            this.messages.push(reply)
-            this._trimHistory()
-        }
-
+        this.messages.push(reply)
         return reply
     }
 
-    /** One-shot prompt — does not touch history. Returns assistant Message. */
+    /**
+     * One-shot prompt — does not affect conversation history or this.messages.
+     * Returns the assistant message { role, content }.
+     */
     async prompt(text) {
-        const payload = this.buildPayload(text)
+        const payload = this.buildPayload(text, { chain: false })
         return this._post(payload)
     }
 
-    /** Build the request body. Uses current history when text is omitted. */
-    buildPayload(userText = null, role = 'user') {
-        let messages = this._withSystem(this.messages)
-
-        if (userText !== null) {
-            messages = [...messages, { role, content: userText }]
-        }
-
-        return {
-            model:    this.options.model,
-            messages,
-            stream:   this.options.stream,
+    /**
+     * Build the raw request body.
+     * chain: true  → includes previous_response_id (continues conversation)
+     * chain: false → standalone request
+     */
+    buildPayload(text, { chain = false } = {}) {
+        const payload = {
+            model:  this.options.model,
+            input:  text,
+            stream: this.options.stream,
             ...this.options.metadata,
         }
-    }
 
-    /** Clear message history. */
-    reset(keepSystem = true) {
-        this.messages     = []
-        this.lastResponse = null
-        this.state        = 'idle'
-
-        if (keepSystem && this.options.system) {
-            // system is injected at send-time via _withSystem; nothing stored here
+        if (this.options.system) {
+            payload.system_prompt = this.options.system
         }
+
+        if (chain && this._responseId) {
+            payload.previous_response_id = this._responseId
+        }
+
+        return payload
     }
 
-    setSystem(text)  { this.options.system = text }
-    setModel(name)   { this.options.model  = name }
+    /** Clear local message log and server-side conversation chain. */
+    reset() {
+        this.messages    = []
+        this.lastResponse = null
+        this.lastRaw      = null
+        this._responseId  = null
+        this.state        = 'idle'
+    }
+
+    setSystem(text) { this.options.system = text }
+    setModel(name)  { this.options.model  = name }
 
     /** Register an event handler. Chainable. */
     on(event, handler) {
@@ -106,25 +116,12 @@ class Chat {
         this._emit('update', { state, messages: this.messages })
     }
 
-    /** Prepend system message if one is set. */
-    _withSystem(messages) {
-        if (!this.options.system) return messages
-        return [{ role: 'system', content: this.options.system }, ...messages]
-    }
-
-    /** Trim history to maxHistory message pairs (user + assistant = 1 pair). */
-    _trimHistory() {
-        const max = this.options.maxHistory
-        if (!max || this.messages.length <= max * 2) return
-        this.messages = this.messages.slice(-(max * 2))
-    }
-
     async _post(payload) {
         this._setState('pending')
         this.lastError = null
 
         try {
-            const res  = await fetch(this.options.endpoint, {
+            const res = await fetch(this.options.endpoint, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify(payload),
@@ -133,12 +130,6 @@ class Chat {
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
 
             const data = await res.json()
-
-            // receipt-based async pattern (home.html style)
-            if (data.receipt_id) {
-                return await this._poll(data.receipt_id)
-            }
-
             return this._handleResponse(data)
 
         } catch (err) {
@@ -150,8 +141,15 @@ class Chat {
     }
 
     _handleResponse(data) {
-        const msg = data.choices[0].message          // { role, content }
+        // LM Studio native response:
+        // { output: [{ type: 'message'|'reasoning'|'tool_call', content }], response_id, stats }
+        const messageItem = data.output.find(o => o.type === 'message')
+        const msg = { role: 'assistant', content: messageItem.content }
+
+        this.lastRaw      = data
         this.lastResponse = msg
+        this._responseId  = data.response_id ?? null   // chain future send() calls
+
         this._setState('idle')
         this._emit('response', msg)
         return msg
