@@ -119,6 +119,23 @@ button:disabled { opacity: 0.4; cursor: default; }
 .msg.assistant {background: #1f2d1f;color: #b5cea8;align-self: flex-end;}
 .msg.status    { color: #555; font-style: italic; font-size: 11px; align-self: center; max-width: none; }
 
+.msg { position: relative; }
+.msg-copy {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 13px;
+    padding: 1px 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    line-height: 1;
+}
+.msg:hover .msg-copy { opacity: 1; }
+.msg-copy:hover { color: #d4d4d4; background: transparent; }
+
 /* â”€â”€ message input */
 
 .panel-input {

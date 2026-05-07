@@ -92,6 +92,7 @@
                 <div class="messages" :ref="'msgs-' + panel.id">
                     <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
                         {{ m.content }}
+                        <button class="msg-copy" @click="copyMessage(m)" :title="'Copy'">⎘</button>
                     </div>
                     <div v-if="panel.state === 'pending'" class="msg status">thinking…</div>
                 </div>

@@ -187,6 +187,11 @@ createApp({
             }
         },
 
+        /* Copy a message's text to the clipboard */
+        copyMessage(m) {
+            navigator.clipboard.writeText(m.content).catch(e => console.error('[Copy]', e))
+        },
+
         /* Reset a panel's conversation history */
         resetPanel(panel) {
             panel.messages = []
