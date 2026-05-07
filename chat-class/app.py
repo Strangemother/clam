@@ -52,7 +52,7 @@ def get_prompt(prompt_path):
     if not target.exists():
         return jsonify({'error': 'not found'}), 404
 
-    return target.read_text(), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    return target.read_text(encoding='utf-8', errors='replace'), 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 if __name__ == '__main__':
