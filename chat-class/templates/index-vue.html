@@ -72,12 +72,14 @@
                                 <span>Template prompt</span>
                             </label>
                         </div>
-                        <div v-if="panel.prompt" class="prompt-description"
-                             @click="panel.showPrompt = !panel.showPrompt"
-                             :title="panel.showPrompt ? 'Click to hide system prompt' : 'Click to inspect system prompt'">
-                            <span class="prompt-description-caret">{{ panel.showPrompt ? '▾' : '▸' }}</span>
-                            <span>{{ panel.description || panel.prompt.title || 'System prompt' }}</span>
-                            <pre v-if="panel.showPrompt" class="prompt-preview">{{ panel.prompt.content }}</pre>
+                        <div v-if="panel.prompt" class="prompt-description">
+                            <span class="prompt-description-toggle"
+                                  @click="panel.showPrompt = !panel.showPrompt"
+                                  :title="panel.showPrompt ? 'Click to hide system prompt' : 'Click to inspect system prompt'">
+                                <span class="prompt-description-caret">{{ panel.showPrompt ? '▾' : '▸' }}</span>
+                                <span>{{ panel.description || panel.prompt.title || 'System prompt' }}</span>
+                            </span>
+                            <textarea v-if="panel.showPrompt" class="prompt-preview" v-model="panel.prompt.content"></textarea>
                         </div>
                     </div>
                     <div class="close-button-container">

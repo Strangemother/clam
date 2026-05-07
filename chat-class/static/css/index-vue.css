@@ -251,11 +251,17 @@ button.graph-toggle.stopped:hover  { background: #2a6a2a; }
     font-size: 11px;
     font-style: italic;
     padding: 2px 0 0;
-    cursor: pointer;
-    user-select: none;
 }
 
-.prompt-description:hover { color: #bbb; }
+.prompt-description-toggle {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.prompt-description-toggle:hover { color: #bbb; }
 
 .prompt-description-caret {
     font-style: normal;
@@ -264,6 +270,7 @@ button.graph-toggle.stopped:hover  { background: #2a6a2a; }
 }
 
 .prompt-preview {
+    display: block;
     margin-top: 6px;
     padding: 8px 10px;
     background: #111;
@@ -275,8 +282,10 @@ button.graph-toggle.stopped:hover  { background: #2a6a2a; }
     font-style: normal;
     white-space: pre-wrap;
     word-break: break-word;
+    width: 100%;
+    min-height: 120px;
     max-height: 260px;
-    overflow-y: auto;
+    resize: vertical;
     cursor: text;
     user-select: text;
 }
