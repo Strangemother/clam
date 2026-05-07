@@ -72,7 +72,13 @@
                                 <span>Template prompt</span>
                             </label>
                         </div>
-                        <div v-if="panel.description" class="prompt-description">{{ panel.description }}</div>
+                        <div v-if="panel.prompt" class="prompt-description"
+                             @click="panel.showPrompt = !panel.showPrompt"
+                             :title="panel.showPrompt ? 'Click to hide system prompt' : 'Click to inspect system prompt'">
+                            <span class="prompt-description-caret">{{ panel.showPrompt ? '▾' : '▸' }}</span>
+                            <span>{{ panel.description || panel.prompt.title || 'System prompt' }}</span>
+                            <pre v-if="panel.showPrompt" class="prompt-preview">{{ panel.prompt.content }}</pre>
+                        </div>
                     </div>
                     <div class="close-button-container">
                         <button class="ghost icon-btn" @click="resetPanel(panel)" title="Reset conversation">↺</button>

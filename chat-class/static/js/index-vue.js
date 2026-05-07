@@ -22,6 +22,7 @@ function makePanel(endpoint, model) {
         state:    'idle',    // 'idle' | 'pending'
         messages: [],
         description: '',     // from prompt metadata
+        showPrompt:  false,   // whether the full system prompt is expanded
         _chat:    null,      // Chat instance, created lazily
     }
 }
