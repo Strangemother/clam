@@ -22,13 +22,20 @@ def list_prompts():
       path  — path relative to PROMPTS_DIR, used as a unique key
     """
     files = sorted(PROMPTS_DIR.rglob('*.md')) + sorted(PROMPTS_DIR.rglob('*.txt'))
-    prompts = [
-        {
-            'name': f.stem,
-            'path': str(f.relative_to(PROMPTS_DIR)),
-        }
-        for f in files if f.is_file()
-    ]
+    prompts = []
+    for f in files:
+        if not f.is_file():
+            continue
+        rel  = f.relative_to(PROMPTS_DIR)
+        # Strip all extensions (e.g. init.prompt.md → init)
+        label = f.name
+        for _ in f.suffixes:
+            label = pathlib.Path(label).stem
+        # Prefix with parent folder(s) when nested (e.g. self / init)
+        if len(rel.parts) > 1:
+            label = ' / '.join(list(rel.parts[:-1]) + [label])
+        prompts.append({'name': label, 'path': str(rel)})
+
     return jsonify(prompts)
 
 
