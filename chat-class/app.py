@@ -5,7 +5,8 @@ app = Flask(__name__)
 
 # Fully-qualified path to your prompts directory.
 # Change this to point at any folder of .md / .txt prompt files.
-PROMPTS_DIR = pathlib.Path('/workspaces/clam/v5_2/prompts')
+fp = 'C:/Users/jay/Documents/projects/olloma-quick/v5_2/prompts/'
+PROMPTS_DIR = pathlib.Path(fp)
 
 
 @app.route('/')
