@@ -68,6 +68,7 @@
                                 <span>{{ panel.mode === 'chat' ? 'History' : 'One-shot' }}</span>
                             </label>
                         </div>
+                        <div v-if="panel.description" class="prompt-description">{{ panel.description }}</div>
                     </div>
                     <div class="close-button-container">
                         <button class="ghost icon-btn" @click="resetPanel(panel)" title="Reset conversation">↺</button>

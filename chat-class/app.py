@@ -1,4 +1,5 @@
 import pathlib
+import markdown
 from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
@@ -42,7 +43,15 @@ def list_prompts():
 
 @app.route('/prompts/<path:prompt_path>')
 def get_prompt(prompt_path):
-    """Return the raw text content of a single prompt file."""
+    """Return parsed prompt data as JSON.
+
+    Keys:
+      content     — prompt text with metadata header stripped (use as system prompt)
+      description — value of the 'description' meta key, or ''
+      title       — value of the 'title' meta key, or filename stem
+      model       — first value of 'model'/'models' meta key, or ''
+      meta        — all raw meta key/value pairs
+    """
     target = (PROMPTS_DIR / prompt_path).resolve()
 
     # Guard: ensure the resolved path is still inside PROMPTS_DIR
@@ -52,7 +61,29 @@ def get_prompt(prompt_path):
     if not target.exists():
         return jsonify({'error': 'not found'}), 404
 
-    return target.read_text(encoding='utf-8', errors='replace'), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    raw = target.read_text(encoding='utf-8', errors='replace')
+    md  = markdown.Markdown(extensions=['meta'])
+    md.convert(raw)
+    # md.lines is the text after the meta preprocessor has stripped the header block
+    content = '\n'.join(md.lines).strip()
+    meta    = {k: v for k, v in md.Meta.items()}
+
+    def first(key, default=''):
+        vals = meta.get(key) or []
+        return vals[0] if vals else default
+
+    # Derive display name from filename (strip all suffixes)
+    stem = target.name
+    for _ in target.suffixes:
+        stem = pathlib.Path(stem).stem
+
+    return jsonify({
+        'content':     content,
+        'description': first('description'),
+        'title':       first('title', stem),
+        'model':       first('models') or first('model'),
+        'meta':        meta,
+    })
 
 
 if __name__ == '__main__':

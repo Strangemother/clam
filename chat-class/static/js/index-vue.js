@@ -20,6 +20,7 @@ function makePanel(endpoint, model) {
         input:    '',
         state:    'idle',    // 'idle' | 'pending'
         messages: [],
+        description: '',     // from prompt metadata
         _chat:    null,      // Chat instance, created lazily
     }
 }
@@ -116,12 +117,14 @@ createApp({
         async selectPrompt(panel, promptPath) {
             if (!promptPath) {
                 panel.prompt = null
+                panel.description = ''
                 return
             }
             try {
                 const res  = await fetch(`/prompts/${promptPath}`)
-                const text = await res.text()
-                panel.prompt = { path: promptPath, content: text }
+                const data = await res.json()
+                panel.prompt = { path: promptPath, content: data.content, title: data.title }
+                panel.description = data.description || ''
                 // Reset conversation so new system prompt takes effect cleanly
                 panel._chat?.reset()
             } catch (e) {
