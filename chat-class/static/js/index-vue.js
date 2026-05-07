@@ -17,6 +17,7 @@ function makePanel(endpoint, model) {
         model:    model    || DEFAULT_MODEL,
         prompt:   null,      // selected prompt { name, path } or null
         mode:     'chat',    // 'chat' (history) | 'prompt' (one-shot)
+        templated: false,    // render system prompt as Jinja2 template before each send
         input:    '',
         state:    'idle',    // 'idle' | 'pending'
         messages: [],
@@ -148,6 +149,11 @@ createApp({
             this.scrollToBottom(panel)
             try {
                 const chat = this.getChat(panel)
+                // If templated mode, render the system prompt server-side first
+                if (panel.mode === 'prompt' && panel.templated && panel.prompt?.content) {
+                    const rendered = await this.renderSystemPrompt(panel.prompt.content, text)
+                    if (rendered !== null) chat.options.system = rendered
+                }
                 panel.mode === 'prompt'
                     ? await chat.prompt(text)
                     : await chat.send(text)
@@ -156,6 +162,27 @@ createApp({
                     panel.messages.push({ role: 'status', content: `Error: ${e.message}` })
                 }
                 panel.state = 'idle'
+            }
+        },
+
+        /* Render a Jinja2 system prompt template via the server.
+           Returns the rendered string, or null on error. */
+        async renderSystemPrompt(template, message) {
+            try {
+                const res = await fetch('/prompts/render', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template,
+                        vars: { message },
+                    }),
+                })
+                const data = await res.json()
+                if (data.error) { console.error('[Render]', data.error); return null }
+                return data.rendered
+            } catch (e) {
+                console.error('[Render]', e)
+                return null
             }
         },
 

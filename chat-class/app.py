@@ -1,6 +1,7 @@
 import pathlib
 import markdown
-from flask import Flask, render_template, jsonify
+from jinja2 import Template, TemplateSyntaxError
+from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
@@ -87,6 +88,57 @@ def get_prompt(prompt_path):
         'model':       first('models') or first('model'),
         'meta':        meta,
     })
+
+
+@app.route('/prompts/render', methods=['POST'])
+def render_prompt():
+    """Render a Jinja2 prompt template with provided variables.
+
+    POST body (JSON):
+      template  — raw Jinja2 template string   (required unless 'path' given)
+      path      — path relative to PROMPTS_DIR (alternative to 'template';
+                  uses the stripped content from the prompt file)
+      vars      — dict of variables to inject  (optional, defaults to {})
+
+    Standard vars always injected (can be overridden by 'vars'):
+      timestamp — current UTC ISO-8601 string
+
+    Returns JSON:
+      { rendered: "...", error: null }
+      or on failure:
+      { rendered: null, error: "message" }
+    """
+    body = request.get_json(silent=True) or {}
+
+    template_str = body.get('template')
+    prompt_path  = body.get('path')
+    variables    = dict(body.get('vars') or {})
+
+    # Inject standard variables (user may override)
+    from datetime import datetime, timezone
+    variables.setdefault('timestamp', datetime.now(timezone.utc).isoformat())
+
+    # Load template string from file if path given
+    if not template_str and prompt_path:
+        target = (PROMPTS_DIR / prompt_path).resolve()
+        if not str(target).startswith(str(PROMPTS_DIR.resolve())):
+            return jsonify({'rendered': None, 'error': 'invalid path'}), 400
+        if not target.exists():
+            return jsonify({'rendered': None, 'error': 'not found'}), 404
+        raw = target.read_text(encoding='utf-8', errors='replace')
+        md  = markdown.Markdown(extensions=['meta'])
+        md.convert(raw)
+        template_str = '\n'.join(md.lines).strip()
+
+    if not template_str:
+        return jsonify({'rendered': None, 'error': 'no template provided'}), 400
+
+    try:
+        rendered = Template(template_str).render(**variables)
+    except TemplateSyntaxError as e:
+        return jsonify({'rendered': None, 'error': f'template error: {e}'}), 422
+
+    return jsonify({'rendered': rendered, 'error': None})
 
 
 if __name__ == '__main__':

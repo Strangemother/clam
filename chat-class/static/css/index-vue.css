@@ -241,6 +241,8 @@ button.graph-toggle.stopped:hover  { background: #2a6a2a; }
     white-space: nowrap;
 }
 .mode-toggle input[type=checkbox] { accent-color: #0e639c; cursor: pointer; }
+.templated-toggle { color: #c0a060; }
+.templated-toggle input[type=checkbox] { accent-color: #c0a060; }
 
 .prompt-description {
     font-size: 11px;

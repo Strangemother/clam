@@ -67,6 +67,10 @@
                                 <input type="checkbox" :checked="panel.mode === 'chat'" @change="panel.mode = $event.target.checked ? 'chat' : 'prompt'" />
                                 <span>{{ panel.mode === 'chat' ? 'History' : 'One-shot' }}</span>
                             </label>
+                            <label v-if="panel.mode === 'prompt'" class="mode-toggle templated-toggle" title="Render system prompt as a Jinja2 template, injecting the message before each send">
+                                <input type="checkbox" v-model="panel.templated" />
+                                <span>Template prompt</span>
+                            </label>
                         </div>
                         <div v-if="panel.description" class="prompt-description">{{ panel.description }}</div>
                     </div>
