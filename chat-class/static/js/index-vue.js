@@ -16,7 +16,7 @@ function makePanel(endpoint, model) {
         endpoint: endpoint || DEFAULT_ENDPOINT,
         model:    model    || DEFAULT_MODEL,
         prompt:   null,      // selected prompt { name, path } or null
-        mode:     'chat',    // 'chat' (history) | 'prompt' (one-shot)
+        mode:     'chat',    // 'chat' (history) | 'prompt' (one-shot) | 'input' (passthrough)
         templated: false,    // render system prompt as Jinja2 template before each send
         input:    '',
         state:    'idle',    // 'idle' | 'pending'
@@ -76,6 +76,18 @@ createApp({
 
         addPanel()    {
             let panel = makePanel(this.newEndpoint)
+            this.panels.push(panel)
+
+            setTimeout(()=>{
+                let n = this._.refs[`panel-${panel.id}`][0]
+                stickAll(n)
+                dragHost.enable(n)
+            }, 100)
+        },
+
+        addInputPanel() {
+            let panel = makePanel(this.newEndpoint)
+            panel.mode = 'input'
             this.panels.push(panel)
 
             setTimeout(()=>{
@@ -146,8 +158,21 @@ createApp({
         async sendMessageText(panel, text) {
             if (!text || panel.state === 'pending') return
             panel.messages.push({ role: 'user', content: text })
-            panel.state = 'pending'
             this.scrollToBottom(panel)
+
+            // Input-only mode: forward directly downstream without hitting an LLM
+            if (panel.mode === 'input') {
+                if (this.graphRunning && typeof pipesWalker !== 'undefined') {
+                    const ids = pipesWalker.getOutgoingIds(String(panel.id))
+                    ids.forEach(targetId => {
+                        const target = this.panels.find(p => String(p.id) === String(targetId))
+                        if (target) this.sendMessageText(target, text)
+                    })
+                }
+                return
+            }
+
+            panel.state = 'pending'
             try {
                 const chat = this.getChat(panel)
                 // If templated mode, render the system prompt server-side first

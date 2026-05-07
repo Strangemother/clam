@@ -20,6 +20,7 @@
         <div id="toolbar">
             <input v-model="newEndpoint" placeholder="endpoint" />
             <button @click="addPanel">+ Panel</button>
+                        <button @click="addInputPanel">+ Input</button>
             <button class="ghost" @click="fetchModels" :disabled="fetching">
                 {{ fetching ? 'Loading…' : 'Refresh Models' }}
             </button>
@@ -55,15 +56,15 @@
                     <div class="double-stack">
                         <input v-model="panel.endpoint" placeholder="endpoint" />
                         <div class="panel-head-controls">
-                            <select v-model="panel.model">
+                            <select v-if="panel.mode !== 'input'" v-model="panel.model">
                                 <option value="">— model —</option>
                                 <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
                             </select>
-                            <select @change="selectPrompt(panel, $event.target.value)">
+                            <select v-if="panel.mode !== 'input'" @change="selectPrompt(panel, $event.target.value)">
                                 <option value="">— system prompt —</option>
                                 <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
                             </select>
-                            <label class="mode-toggle" :title="panel.mode === 'chat' ? 'History mode — click for one-shot' : 'One-shot mode — click for history'">
+                            <label v-if="panel.mode !== 'input'" class="mode-toggle" :title="panel.mode === 'chat' ? 'History mode — click for one-shot' : 'One-shot mode — click for history'">
                                 <input type="checkbox" :checked="panel.mode === 'chat'" @change="panel.mode = $event.target.checked ? 'chat' : 'prompt'" />
                                 <span>{{ panel.mode === 'chat' ? 'History' : 'One-shot' }}</span>
                             </label>
@@ -71,6 +72,7 @@
                                 <input type="checkbox" v-model="panel.templated" />
                                 <span>Template prompt</span>
                             </label>
+                            <span v-if="panel.mode === 'input'" class="mode-badge">Input only</span>
                         </div>
                         <div v-if="panel.prompt" class="prompt-description">
                             <span class="prompt-description-toggle"
