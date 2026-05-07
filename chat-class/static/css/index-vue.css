@@ -150,3 +150,61 @@ div#app {
     flex-wrap: wrap;
     flex-direction: column;
 }
+
+/* ── canvas layer-space ── */
+
+.layer-space {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.canvas-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+.canvas-container.back { z-index: 0; }
+.canvas-container.fore { z-index: 1000; }
+
+.canvas-container canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ── pip connectors ── */
+
+.pips {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 10;
+}
+
+/* .pips.inbound  { left:  -9px; } */
+.pips.outbound { right: 5px; }
+
+.pip-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #444;
+    border: 2px solid #888;
+    cursor: grab;
+    pointer-events: all;
+    transition: background 0.15s;
+}
+
+.pip-dot:hover    { background: #3cb44b; border-color: #3cb44b; }
+.pip-dot.dragging { background: #e6194b; border-color: #e6194b; cursor: grabbing; }
+
+.pips.inbound  .pip-dot { border-color: #4363d8; }
+.pips.outbound .pip-dot { border-color: #f58231; }

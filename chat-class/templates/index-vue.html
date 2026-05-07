@@ -6,70 +6,114 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index-vue.css') }}">
 </head>
 <body>
-<div id="app">
-    {% raw %}
 
-    <div id="toolbar">
-        <input v-model="newEndpoint" placeholder="endpoint" />
-        <button @click="addPanel">+ Panel</button>
-        <button class="ghost" @click="fetchModels" :disabled="fetching">
-            {{ fetching ? 'Loading…' : 'Refresh Models' }}
-        </button>
-        <span class="model-count">{{ modelIds.length }} model(s)</span>
+<div class="layer-space">
+
+    <!-- back canvas: lines render behind panels -->
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
     </div>
 
-    <div id="panels">
-        <div class="panel"
-            v-for="(panel, i) in panels"
-            :ref="'panel-' + panel.id"
-            :key="panel.id">
+    <div id="app">
+        {% raw %}
 
-            <div class="panel-head">
-                <div class="double-stack">
-                    <input v-model="panel.endpoint" placeholder="endpoint" />
-                    <div>
+        <div id="toolbar">
+            <input v-model="newEndpoint" placeholder="endpoint" />
+            <button @click="addPanel">+ Panel</button>
+            <button class="ghost" @click="fetchModels" :disabled="fetching">
+                {{ fetching ? 'Loading…' : 'Refresh Models' }}
+            </button>
+            <span class="model-count">{{ modelIds.length }} model(s)</span>
+        </div>
 
-                        <select v-model="panel.model">
-                            <option value="">— model —</option>
-                            <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
-                        </select>
-                        <select @change="selectPrompt(panel, $event.target.value)">
-                            <option value="">— system prompt —</option>
-                            <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
-                        </select>
+        <div id="panels">
+            <div class="panel"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- inbound pip (left side) -->
+                <div class="pips inbound">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event, 'inbound', pip)"
+                        @dragover="pipOverDrag($event, 'inbound', pip)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        title="inbound"></div>
+                </div>
+
+                <div class="panel-head">
+                    <div class="double-stack">
+                        <input v-model="panel.endpoint" placeholder="endpoint" />
+                        <div>
+                            <select v-model="panel.model">
+                                <option value="">— model —</option>
+                                <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                            </select>
+                            <select @change="selectPrompt(panel, $event.target.value)">
+                                <option value="">— system prompt —</option>
+                                <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="close-button-container">
+                        <button class="ghost" @click="removePanel(i)">✕</button>
                     </div>
                 </div>
-                <div class="close-button-container">
-                    <button class="ghost" @click="removePanel(i)">✕</button>
+
+                <div class="messages" :ref="'msgs-' + panel.id">
+                    <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
+                        {{ m.content }}
+                    </div>
+                    <div v-if="panel.state === 'pending'" class="msg status">thinking…</div>
                 </div>
-            </div>
 
-            <div class="messages" :ref="'msgs-' + panel.id">
-                <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
-                    {{ m.content }}
+                <div class="panel-input">
+                    <textarea
+                        v-model="panel.input"
+                        placeholder="Type a message…"
+                        @keydown.enter.exact.prevent="sendMessage(panel)"
+                    ></textarea>
+                    <button @click="sendMessage(panel)" :disabled="panel.state === 'pending'">Send</button>
                 </div>
-                <div v-if="panel.state === 'pending'" class="msg status">thinking…</div>
-            </div>
 
-            <div class="panel-input">
-                <textarea
-                    v-model="panel.input"
-                    placeholder="Type a message…"
-                    @keydown.enter.exact.prevent="sendMessage(panel)"
-                ></textarea>
-                <button @click="sendMessage(panel)" :disabled="panel.state === 'pending'">Send</button>
-            </div>
+                <!-- outbound pip (right side) -->
+                <div class="pips outbound">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event, 'outbound', pip)"
+                        @dragover="pipOverDrag($event, 'outbound', pip)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        title="outbound"></div>
+                </div>
 
+            </div>
         </div>
+        {% endraw %}
     </div>
-    {% endraw %}
 
+    <!-- fore canvas: lines render in front of panels -->
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 <script src="{{ url_for('static', filename='js/dragsolo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/index-vue-dragging.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pens/straight-lines.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pens/curve-lines.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pens/s-curve-lines.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/canvas-layer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/graph-walker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/model-list.js') }}"></script>
 <script src="{{ url_for('static', filename='js/index-vue.js') }}"></script>

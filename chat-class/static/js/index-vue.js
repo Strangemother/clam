@@ -8,8 +8,11 @@ const { createApp, nextTick } = Vue
 let _uid = 0
 
 function makePanel(endpoint, model) {
+    const id = ++_uid
     return {
-        id:       ++_uid,
+        id,
+        pipsInbound:  [{ label: id, index: 0 }],
+        pipsOutbound: [{ label: id, index: 0 }],
         endpoint: endpoint || DEFAULT_ENDPOINT,
         model:    model    || DEFAULT_MODEL,
         prompt:   null,      // selected prompt { name, path } or null
@@ -94,6 +97,14 @@ createApp({
                 panel.messages.push(msg)
                 panel.state = 'idle'
                 this.scrollToBottom(panel)
+                // Forward response to downstream connected panels
+                if (typeof pipesWalker !== 'undefined') {
+                    const ids = pipesWalker.getOutgoingIds(String(panel.id))
+                    ids.forEach(targetId => {
+                        const target = this.panels.find(p => String(p.id) === String(targetId))
+                        if (target) this.sendMessageText(target, msg.content)
+                    })
+                }
             }
 
             return panel._chat
@@ -120,18 +131,60 @@ createApp({
         async sendMessage(panel) {
             const text = panel.input.trim()
             if (!text || panel.state === 'pending') return
-
-            panel.messages.push({ role: 'user', content: text })
             panel.input = ''
+            await this.sendMessageText(panel, text)
+        },
+
+        /* Send an arbitrary text to a panel (used by sendMessage + pipe forwarding) */
+        async sendMessageText(panel, text) {
+            if (!text || panel.state === 'pending') return
+            panel.messages.push({ role: 'user', content: text })
             panel.state = 'pending'
             this.scrollToBottom(panel)
-
             try {
                 await this.getChat(panel).send(text)
             } catch (e) {
                 panel.messages.push({ role: 'status', content: `Error: ${e.message}` })
                 panel.state = 'idle'
             }
+        },
+
+        /* ── pip drag-and-drop ──────────────────────────────────────────── */
+
+        pipStartDrag(event, direction, pip) {
+            event.target.classList.add('dragging')
+            event.dataTransfer.clearData()
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                label: pip.label, direction, pipIndex: pip.index
+            }))
+        },
+
+        pipEndDrag(event, direction, pip) {
+            event.target.classList.remove('dragging')
+            if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()
+        },
+
+        pipOverDrag(event, direction, pip) {
+            event.preventDefault()
+        },
+
+        pipDrop(event, direction, pip) {
+            const sender   = JSON.parse(event.dataTransfer.getData('text/plain'))
+            const receiver = { label: pip.label, direction, pipIndex: pip.index }
+            this.connect(sender, receiver)
+        },
+
+        connect(sender, receiver) {
+            const palette = ['#e6194b','#3cb44b','#ffe119','#4363d8',
+                             '#f58231','#911eb4','#46f0f0','#f032e6']
+            const line = {
+                color: palette[Math.floor(Math.random() * palette.length)],
+                width: Math.floor(Math.random() * 4) + 2,
+            }
+            document.dispatchEvent(new CustomEvent('connectnodes', {
+                detail: { sender, receiver, line }
+            }))
+            if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()
         },
 
         scrollToBottom(panel) {
