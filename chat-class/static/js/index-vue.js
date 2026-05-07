@@ -12,6 +12,7 @@ function makePanel(endpoint, model) {
         id:       ++_uid,
         endpoint: endpoint || DEFAULT_ENDPOINT,
         model:    model    || DEFAULT_MODEL,
+        prompt:   null,      // selected prompt { name, path } or null
         input:    '',
         state:    'idle',    // 'idle' | 'pending'
         messages: [],
@@ -28,6 +29,7 @@ createApp({
         return {
             newEndpoint: DEFAULT_ENDPOINT,
             modelIds:    [],
+            prompts:     [],   // [{ name, path }] loaded from /prompts/
             fetching:    false,
             panels:      [],
         }
@@ -35,9 +37,20 @@ createApp({
 
     async mounted() {
         this.fetchModels()
+        this.fetchPrompts()
     },
 
     methods: {
+
+        /* Fetch prompt file list from the server */
+        async fetchPrompts() {
+            try {
+                const res = await fetch('/prompts/')
+                this.prompts = await res.json()
+            } catch (e) {
+                console.error('[Prompts]', e)
+            }
+        },
 
         /* Fetch model list and populate all model dropdowns */
         async fetchModels() {
@@ -74,7 +87,8 @@ createApp({
             if (!panel._chat || panel._chat.options.endpoint !== panel.endpoint) {
                 panel._chat = new Chat({ endpoint: panel.endpoint, model: panel.model })
             }
-            panel._chat.options.model = panel.model
+            panel._chat.options.model  = panel.model
+            panel._chat.options.system = panel.prompt?.content || ''
 
             panel._chat.onResponse = (msg) => {
                 panel.messages.push(msg)
@@ -83,6 +97,23 @@ createApp({
             }
 
             return panel._chat
+        },
+
+        /* Load prompt content from server and apply to panel */
+        async selectPrompt(panel, promptPath) {
+            if (!promptPath) {
+                panel.prompt = null
+                return
+            }
+            try {
+                const res  = await fetch(`/prompts/${promptPath}`)
+                const text = await res.text()
+                panel.prompt = { path: promptPath, content: text }
+                // Reset conversation so new system prompt takes effect cleanly
+                panel._chat?.reset()
+            } catch (e) {
+                console.error('[Prompt load]', e)
+            }
         },
 
         /* Send the current input text as a user message */

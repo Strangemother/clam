@@ -26,8 +26,8 @@
     <p>// <code>chat.lastResponse.content  // last reply text</code></p>
     <p>// <code>chat.reset()               // clear conversation</code></p>
 
-    <script src="chat.js"></script>
-    <script src="model-list.js"></script>
-    <script src="example.js"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/model-list.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/example.js') }}"></script>
 </body>
 </html>

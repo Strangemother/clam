@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Chat</title>
-    <link rel="stylesheet" href="index-vue.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index-vue.css') }}">
 </head>
 <body>
 <div id="app">
@@ -28,6 +28,10 @@
                 <select v-model="panel.model">
                     <option value="">— model —</option>
                     <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                </select>
+                <select @change="selectPrompt(panel, $event.target.value)">
+                    <option value="">— system prompt —</option>
+                    <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
                 </select>
                 <button class="ghost" @click="removePanel(i)">✕</button>
             </div>
@@ -54,10 +58,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<script src="dragsolo.js"></script>
-<script src="index-vue-dragging.js"></script>
-<script src="chat.js"></script>
-<script src="model-list.js"></script>
-<script src="index-vue.js"></script>
+<script src="{{ url_for('static', filename='js/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/index-vue-dragging.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/model-list.js') }}"></script>
+<script src="{{ url_for('static', filename='js/index-vue.js') }}"></script>
 </body>
 </html>
