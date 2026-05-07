@@ -73,10 +73,11 @@ button:disabled { opacity: 0.4; cursor: default; }
     background: #1e1e1e;
     min-width: 280px;
     overflow: hidden;
-    height: 35em;
-    width: 39em;
+    height: 32em;
+    width: 45em;
     border-radius: .4em;
     position: absolute;
+    resize: both;
 }
 
 /* â”€â”€ panel header  */
@@ -134,3 +135,18 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 
 .panel-input button { border-radius: 0; padding: 0 16px; height: 60px; }
+
+
+div#app {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.panel-head .double-stack {
+    flex-grow: 1;
+    gap: 1em;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}

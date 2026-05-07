@@ -25,16 +25,23 @@
             :key="panel.id">
 
             <div class="panel-head">
-                <input v-model="panel.endpoint" placeholder="endpoint" />
-                <select v-model="panel.model">
-                    <option value="">— model —</option>
-                    <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
-                </select>
-                <select @change="selectPrompt(panel, $event.target.value)">
-                    <option value="">— system prompt —</option>
-                    <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
-                </select>
-                <button class="ghost" @click="removePanel(i)">✕</button>
+                <div class="double-stack">
+                    <input v-model="panel.endpoint" placeholder="endpoint" />
+                    <div>
+
+                        <select v-model="panel.model">
+                            <option value="">— model —</option>
+                            <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                        </select>
+                        <select @change="selectPrompt(panel, $event.target.value)">
+                            <option value="">— system prompt —</option>
+                            <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="close-button-container">
+                    <button class="ghost" @click="removePanel(i)">✕</button>
+                </div>
             </div>
 
             <div class="messages" :ref="'msgs-' + panel.id">
