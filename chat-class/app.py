@@ -45,7 +45,7 @@ def get_prompt(prompt_path):
     target = (PROMPTS_DIR / prompt_path).resolve()
 
     # Guard: ensure the resolved path is still inside PROMPTS_DIR
-    if not target.is_relative_to(PROMPTS_DIR.resolve()):
+    if not str(target).startswith(str(PROMPTS_DIR.resolve())):
         return jsonify({'error': 'invalid path'}), 400
 
     if not target.exists():
