@@ -24,6 +24,12 @@
                 {{ fetching ? 'Loading…' : 'Refresh Models' }}
             </button>
             <span class="model-count">{{ modelIds.length }} model(s)</span>
+            <span class="toolbar-sep"></span>
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Graph forwarding active — click to stop' : 'Graph forwarding paused — click to resume'">
+                {{ graphRunning ? '⏹ Stop Graph' : '▶ Run Graph' }}
+            </button>
         </div>
 
         <div id="panels">
@@ -48,7 +54,7 @@
                 <div class="panel-head">
                     <div class="double-stack">
                         <input v-model="panel.endpoint" placeholder="endpoint" />
-                        <div>
+                        <div class="panel-head-controls">
                             <select v-model="panel.model">
                                 <option value="">— model —</option>
                                 <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
@@ -57,9 +63,15 @@
                                 <option value="">— system prompt —</option>
                                 <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
                             </select>
+                            <label class="mode-toggle" :title="panel.mode === 'chat' ? 'History mode — click for one-shot' : 'One-shot mode — click for history'">
+                                <input type="checkbox" :checked="panel.mode === 'chat'" @change="panel.mode = $event.target.checked ? 'chat' : 'prompt'" />
+                                <span>{{ panel.mode === 'chat' ? 'History' : 'One-shot' }}</span>
+                            </label>
                         </div>
                     </div>
                     <div class="close-button-container">
+                        <button class="ghost icon-btn" @click="resetPanel(panel)" title="Reset conversation">↺</button>
+                        <button class="ghost icon-btn stop-btn" @click="stopPanel(panel)" :disabled="panel.state !== 'pending'" title="Stop request">■</button>
                         <button class="ghost" @click="removePanel(i)">✕</button>
                     </div>
                 </div>

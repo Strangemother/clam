@@ -208,3 +208,40 @@ div#app {
 
 .pips.inbound  .pip-dot { border-color: #4363d8; }
 .pips.outbound .pip-dot { border-color: #f58231; }
+
+/* ── toolbar extras ── */
+
+.toolbar-sep { flex: 1; }
+
+button.graph-toggle { font-weight: bold; border-radius: 0.3em; padding: 5px 12px; }
+button.graph-toggle.running  { background: #7a1e1e; color: #f99; border: 1px solid #c44; }
+button.graph-toggle.running:hover  { background: #9a2e2e; }
+button.graph-toggle.stopped  { background: #1e4a1e; color: #9f9; border: 1px solid #4c4; }
+button.graph-toggle.stopped:hover  { background: #2a6a2a; }
+
+/* ── panel head extras ── */
+
+.panel-head-controls {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.panel-head-controls select { max-width: 160px; font-size: 12px; }
+
+.mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #888;
+    font-size: 11px;
+    user-select: none;
+    white-space: nowrap;
+}
+.mode-toggle input[type=checkbox] { accent-color: #0e639c; cursor: pointer; }
+
+.icon-btn { padding: 4px 7px; font-size: 14px; }
+button.stop-btn:not(:disabled) { color: #f99; border-color: #c44; }
+button.stop-btn:not(:disabled):hover { background: #7a1e1e; }

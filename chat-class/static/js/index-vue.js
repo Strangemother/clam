@@ -16,6 +16,7 @@ function makePanel(endpoint, model) {
         endpoint: endpoint || DEFAULT_ENDPOINT,
         model:    model    || DEFAULT_MODEL,
         prompt:   null,      // selected prompt { name, path } or null
+        mode:     'chat',    // 'chat' (history) | 'prompt' (one-shot)
         input:    '',
         state:    'idle',    // 'idle' | 'pending'
         messages: [],
@@ -34,6 +35,7 @@ createApp({
             modelIds:    [],
             prompts:     [],   // [{ name, path }] loaded from /prompts/
             fetching:    false,
+            graphRunning: true,  // false = graph forwarding paused
             panels:      [],
         }
     },
@@ -98,7 +100,7 @@ createApp({
                 panel.state = 'idle'
                 this.scrollToBottom(panel)
                 // Forward response to downstream connected panels
-                if (typeof pipesWalker !== 'undefined') {
+                if (this.graphRunning && typeof pipesWalker !== 'undefined') {
                     const ids = pipesWalker.getOutgoingIds(String(panel.id))
                     ids.forEach(targetId => {
                         const target = this.panels.find(p => String(p.id) === String(targetId))
@@ -142,11 +144,39 @@ createApp({
             panel.state = 'pending'
             this.scrollToBottom(panel)
             try {
-                await this.getChat(panel).send(text)
+                const chat = this.getChat(panel)
+                const reply = panel.mode === 'prompt'
+                    ? await chat.prompt(text)
+                    : await chat.send(text)
+                // prompt() response isn't wired via onResponse; handle inline
+                if (panel.mode === 'prompt' && reply) {
+                    panel.messages.push(reply)
+                    panel.state = 'idle'
+                    this.scrollToBottom(panel)
+                }
             } catch (e) {
-                panel.messages.push({ role: 'status', content: `Error: ${e.message}` })
+                if (e?.name !== 'AbortError') {
+                    panel.messages.push({ role: 'status', content: `Error: ${e.message}` })
+                }
                 panel.state = 'idle'
             }
+        },
+
+        /* Reset a panel's conversation history */
+        resetPanel(panel) {
+            panel.messages = []
+            panel._chat?.reset()
+        },
+
+        /* Cancel an in-flight request on a panel */
+        stopPanel(panel) {
+            panel._chat?.abort()
+            panel.state = 'idle'
+        },
+
+        /* Pause/resume graph forwarding */
+        toggleGraph() {
+            this.graphRunning = !this.graphRunning
         },
 
         /* ── pip drag-and-drop ──────────────────────────────────────────── */

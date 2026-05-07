@@ -21,13 +21,14 @@ class Chat {
             ...options,
         }
 
-        this.messages      = []       // local display log: [{ role, content }, ...]
-        this.state         = 'idle'
-        this.lastResponse  = null     // last assistant message { role, content }
-        this.lastRaw       = null     // full raw API response
-        this.lastError     = null
-        this._responseId   = null     // previous_response_id for conversation chaining
-        this._handlers     = {}
+        this.messages          = []       // local display log: [{ role, content }, ...]
+        this.state             = 'idle'
+        this.lastResponse      = null     // last assistant message { role, content }
+        this.lastRaw           = null     // full raw API response
+        this.lastError         = null
+        this._responseId       = null     // previous_response_id for conversation chaining
+        this._handlers         = {}
+        this._abortController  = null
 
         // Override to handle responses your way. Default prints to console.
         this.onResponse    = (msg) => console.log(`[${msg.role}]`, msg.content)
@@ -83,6 +84,15 @@ class Chat {
         return payload
     }
 
+    /** Cancel any in-flight request. Resets state to idle. */
+    abort() {
+        if (this._abortController) {
+            this._abortController.abort()
+            this._abortController = null
+        }
+        this._setState('idle')
+    }
+
     /** Clear local message log and server-side conversation chain. */
     reset() {
         this.messages    = []
@@ -123,11 +133,14 @@ class Chat {
         this._setState('pending')
         this.lastError = null
 
+        this._abortController = new AbortController()
+
         try {
             const res = await fetch(this.options.endpoint, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify(payload),
+                signal:  this._abortController.signal,
             })
 
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
@@ -136,10 +149,16 @@ class Chat {
             return this._handleResponse(data)
 
         } catch (err) {
+            if (err.name === 'AbortError') {
+                this._setState('idle')
+                return null
+            }
             this.lastError = err
             this._setState('error')
             this._emit('error', err)
             throw err
+        } finally {
+            this._abortController = null
         }
     }
 
