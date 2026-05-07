@@ -309,6 +309,9 @@ class DragSolo {
         let body = document.body
 
         let mousedown = function(event){
+            // Don't initiate a panel drag when the direct target is itself
+            // draggable (e.g. a pip-dot with draggable="true").
+            if (event.target.draggable) return
             let node = event.target.closest('[data-draggable-id]') || event.target
             // console.log('mouseDown', node)
             let dn = host.nodes[node.dataset.draggableId]
