@@ -148,15 +148,9 @@ createApp({
             this.scrollToBottom(panel)
             try {
                 const chat = this.getChat(panel)
-                const reply = panel.mode === 'prompt'
+                panel.mode === 'prompt'
                     ? await chat.prompt(text)
                     : await chat.send(text)
-                // prompt() response isn't wired via onResponse; handle inline
-                if (panel.mode === 'prompt' && reply) {
-                    panel.messages.push(reply)
-                    panel.state = 'idle'
-                    this.scrollToBottom(panel)
-                }
             } catch (e) {
                 if (e?.name !== 'AbortError') {
                     panel.messages.push({ role: 'status', content: `Error: ${e.message}` })

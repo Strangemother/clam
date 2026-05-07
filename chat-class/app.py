@@ -29,11 +29,14 @@ def list_prompts():
         if not f.is_file():
             continue
         rel  = f.relative_to(PROMPTS_DIR)
-        # Strip all extensions (e.g. init.prompt.md → init)
+        # Strip only the trailing file-type suffixes (.prompt.md, .md, .txt)
+        # so that version dots like .v2 are preserved.
         label = f.name
-        for _ in f.suffixes:
-            label = pathlib.Path(label).stem
-        # Prefix with parent folder(s) when nested (e.g. self / init)
+        for ext in ('.prompt.md', '.prompt.txt', '.md', '.txt'):
+            if label.lower().endswith(ext):
+                label = label[: len(label) - len(ext)]
+                break
+        # Prefix with parent folder(s) when nested (e.g. self / example.v2)
         if len(rel.parts) > 1:
             label = ' / '.join(list(rel.parts[:-1]) + [label])
         prompts.append({'name': label, 'path': str(rel)})
