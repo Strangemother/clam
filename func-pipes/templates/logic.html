@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logic Gates</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/logic.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <button class="btn-gate"   @click="addGate">+ Gate</button>
+            <button class="btn-switch" @click="addSwitch">+ Switch</button>
+            <button class="btn-led"    @click="addLed">+ LED</button>
+            <span class="toolbar-sep"></span>
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Graph active — click to pause' : 'Graph paused — click to run'">
+                {{ graphRunning ? '⏹ Stop' : '▶ Run' }}
+            </button>
+        </div>
+
+        <div id="panels">
+            <div class="panel"
+                :class="'type-' + panel.type"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- inbound pip -->
+                <div class="pips inbound" v-if="panel.type !== 'switch'">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event, 'inbound', pip)"
+                        @dragover="pipOverDrag($event, 'inbound', pip)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        :title="panel.type === 'gate' && !['buffer','not'].includes(panel.op)
+                                    ? (pip.index === 0 ? 'A input' : 'B input')
+                                    : 'inbound'">
+                        <span class="pip-label" v-if="panel.type === 'gate' && !['buffer','not'].includes(panel.op)">
+                            {{ pip.index === 0 ? 'A' : 'B' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ── panel head ── -->
+                <div class="panel-head">
+                    <span class="panel-title">{{ panel.title }}</span>
+
+                    <!-- gate: op selector -->
+                    <template v-if="panel.type === 'gate'">
+                        <select class="gate-op-select" v-model="panel.op" title="Gate operation">
+                            <option v-for="op in logicGateOps" :key="op" :value="op">{{ op.toUpperCase() }}</option>
+                        </select>
+                    </template>
+
+                    <div class="close-button-container">
+                        <button class="ghost icon-btn" @click="resetPanel(panel)" title="Reset">↺</button>
+                        <button class="ghost" @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                <!-- ── gate body ── -->
+                <template v-if="panel.type === 'gate'">
+                    <div class="state-display">
+                        <div :class="['state-bit',
+                            panel.state === '1' ? 'high' :
+                            panel.state === '0' ? 'low'  : 'unknown']">
+                            {{ panel.state }}
+                        </div>
+                    </div>
+
+                    <!-- A/B input readout (hidden for unary gates) -->
+                    <div class="latch-row" v-if="panel.op !== 'buffer' && panel.op !== 'not'">
+                        <span class="latch-label">A</span>
+                        <span :class="['latch-bit', panel.inputs[0] === '1' ? 'high' : 'low']">{{ panel.inputs[0] }}</span>
+                        <span class="latch-label" style="margin-left:8px">B</span>
+                        <span :class="['latch-bit', panel.inputs[1] === '1' ? 'high' : 'low']">{{ panel.inputs[1] }}</span>
+                    </div>
+                </template>
+
+                <!-- ── switch body ── -->
+                <template v-else-if="panel.type === 'switch'">
+                    <div class="switch-body">
+                        <button :class="['toggle-btn', panel.state === '1' ? 'on' : 'off']"
+                                @click="toggleSwitch(panel)">
+                            {{ panel.state === '1' ? 'HIGH' : 'LOW' }}
+                        </button>
+                    </div>
+                    <div class="state-display">
+                        <div :class="['state-bit', panel.state === '1' ? 'high' : 'low']">
+                            {{ panel.state }}
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── LED body ── -->
+                <template v-else-if="panel.type === 'led'">
+                    <div class="led-body">
+                        <div :class="['led-bulb', panel.state === '1' ? 'on' : 'off']"></div>
+                    </div>
+                    <div class="state-display">
+                        <div :class="['state-bit', panel.state === '1' ? 'high' : 'low']">
+                            {{ panel.state }}
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── message log ── -->
+                <div class="messages" :ref="'msgs-' + panel.id" v-if="panel.messages.length">
+                    <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
+                        {{ m.content }}
+                        <button class="msg-copy" @click="copyMessage(m)" title="Copy">⎘</button>
+                    </div>
+                </div>
+
+                <!-- ── manual input ── -->
+                <div class="panel-input" v-if="panel.type !== 'led'">
+                    <input v-model="panel.input"
+                           placeholder="0 / 1"
+                           maxlength="4"
+                           @keydown.enter.prevent="sendMessage(panel)" />
+                    <button @click="sendMessage(panel)">→</button>
+                </div>
+
+                <!-- outbound pip -->
+                <div class="pips outbound" v-if="panel.type !== 'led'">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event, 'outbound', pip)"
+                        @dragover="pipOverDrag($event, 'outbound', pip)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        title="outbound"></div>
+                </div>
+
+            </div>
+        </div>
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+<script src="{{ url_for('static', filename='js/logic/nodes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/logic/index.js') }}"></script>
+</body>
+</html>

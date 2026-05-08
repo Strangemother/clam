@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Func Pipes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <!-- back canvas: lines render behind panels -->
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <button @click="addPanel">+ Node</button>
+            <button @click="addValuePanel">+ Value Node</button>
+            <span class="toolbar-sep"></span>
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Graph forwarding active — click to stop' : 'Graph forwarding paused — click to resume'">
+                {{ graphRunning ? '⏹ Stop Graph' : '▶ Run Graph' }}
+            </button>
+        </div>
+
+        <div id="panels">
+            <div class="panel"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- inbound pip (left side) -->
+                <div class="pips inbound">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event, 'inbound', pip)"
+                        @dragover="pipOverDrag($event, 'inbound', pip)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        title="inbound"></div>
+                </div>
+
+                <div class="panel-head">
+                    <span class="panel-title">{{ panel.title }}</span>
+
+                    <!-- default node: ExecNodes function selector -->
+                    <template v-if="panel.type === 'default'">
+                        <select class="fn-select" v-model="panel.fn" title="Transform function">
+                            <option value="">— passthrough —</option>
+                            <option v-for="name in execNodeNames" :key="name" :value="name">{{ name }}</option>
+                        </select>
+                    </template>
+
+                    <!-- value node: combine-op selector -->
+                    <template v-else-if="panel.type === 'value'">
+                        <select class="fn-select value-op-select" v-model="panel.op" title="Combine operation">
+                            <option v-for="op in valueNodeOps" :key="op" :value="op">{{ op }}</option>
+                        </select>
+                    </template>
+
+                    <div class="close-button-container">
+                        <button class="ghost icon-btn" @click="resetPanel(panel)" title="Clear messages">↺</button>
+                        <button class="ghost" @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                <!-- value node: stored-value editor -->
+                <div v-if="panel.type === 'value'" class="stored-value-row">
+                    <span class="stored-label">stored</span>
+                    <input class="stored-input" v-model="panel.stored" placeholder="internal value…" />
+                </div>
+
+                <div class="messages" :ref="'msgs-' + panel.id">
+                    <div v-for="(m, j) in panel.messages" :key="j" class="msg" :class="m.role">
+                        {{ m.content }}
+                        <button class="msg-copy" @click="copyMessage(m)" title="Copy">⎘</button>
+                    </div>
+                </div>
+
+                <div class="panel-input">
+                    <textarea
+                        v-model="panel.input"
+                        placeholder="Type a message…"
+                        @keydown.enter.exact.prevent="sendMessage(panel)"
+                    ></textarea>
+                    <button @click="sendMessage(panel)">Send</button>
+                </div>
+
+                <!-- outbound pip (right side) -->
+                <div class="pips outbound">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        class="pip-dot"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event, 'outbound', pip)"
+                        @dragover="pipOverDrag($event, 'outbound', pip)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        title="outbound"></div>
+                </div>
+
+            </div>
+        </div>
+        {% endraw %}
+    </div>
+
+    <!-- fore canvas: lines render in front of panels -->
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/graph-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+<script src="{{ url_for('static', filename='js/func/value-node.js') }}"></script>
+<script src="{{ url_for('static', filename='js/func/exec-nodes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/func/index.js') }}"></script>
+</body>
+</html>

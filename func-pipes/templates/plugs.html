@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Plugs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plugs.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <button class="btn-battery" @click="addBattery">⚡ Battery</button>
+            <button class="btn-module"  @click="addModule">⬡ Module</button>
+            <button class="btn-meter"   @click="addMeter">◎ Meter</button>
+            <span class="toolbar-sep"></span>
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Graph active — click to pause' : 'Graph paused — click to run'">
+                {{ graphRunning ? '⏹ Stop' : '▶ Run' }}
+            </button>
+        </div>
+
+        <div id="panels">
+            <div class="panel"
+                :class="'type-' + panel.type"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- inbound pips (left side) -->
+                <div class="pips inbound">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        class="pip-dot"
+                        :class="pip.index === 0 ? 'pip-power' : 'pip-aux'"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        :title="pip.index === 0 ? 'Power in' : 'Aux in'">
+                        <span class="pip-label">{{ pip.index === 0 ? 'PWR' : 'AUX' }}</span>
+                    </div>
+                </div>
+
+                <!-- panel header -->
+                <div class="panel-head">
+                    <span class="panel-title">{{ panel.title }}</span>
+                    <div class="close-button-container">
+                        <button class="ghost icon-btn" @click="resetPanel(panel)" title="Reset">↺</button>
+                        <button class="ghost" @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                <!-- ── battery body ── -->
+                <template v-if="panel.type === 'battery'">
+                    <div class="power-body">
+                        <div class="field-row">
+                            <label>Watts</label>
+                            <input type="number" v-model.number="panel.watts" min="0" step="1" />
+                        </div>
+                        <button class="fire-btn" @click="fireBattery(panel)">⚡ Fire</button>
+                        <div class="power-display" v-if="panel.state > 0">
+                            <div class="power-row">
+                                <span class="power-label">Total</span>
+                                <span class="power-value">{{ panel.state }}W</span>
+                            </div>
+                            <div class="power-row">
+                                <span class="power-label">Branches</span>
+                                <span class="power-value" style="font-size:13px">{{ panel.connectionCount }}</span>
+                            </div>
+                            <div class="power-row">
+                                <span class="power-label">Per branch</span>
+                                <span class="power-value active">
+                                    {{ panel.connectionCount > 0 ? (panel.watts / panel.connectionCount).toFixed(1) : panel.watts }}W
+                                </span>
+                            </div>
+                            <div class="edge-table" v-if="panel.outputEdges.length > 1">
+                                <div class="edge-row" v-for="(e, ei) in panel.outputEdges" :key="ei">
+                                    <span class="edge-label">→ Node {{ e.targetId }}</span>
+                                    <span class="edge-watts">{{ e.watts }}W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── module body ── -->
+                <template v-else-if="panel.type === 'module'">
+                    <div class="power-body">
+                        <div class="field-row">
+                            <label>Usage</label>
+                            <input type="number" v-model.number="panel.usage" min="0" step="1" />
+                            <span class="unit">W</span>
+                        </div>
+                        <div class="power-display">
+                            <div class="power-row">
+                                <span class="power-label">In</span>
+                                <span class="power-value">{{ panel.powerIn }}W</span>
+                            </div>
+                            <div class="power-row" v-if="Object.keys(panel.powerSources).length > 1">
+                                <span class="power-label">Sources</span>
+                                <span class="power-value" style="font-size:11px; color:#8b7a56">
+                                    {{ Object.keys(panel.powerSources).length }}
+                                </span>
+                            </div>
+                            <div class="power-row">
+                                <span class="power-label">Used</span>
+                                <span class="power-value used">{{ panel.powerUsed }}W</span>
+                            </div>
+                            <div class="power-row">
+                                <span class="power-label">Out</span>
+                                <span :class="['power-value', panel.powerOut > 0 ? 'active' : 'depleted']">
+                                    {{ panel.powerOut }}W
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── meter body ── -->
+                <template v-else-if="panel.type === 'meter'">
+                    <div class="power-body">
+                        <div class="power-display">
+                            <div class="power-row">
+                                <span class="power-label">Reading</span>
+                                <span :class="['power-value', panel.state > 0 ? 'active' : 'depleted']">
+                                    {{ panel.state }}W
+                                </span>
+                            </div>
+                            <div class="power-row" v-if="panel.peak > 0">
+                                <span class="power-label">Peak</span>
+                                <span class="power-value" style="font-size:11px; color:#8b7a56">
+                                    {{ panel.peak }}W
+                                </span>
+                            </div>
+                        </div>
+                        <div class="meter-bar-container">
+                            <div class="meter-bar" :style="{ width: meterPercent(panel) + '%' }"></div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- outbound pips (right side) -->
+                <div class="pips outbound">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        class="pip-dot"
+                        :class="pip.index === 0 ? 'pip-power' : 'pip-aux'"
+                        draggable="true"
+                        @dragstart="pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        :title="pip.index === 0 ? 'Power out' : 'Aux out'">
+                        <span class="pip-label">{{ pip.index === 0 ? 'PWR' : 'AUX' }}</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugs/nodes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugs/index.js') }}"></script>
+</body>
+</html>
