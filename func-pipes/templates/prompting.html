@@ -38,9 +38,14 @@
                 </select>
             </div>
 
-            <!-- Model refresh -->
+            <!-- Model endpoint + refresh -->
             <div class="toolbar-group">
-                <button class="ghost" @click="fetchModels" :disabled="fetching">
+                <span class="toolbar-label">LLM</span>
+                <input v-model="modelsEndpoint"
+                       placeholder="http://localhost:1234/api/v1/chat/"
+                       style="width:260px"
+                       title="Base endpoint — used for model list and new LLM nodes" />
+                <button @click="fetchModels" :disabled="fetching">
                     {{ fetching ? 'Loading…' : '⟳ Models' }}
                 </button>
                 <span style="font-size:10px; color:#554466">{{ modelIds.length }} model(s)</span>

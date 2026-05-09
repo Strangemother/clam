@@ -126,7 +126,7 @@ const LLMMethods = {
     async fetchModels() {
         this.fetching = true
         try {
-            const ep = this.panels.find(p => p.type === 'llm')?.endpoint || DEFAULT_ENDPOINT
+            const ep = this.modelsEndpoint || DEFAULT_ENDPOINT
             const ml = new ModelList({ endpoint: ep })
             ml.onResult = (models) => { this.modelIds = models.map(m => m.id) }
             await ml.getList()

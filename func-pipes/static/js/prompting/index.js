@@ -40,6 +40,7 @@ createApp({
             disconnectFirst:  null,
             transformPresets: TRANSFORM_PRESETS,
             // LLM toolbar state
+            modelsEndpoint:   DEFAULT_ENDPOINT,
             modelIds:         [],
             prompts:          [],
             fetching:         false,
@@ -48,7 +49,7 @@ createApp({
 
     async mounted() {
         await this.fetchPrompts()
-        await this.fetchModels()
+        // Models must be fetched manually via the toolbar after setting the endpoint.
     },
 
     methods: {
