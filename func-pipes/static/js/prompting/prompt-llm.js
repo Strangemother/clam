@@ -18,25 +18,25 @@
 
 const LLMMethods = {
 
-    /* ── endpoint resolution ─────────────────────────────────────────── */
-
-    // Return the URL the Chat class should post to for this panel.
-    // Proxy endpoints route through /prompting/proxy/?service=<key>.
-    _resolveEndpoint(panel) {
-        const key = panel.endpointKey
-        if (!key) return panel.endpoint || DEFAULT_ENDPOINT
-        const cfg = (this.endpoints || []).find(e => e.key === key)
-        if (!cfg) return panel.endpoint || DEFAULT_ENDPOINT
-        if (cfg.proxy) return `${PROMPTING_API_BASE}/proxy/?service=${encodeURIComponent(key)}`
-        return cfg.models_url
-            ? cfg.models_url.replace(/\/?$/, '').replace(/\/models.*$/, '') + '/chat'
-            : panel.endpoint || DEFAULT_ENDPOINT
-    },
-
     /* ── Chat instance management ──────────────────────────────────── */
 
     _getLLMChat(panel) {
-        const resolvedEndpoint = this._resolveEndpoint(panel)
+        // Resolve the actual endpoint URL from endpointKey.
+        // Proxy services route through Flask; direct services are called straight.
+        let resolvedEndpoint = panel.endpoint || DEFAULT_ENDPOINT
+        const key = panel.endpointKey
+        if (key) {
+            const endpoints = this.endpoints   // Vue reactive data — safe to read here
+            const cfg = Array.isArray(endpoints) ? endpoints.find(e => e.key === key) : null
+            if (cfg) {
+                if (cfg.proxy) {
+                    resolvedEndpoint = `${PROMPTING_API_BASE}/proxy/?service=${encodeURIComponent(key)}`
+                } else if (cfg.models_url) {
+                    resolvedEndpoint = cfg.models_url.replace(/\/?$/, '').replace(/\/models.*$/, '') + '/chat'
+                }
+            }
+        }
+
         if (!panel._chat || panel._chat.options.endpoint !== resolvedEndpoint) {
             panel._chat = new Chat({
                 endpoint: resolvedEndpoint,
