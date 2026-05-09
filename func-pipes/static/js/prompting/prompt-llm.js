@@ -92,7 +92,9 @@ const LLMMethods = {
             }
         } catch (e) {
             if (e?.name !== 'AbortError') {
-                panel.messages.push({ role: 'error', content: `Error: ${e.message}` })
+                const detail = e.data?.error || e.data?.message || e.message
+                panel.messages.push({ role: 'error', content: `Error: ${detail}` })
+                console.error('[LLM error]', e.message, e.data ?? '')
             }
             panel.state = e?.name === 'AbortError' ? 'idle' : 'error'
         }

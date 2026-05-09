@@ -58,6 +58,8 @@ createApp({
         await this.fetchPrompts()
         await this.fetchFunctions()
         // Models must be fetched manually via the toolbar after setting the endpoint.
+        // Attach space-panning to the stable outer container (outside Vue's DOM)
+        window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel')
     },
 
     methods: {
