@@ -45,7 +45,7 @@ ENDPOINT_CONFIGS = {
         'label':      'LM Studio (LAN)',
         'url':        'http://192.168.50.60:1234/api/v1/chat',
         'proxy':      False,
-        'models_url': 'http://192.168.50.60:1234/api/v1/',
+        'models_url': 'http://192.168.50.60:1234/',
     },
     'digital-ocean': {
         'label':   'Digital Ocean Agent',
