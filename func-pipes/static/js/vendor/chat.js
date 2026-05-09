@@ -174,7 +174,13 @@ class Chat {
                 signal:  this._abortController.signal,
             })
 
-            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
+            if (!res.ok) {
+                let errBody = null
+                try { errBody = await res.json() } catch (_) {}
+                const err = new Error(`HTTP ${res.status} ${res.statusText}`)
+                err.data = errBody
+                throw err
+            }
 
             const data = await res.json()
             return this._handleResponse(data)
