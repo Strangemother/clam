@@ -45,8 +45,15 @@ const SignalMethods = {
             if (pipName === 'system') {
                 // Store the override; _getLLMChat will apply it on the next send
                 panel._systemOverride = signal?.text ?? ''
-                if (panel._chat) panel._chat.options.system = panel._systemOverride
-                else              panel._pendingSystem = panel._systemOverride
+                if (panel._chat) {
+                    panel._chat.options.system = panel._systemOverride
+                    // Reset the conversation chain so the next send starts fresh with
+                    // the new system prompt — the server ignores system_prompt changes
+                    // on chained (previous_response_id) requests otherwise.
+                    panel._chat.reset()
+                } else {
+                    panel._pendingSystem = panel._systemOverride
+                }
             } else {
                 // 'in' or any unnamed inbound — treat as a message to send
                 if (signal !== null) this._applyLLM(panel, signal.text ?? '', signal.meta)
