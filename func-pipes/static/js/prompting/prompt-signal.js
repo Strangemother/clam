@@ -43,9 +43,10 @@ const SignalMethods = {
             const pip     = panel.pipsInbound.find(p => p.index === inPipIndex)
             const pipName = pip?.name ?? String(inPipIndex)
             if (pipName === 'system') {
-                // Update system prompt on the Chat instance
-                if (panel._chat) panel._chat.setSystem(signal?.text ?? '')
-                else              panel._pendingSystem = signal?.text ?? ''
+                // Store the override; _getLLMChat will apply it on the next send
+                panel._systemOverride = signal?.text ?? ''
+                if (panel._chat) panel._chat.options.system = panel._systemOverride
+                else              panel._pendingSystem = panel._systemOverride
             } else {
                 // 'in' or any unnamed inbound — treat as a message to send
                 if (signal !== null) this._applyLLM(panel, signal.text ?? '', signal.meta)

@@ -29,11 +29,10 @@ const LLMMethods = {
             })
         }
         panel._chat.options.model  = panel.model
-        panel._chat.options.system = panel.prompt?.content || panel._pendingSystem || ''
-        if (panel._pendingSystem !== undefined) {
-            panel._chat.options.system = panel._pendingSystem
-            delete panel._pendingSystem
-        }
+        // Priority: system pip override > loaded prompt file > pending > empty
+        const sysOverride = panel._systemOverride ?? panel.prompt?.content ?? panel._pendingSystem ?? ''
+        panel._chat.options.system = sysOverride
+        if (panel._pendingSystem !== undefined) delete panel._pendingSystem
         return panel._chat
     },
 

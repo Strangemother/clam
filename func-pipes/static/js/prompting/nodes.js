@@ -23,7 +23,7 @@
 */
 
 const PROMPTING_API_BASE = '/prompting'
-const DEFAULT_ENDPOINT   = 'http://localhost:1234/api/v1/chat/'
+const DEFAULT_ENDPOINT   = 'http://192.168.50.60:1234/api/v1/chat/'
 const DEFAULT_MODEL      = ''
 
 // ── component catalogue ──────────────────────────────────────────────────────
