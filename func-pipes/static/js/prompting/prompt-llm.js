@@ -31,8 +31,8 @@ const LLMMethods = {
             if (cfg) {
                 if (cfg.proxy) {
                     resolvedEndpoint = `${PROMPTING_API_BASE}/proxy/?service=${encodeURIComponent(key)}`
-                } else if (cfg.models_url) {
-                    resolvedEndpoint = cfg.models_url.replace(/\/?$/, '').replace(/\/models.*$/, '') + '/chat'
+                } else if (cfg.url) {
+                    resolvedEndpoint = cfg.url   // direct endpoint: use the configured chat URL as-is
                 }
             }
         }

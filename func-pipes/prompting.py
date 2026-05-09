@@ -297,11 +297,15 @@ def list_endpoints():
     """
     result = []
     for key, cfg in ENDPOINT_CONFIGS.items():
+        is_proxy = cfg.get('proxy', False)
         entry = {
             'key':   key,
             'label': cfg['label'],
-            'proxy': cfg.get('proxy', False),
+            'proxy': is_proxy,
         }
+        if not is_proxy:
+            # Expose the chat URL only for direct endpoints (no auth headers to protect)
+            entry['url'] = cfg['url']
         if 'models_url' in cfg:
             entry['models_url'] = cfg['models_url']
         result.append(entry)
