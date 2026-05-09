@@ -486,3 +486,12 @@ html.layer-space-container {
     max-width: 1000px;
     margin: auto;
 }
+
+.panspace-container .box {
+    /* border: solid 1px red; */
+    background: #111;
+    width: 10em;
+    height: 6em;
+    border-radius: .5em;
+    margin: 1em;
+}
