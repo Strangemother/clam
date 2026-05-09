@@ -21,9 +21,10 @@ const LLMMethods = {
     /* ── Chat instance management ──────────────────────────────────── */
 
     _getLLMChat(panel) {
-        // Resolve the actual endpoint URL from endpointKey.
+        // Resolve the actual endpoint URL and wire format from endpointKey.
         // Proxy services route through Flask; direct services are called straight.
         let resolvedEndpoint = panel.endpoint || DEFAULT_ENDPOINT
+        let chatFormat = 'lmstudio'
         const key = panel.endpointKey
         if (key) {
             const endpoints = this.endpoints   // Vue reactive data — safe to read here
@@ -34,18 +35,23 @@ const LLMMethods = {
                 } else if (cfg.url) {
                     resolvedEndpoint = cfg.url   // direct endpoint: use the configured chat URL as-is
                 }
+                chatFormat = cfg.api_format || 'lmstudio'
             }
         }
 
-        if (!panel._chat || panel._chat.options.endpoint !== resolvedEndpoint) {
+        if (!panel._chat
+            || panel._chat.options.endpoint !== resolvedEndpoint
+            || panel._chat.options.format   !== chatFormat) {
             panel._chat = new Chat({
                 endpoint: resolvedEndpoint,
                 model:    panel.model,
                 system:   panel.prompt?.content || panel._pendingSystem || '',
+                format:   chatFormat,
             })
         }
         panel._chat.options.model    = panel.model
         panel._chat.options.endpoint = resolvedEndpoint  // keep in sync on key change
+        panel._chat.options.format   = chatFormat
         // Priority: system pip override > loaded prompt file > pending > empty
         const sysOverride = panel._systemOverride ?? panel.prompt?.content ?? panel._pendingSystem ?? ''
         panel._chat.options.system = sysOverride

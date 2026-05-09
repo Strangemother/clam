@@ -1,11 +1,17 @@
 /**
- * Chat — wraps a single LLM conversation against the LM Studio native API.
+ * Chat — wraps a single LLM conversation.
  *
- * POST /api/v1/chat
- * Conversation history is tracked server-side via previous_response_id.
- * Local this.messages is a client-side display log only.
+ * Supports two wire formats, selected via options.format:
  *
- *   const chat = new Chat({ model: 'granite-4-micro', system: 'You are helpful.' })
+ *   'lmstudio' (default)
+ *     POST { model, input, system_prompt?, previous_response_id?, stream }
+ *     Server tracks history via response_id chain.
+ *
+ *   'openai'
+ *     POST { model, messages: [{role,content},…], stream }
+ *     Client sends full history every turn (OpenAI / DO / compatible APIs).
+ *
+ *   const chat = new Chat({ model: 'gpt-4o', system: 'You are helpful.', format: 'openai' })
  *   await chat.send('Hello')        // continues the conversation
  *   await chat.prompt('One-shot')   // no history, no side-effects
  */
@@ -17,11 +23,12 @@ class Chat {
             model:    '',
             system:   '',
             stream:   false,
+            format:   'lmstudio',  // 'lmstudio' | 'openai'
             metadata: {},
             ...options,
         }
 
-        this.messages          = []       // local display log: [{ role, content }, ...]
+        this.messages          = []       // conversation history: [{ role, content }, ...]
         this.state             = 'idle'
         this.lastResponse      = null     // last assistant message { role, content }
         this.lastRaw           = null     // full raw API response
@@ -38,12 +45,14 @@ class Chat {
 
     /**
      * Send a message, continuing the conversation.
-     * Appends user + assistant turns to local this.messages.
+     * Appends user + assistant turns to this.messages.
      * Returns the assistant message { role, content }.
      */
     async send(text) {
         this.messages.push({ role: 'user', content: text })
 
+        // For openai format, buildPayload reads this.messages directly,
+        // so the new user turn is already included above.
         const payload = this.buildPayload(text, { chain: true })
         const reply   = await this._post(payload)
 
@@ -56,31 +65,53 @@ class Chat {
      * Returns the assistant message { role, content }.
      */
     async prompt(text) {
-        const payload = this.buildPayload(text, { chain: false })
+        const payload = this.buildPayload(text, { chain: false, oneshot: true })
         return this._post(payload)
     }
 
     /**
      * Build the raw request body.
-     * chain: true  → includes previous_response_id (continues conversation)
-     * chain: false → standalone request
+     *
+     * For 'lmstudio':
+     *   chain: true  → includes previous_response_id
+     *   chain: false → standalone, no history
+     *
+     * For 'openai':
+     *   chain: true  → sends full this.messages array (client-side history)
+     *   oneshot:true → sends only system + current user message, no history
      */
-    buildPayload(text, { chain = false } = {}) {
+    buildPayload(text, { chain = false, oneshot = false } = {}) {
+        if (this.options.format === 'openai') {
+            const messages = []
+            if (this.options.system) {
+                messages.push({ role: 'system', content: this.options.system })
+            }
+            if (oneshot || !chain) {
+                // One-shot: just this message, no accumulated history
+                messages.push({ role: 'user', content: text })
+            } else {
+                // Full history — this.messages already has the new user turn
+                // pushed by send() before buildPayload is called
+                messages.push(...this.messages)
+            }
+            const payload = { messages, stream: this.options.stream }
+            if (this.options.model) payload.model = this.options.model
+            return payload
+        }
+
+        // LM Studio native format
         const payload = {
             model:  this.options.model,
             input:  text,
             stream: this.options.stream,
             ...this.options.metadata,
         }
-
         if (this.options.system) {
             payload.system_prompt = this.options.system
         }
-
         if (chain && this._responseId) {
             payload.previous_response_id = this._responseId
         }
-
         return payload
     }
 
@@ -163,14 +194,22 @@ class Chat {
     }
 
     _handleResponse(data) {
-        // LM Studio native response:
-        // { output: [{ type: 'message'|'reasoning'|'tool_call', content }], response_id, stats }
-        const messageItem = data.output.find(o => o.type === 'message')
-        const msg = { role: 'assistant', content: messageItem.content }
+        let msg
+
+        if (data.choices) {
+            // OpenAI / DO format: { choices: [{ message: { role, content } }] }
+            const choice = data.choices[0].message
+            msg = { role: choice.role || 'assistant', content: choice.content }
+            this._responseId = null   // OpenAI services don't use response chaining
+        } else {
+            // LM Studio native: { output: [{ type: 'message', content }], response_id }
+            const messageItem = data.output.find(o => o.type === 'message')
+            msg = { role: 'assistant', content: messageItem.content }
+            this._responseId = data.response_id ?? null
+        }
 
         this.lastRaw      = data
         this.lastResponse = msg
-        this._responseId  = data.response_id ?? null   // chain future send() calls
 
         this._setState('idle')
         this._emit('response', msg)

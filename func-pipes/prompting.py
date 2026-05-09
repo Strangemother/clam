@@ -36,6 +36,8 @@ PROMPTS_DIR = pathlib.Path(os.environ.get('PROMPTS_DIR', str(_DEFAULT_PROMPTS)))
 #   url        — target URL for LLM calls (and model listing for direct endpoints)
 #   proxy      — True  → calls go via /prompting/proxy/?service=<key> (Flask adds auth)
 #              — False → frontend calls the URL directly
+#   api_format — 'lmstudio' (default) or 'openai'
+#                'openai'   → proxy translates LM Studio ↔ OpenAI messages format
 #   headers    — extra request headers sent by the proxy (e.g. Authorization)
 #   models_url — optional base URL used by ModelList for the model dropdown
 #                (leave absent for proxy endpoints that don't expose a models API)
@@ -48,9 +50,10 @@ ENDPOINT_CONFIGS = {
         'models_url': 'http://192.168.50.60:1234/',
     },
     'digital-ocean': {
-        'label':   'Digital Ocean Agent',
-        'url':     'https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run/api/v1/chat/completions',
-        'proxy':   True,
+        'label':      'Digital Ocean Agent',
+        'url':        'https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run/api/v1/chat/completions',
+        'proxy':      True,
+        'api_format': 'openai',
         'headers': {
             'Authorization': 'Bearer A5e3_jlOcpzAbDBTgVgMeYiWQx1xw2La',
         },
@@ -299,9 +302,10 @@ def list_endpoints():
     for key, cfg in ENDPOINT_CONFIGS.items():
         is_proxy = cfg.get('proxy', False)
         entry = {
-            'key':   key,
-            'label': cfg['label'],
-            'proxy': is_proxy,
+            'key':        key,
+            'label':      cfg['label'],
+            'proxy':      is_proxy,
+            'api_format': cfg.get('api_format', 'lmstudio'),
         }
         if not is_proxy:
             # Expose the chat URL only for direct endpoints (no auth headers to protect)
@@ -336,6 +340,8 @@ def proxy_request():
     headers = dict(cfg.get('headers', {}))
     headers['Content-Type'] = 'application/json'
 
+    # The Chat class already sends the correct api_format payload, so the proxy
+    # only needs to add auth headers and forward. No translation required.
     try:
         resp = _requests.post(cfg['url'], json=payload, headers=headers, timeout=120)
         return jsonify(resp.json()), resp.status_code
