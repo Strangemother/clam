@@ -23,5 +23,10 @@ def power():
     return render_template('power.html')
 
 
+@app.route('/inputs')
+def inputs():
+    return render_template('inputs.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

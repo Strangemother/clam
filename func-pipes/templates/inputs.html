@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inputs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inputs.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <!-- Quick-add buttons -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Add</span>
+                <button class="btn-gamepad" @click="addGamepad">🎮 Gamepad</button>
+                <button class="btn-value"   @click="addValue">◈ Value</button>
+            </div>
+
+            <!-- Catalogue presets -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Preset</span>
+                <select class="catalog-select" @change="addFromCatalog($event.target.value); $event.target.value = ''">
+                    <option value="">— select node —</option>
+                    <optgroup v-for="(items, group) in catalogGroups" :key="group" :label="group">
+                        <option v-for="c in items" :key="c.key" :value="c.key">
+                            {{ c.label }}
+                        </option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <span class="toolbar-sep"></span>
+
+            <!-- Layout -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Layout</span>
+                <button @click="saveLayout"   title="Save to browser storage">💾 Save</button>
+                <button @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <button @click="exportJSON"   title="Download as JSON">⬇ Export</button>
+                <button @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+            </div>
+
+            <!-- Disconnect mode -->
+            <button :class="['disconnect-toggle', disconnectMode ? 'active' : '']"
+                    @click="disconnectMode = !disconnectMode; if (!disconnectMode) disconnectFirst = null"
+                    title="Step 1: click a pip. Step 2: click the pip it connects to.">
+                ✂ {{ disconnectMode ? (disconnectFirst ? 'Now click the other pip…' : 'Select a pip') : 'Disconnect' }}
+            </button>
+        </div>
+
+        <div id="panels">
+            <div class="panel"
+                :class="['type-' + panel.type, 'state-' + panel.state]"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- ── inbound anonymous pips (left edge) ── -->
+                <div class="pips inbound" v-if="panel.pipsInbound && panel.pipsInbound.length && !panel.pipsInbound[0].name">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                        @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        :title="pip.name || 'Input'">
+                    </div>
+                </div>
+
+                <!-- ── panel header ── -->
+                <div class="panel-head">
+                    <span class="panel-title">{{ panel.title }}</span>
+                    <div class="panel-btns">
+                        <button @click="resetPanel(panel)" title="Reset">↺</button>
+                        <button @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════════════ -->
+                <!-- ── GAMEPAD ── -->
+                <template v-if="panel.type === 'gamepad'">
+                    <div class="gamepad-layout">
+
+                        <!-- controls + state -->
+                        <div class="gamepad-body">
+                            <div class="state-badge" :class="panel.state">
+                                {{ panel.state === 'active' ? '● ACTIVE' : panel.state === 'disconnected' ? '⚠ NO PAD' : '○ IDLE' }}
+                            </div>
+                            <div class="field-row">
+                                <label>Pad #</label>
+                                <select v-model.number="panel.gamepadIndex" @change="gamepadIndexChanged(panel)">
+                                    <option :value="0">0</option>
+                                    <option :value="1">1</option>
+                                    <option :value="2">2</option>
+                                    <option :value="3">3</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- named output pips (one per button/axis) -->
+                        <div class="named-pips gamepad-pips">
+                            <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                                class="named-pip-row">
+                                <span class="pip-name">{{ pip.name }}</span>
+                                <div
+                                    :class="['pip-dot',
+                                        disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                        disconnectMode ? 'disconnect-ready' : '']"
+                                    :draggable="!disconnectMode"
+                                    @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                    @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                    @dragend="pipEndDrag($event)"
+                                    @dragover="pipOverDrag($event)"
+                                    @drop="pipDrop($event, 'outbound', pip)"
+                                    :id="`${pip.label}-outbound-${pip.index}`"
+                                    :title="pip.name">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+
+                <!-- ── VALUE ── -->
+                <template v-else-if="panel.type === 'value'">
+
+                    <!-- named inbound pip with label -->
+                    <div class="named-pips" v-if="panel.pipsInbound && panel.pipsInbound[0] && panel.pipsInbound[0].name">
+                        <div v-for="pip in panel.pipsInbound" :key="pip.index" class="named-pip-row">
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'inbound', pip)"
+                                :id="`${pip.label}-inbound-${pip.index}`"
+                                :title="pip.name">
+                            </div>
+                            <span class="pip-name" style="text-align:left; min-width:0">{{ pip.name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="value-display node-body">
+                        <div v-if="panel.value !== null"
+                            :class="['value-number', panel.state]">
+                            {{ typeof panel.value === 'boolean' ? (panel.value ? '1' : '0') : Number(panel.value).toFixed(3) }}
+                        </div>
+                        <div v-else class="value-null">— null —</div>
+
+                        <!-- bar graph: maps value 0..1 or -1..1 to width -->
+                        <div class="value-bar-bg" v-if="panel.value !== null">
+                            <div class="value-bar-fill"
+                                :style="{ width: Math.min(100, Math.abs(+panel.value) * 100) + '%' }">
+                            </div>
+                        </div>
+
+                        <div class="field-row" style="margin-top:2px">
+                            <label>Label</label>
+                            <input type="text" v-model="panel.label" style="text-align:left" />
+                        </div>
+                    </div>
+                </template>
+
+                <!-- outbound anonymous pips (right edge, non-named) -->
+                <div class="pips outbound" v-if="panel.pipsOutbound && panel.pipsOutbound.length && !panel.pipsOutbound[0].name">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                        @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        :title="pip.name || 'Output'">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/nodes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-spawn.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-signal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-gamepad.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-wiring.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-persist.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/index.js') }}"></script>
+</body>
+</html>
