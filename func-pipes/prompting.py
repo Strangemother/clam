@@ -15,6 +15,8 @@ but can be overridden with the PROMPTS_DIR environment variable.
 
 import os
 import pathlib
+import inspect
+import importlib
 import markdown
 from datetime import datetime, timezone
 
@@ -145,3 +147,108 @@ def render_prompt():
         return jsonify({'rendered': None, 'error': f'template error: {e}'}), 422
 
     return jsonify({'rendered': rendered, 'error': None})
+
+
+# ── pyfunc helpers ────────────────────────────────────────────────────────────
+
+# Map Python annotation types → JSON-friendly label
+_TYPE_LABELS = {str: 'str', int: 'int', float: 'float', bool: 'bool'}
+_TYPE_COERCE  = {str: str,  int: int,   float: float,   bool: lambda v: str(v).lower() not in ('0', 'false', '')}
+
+_PYFUNCS_MODULE = 'pyfuncs'  # module name, importable from the Flask cwd
+
+
+def _load_pyfuncs():
+    """Import (or reload) pyfuncs.py and return the module object."""
+    if _PYFUNCS_MODULE in importlib.sys.modules:
+        return importlib.reload(importlib.sys.modules[_PYFUNCS_MODULE])
+    return importlib.import_module(_PYFUNCS_MODULE)
+
+
+def _introspect(module) -> list:
+    """Return a list of function descriptors from the module."""
+    functions = []
+    for name, fn in inspect.getmembers(module, inspect.isfunction):
+        if name.startswith('_'):
+            continue
+        if fn.__module__ != module.__name__:
+            continue          # skip re-exported symbols from other modules
+        sig    = inspect.signature(fn)
+        params = []
+        for pname, param in sig.parameters.items():
+            ann = param.annotation
+            if ann is inspect.Parameter.empty:
+                ann = str
+            label = _TYPE_LABELS.get(ann, 'str')
+            entry = {'name': pname, 'type': label}
+            if param.default is not inspect.Parameter.empty:
+                entry['default'] = str(param.default)
+            params.append(entry)
+        ret_ann = sig.return_annotation
+        functions.append({
+            'name':    name,
+            'params':  params,
+            'returns': _TYPE_LABELS.get(ret_ann, 'str'),
+            'doc':     (inspect.getdoc(fn) or '').split('\n')[0],
+        })
+    return functions
+
+
+# ── pyfunc routes ─────────────────────────────────────────────────────────────
+
+@prompting_bp.route('/functions/', strict_slashes=False)
+def list_functions():
+    """Return JSON list of all callable functions from pyfuncs.py"""
+    try:
+        module = _load_pyfuncs()
+        return jsonify(_introspect(module))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@prompting_bp.route('/functions/call', methods=['POST'])
+def call_function():
+    """Call a named function from pyfuncs.py with the given params.
+
+    POST body (JSON):
+      function  — function name (str, required)
+      params    — dict of parameter_name → value (optional, defaults to {})
+
+    Returns: { result: str, error: null }  or  { result: null, error: str }
+    """
+    body      = request.get_json(silent=True) or {}
+    fn_name   = body.get('function', '').strip()
+    raw_params = body.get('params') or {}
+
+    if not fn_name:
+        return jsonify({'result': None, 'error': 'no function specified'}), 400
+
+    try:
+        module = _load_pyfuncs()
+    except Exception as e:
+        return jsonify({'result': None, 'error': f'could not load pyfuncs: {e}'}), 500
+
+    fn = getattr(module, fn_name, None)
+    if fn is None or not callable(fn) or fn_name.startswith('_'):
+        return jsonify({'result': None, 'error': f'unknown function: {fn_name}'}), 404
+
+    # Coerce each param to its annotated type
+    sig    = inspect.signature(fn)
+    kwargs = {}
+    for pname, param in sig.parameters.items():
+        if pname not in raw_params:
+            if param.default is inspect.Parameter.empty:
+                return jsonify({'result': None, 'error': f'missing param: {pname}'}), 400
+            continue   # use the default
+        ann    = param.annotation if param.annotation is not inspect.Parameter.empty else str
+        coerce = _TYPE_COERCE.get(ann, str)
+        try:
+            kwargs[pname] = coerce(raw_params[pname])
+        except (ValueError, TypeError) as e:
+            return jsonify({'result': None, 'error': f'bad param {pname!r}: {e}'}), 422
+
+    try:
+        result = fn(**kwargs)
+        return jsonify({'result': str(result), 'error': None})
+    except Exception as e:
+        return jsonify({'result': None, 'error': str(e)}), 500

@@ -5,7 +5,8 @@
 
   Load order in prompting.html:
     nodes.js → prompt-spawn.js → prompt-signal.js → prompt-llm.js →
-    prompt-wiring.js → prompt-persist.js → prompt-transform.js → index.js
+      prompt-wiring.js → prompt-persist.js → prompt-transform.js →
+      prompt-pyfunc.js → prompt-event.js → index.js
 */
 
 const { createApp, nextTick } = Vue
@@ -40,15 +41,19 @@ createApp({
             disconnectFirst:  null,
             transformPresets: TRANSFORM_PRESETS,
             // LLM toolbar state
-            modelsEndpoint:   DEFAULT_ENDPOINT,
-            modelIds:         [],
-            prompts:          [],
-            fetching:         false,
+            modelsEndpoint:    DEFAULT_ENDPOINT,
+            modelIds:          [],
+            prompts:           [],
+            fetching:          false,
+            // PyFunc toolbar state
+            pyFunctions:       [],
+            fetchingFunctions: false,
         }
     },
 
     async mounted() {
         await this.fetchPrompts()
+        await this.fetchFunctions()
         // Models must be fetched manually via the toolbar after setting the endpoint.
     },
 
@@ -59,6 +64,8 @@ createApp({
         ...WiringMethods,
         ...PersistMethods,
         ...TransformMethods,
+        ...PyFuncMethods,
+        ...EventMethods,
     },
 
 }).mount('#app')

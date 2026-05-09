@@ -84,6 +84,154 @@ canvas { display: block; width: 100%; height: 100%; }
 .btn-llm          { color: #cc88ff; border-color: #441166; }
 .btn-text-display { color: #ffcc88; border-color: #443311; }
 .btn-transform    { color: #88ccff; border-color: #112244; }
+.btn-delay        { color: #ffdd88; border-color: #443300; }
+.btn-pyfunc       { color: #aaffaa; border-color: #224422; }
+.btn-event-input  { color: #88eeff; border-color: #113344; }
+
+/* ── pyfunc node ── */
+
+.pyfunc-params {
+    display:        flex;
+    flex-direction: column;
+    gap:            3px;
+    padding:        4px 8px;
+    border-bottom:  1px solid #1e1a3a;
+}
+
+.pyfunc-param-row {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+}
+
+.pyfunc-param-label {
+    font-size:  11px;
+    color:      #668855;
+    min-width:  60px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.pyfunc-param-input {
+    flex:      1;
+    min-width: 0;
+    font-size: 12px;
+}
+
+.pyfunc-actions {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    padding:     6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+}
+
+.pyfunc-auto {
+    font-size:   11px;
+    color:       #668855;
+    display:     flex;
+    align-items: center;
+    gap:         4px;
+    user-select: none;
+    cursor:      pointer;
+}
+
+.pyfunc-call-btn {
+    margin-left: auto;
+    font-size:   11px;
+    padding:     2px 10px;
+    color:       #aaffaa;
+    border-color: #224422;
+}
+.pyfunc-call-btn:disabled { opacity: 0.35; cursor: default; }
+
+.pyfunc-result {
+    font-size:   12px;
+    color:       #aaffaa;
+    padding:     4px 8px;
+    white-space: pre-wrap;
+    word-break:  break-word;
+    max-height:  80px;
+    overflow-y:  auto;
+}
+
+.pyfunc-error {
+    font-size:  11px;
+    color:      #ff8888;
+    padding:    4px 8px;
+    word-break: break-word;
+}
+
+/* ── event-input node ── */
+
+.event-status {
+    padding:    5px 8px;
+    font-size:  11px;
+    color:      #445566;
+    display:    flex;
+    flex-direction: column;
+    gap:        2px;
+    border-bottom: 1px solid #1e1a3a;
+    min-height: 32px;
+    transition: color 0.3s;
+}
+.event-status.state-active { color: #88eeff; }
+
+.event-time   { color: #446677; font-size: 10px; }
+.event-detail { color: #88ccdd; font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 60px; overflow-y: auto; }
+.event-idle   { color: #2a4455; font-style: italic; }
+
+.event-actions {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    padding:     5px 8px;
+}
+
+.delay-controls {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    padding:     6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+}
+
+.delay-label {
+    font-size:  11px;
+    color:      #887755;
+    white-space: nowrap;
+    display:    flex;
+    align-items: center;
+    gap:        4px;
+}
+
+.delay-ms-input {
+    width:      72px;
+    text-align: right;
+}
+
+.delay-queue {
+    display:     flex;
+    align-items: center;
+    justify-content: space-between;
+    padding:     6px 8px;
+    gap:         8px;
+}
+
+.delay-queue-count {
+    font-size:  12px;
+    color:      #665544;
+}
+.delay-queue-count.state-waiting { color: #ffdd88; }
+.delay-queue-count.state-paused  { color: #ff9944; }
+
+.delay-release-btn {
+    font-size: 11px;
+    padding:   2px 8px;
+    color:     #ffdd88;
+    border-color: #443300;
+}
+.delay-release-btn:disabled { opacity: 0.35; cursor: default; }
 
 .disconnect-toggle        { color: #ff8888; border-color: #440011; }
 .disconnect-toggle.active { background: #330011; color: #ffaaaa; border-color: #ff8888; }

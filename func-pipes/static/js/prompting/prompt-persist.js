@@ -72,6 +72,12 @@ const PersistMethods = {
                     gateMode:    p.gateMode,
                     gatePattern: p.gatePattern,
                 }
+            } else if (p.type === 'event-input') {
+                config = {
+                    label:     p.label,
+                    eventName: p.eventName,
+                    outputs:   p.pipsOutbound.map(pip => ({ name: pip.name, index: pip.index })),
+                }
             } else {
                 config = { label: p.label }
             }
@@ -100,6 +106,9 @@ const PersistMethods = {
             'llm':          makeLLMPanel,
             'text-display': makeTextDisplayPanel,
             'transform':    makeTransformPanel,
+            'delay':        makeDelayPanel,
+            'pyfunc':       makePyFuncPanel,
+            'event-input':  makeEventInputPanel,
         }
         const maxId = Math.max(0, ...layout.nodes.map(n => n.id))
 
@@ -114,6 +123,10 @@ const PersistMethods = {
             // Re-load prompt content if it was saved
             if (node.type === 'llm' && node.config?.promptPath) {
                 nextTick(() => this.selectPrompt(panel, node.config.promptPath))
+            }
+            // Re-mount event listener
+            if (node.type === 'event-input') {
+                nextTick(() => this.mountEventInput(panel))
             }
         }
         _uid = maxId
@@ -146,6 +159,7 @@ const PersistMethods = {
     _clearAll() {
         this.panels.forEach(p => {
             if (p.type === 'llm' && p._chat) p._chat.abort()
+            if (p.type === 'event-input') this.unmountEventInput(p)
         })
         this.panels = []
         if (typeof pipesWalker !== 'undefined' && pipesWalker.connections) {

@@ -24,6 +24,9 @@
                 <button class="btn-llm"          @click="addLLM">⬡ LLM</button>
                 <button class="btn-text-display" @click="addTextDisplay">◈ Display</button>
                 <button class="btn-transform"    @click="addTransform">ƒ Transform</button>
+                <button class="btn-delay"        @click="addDelay">⏱ Delay</button>
+                <button class="btn-pyfunc"       @click="addPyFunc">λ Python</button>
+                <button class="btn-event-input"   @click="addEventInput()">⦿ Event</button>
             </div>
 
             <!-- Catalogue presets -->
@@ -300,6 +303,235 @@
 
                 </template>
 
+                </template>
+
+                <!-- ── DELAY node ── -->
+                <template v-else-if="panel.type === 'delay'">
+
+                    <!-- inbound pip -->
+                    <div class="pips inbound">
+                        <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                            :class="['pip-dot',
+                                disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                disconnectMode ? 'disconnect-ready' : '']"
+                            :draggable="!disconnectMode"
+                            @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                            @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                            @dragend="pipEndDrag($event)"
+                            @dragover="pipOverDrag($event)"
+                            @drop="pipDrop($event, 'inbound', pip)"
+                            :id="`${pip.label}-inbound-${pip.index}`"
+                            :title="pip.name">
+                        </div>
+                    </div>
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="resetPanel(panel)" title="Clear queue">↺</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <div class="delay-controls">
+                            <label class="delay-label">Delay (ms)</label>
+                            <input type="number" min="0" step="100"
+                                   v-model.number="panel.delayMs"
+                                   class="delay-ms-input" />
+                            <label class="delay-label" title="Hold all signals until released manually">
+                                <input type="checkbox" v-model="panel.paused" />
+                                Pause
+                            </label>
+                        </div>
+
+                        <div class="delay-queue">
+                            <span class="delay-queue-count" :class="'state-' + panel.state">
+                                {{ panel.queue.length ? panel.queue.length + ' waiting' : 'idle' }}
+                            </span>
+                            <button class="delay-release-btn"
+                                    @click="releaseDelay(panel)"
+                                    :disabled="!panel.queue.length"
+                                    :title="panel.paused ? 'Release one signal' : 'Flush all now'">
+                                {{ panel.paused ? '▶ Release one' : '⏩ Flush' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- outbound pip -->
+                    <div class="pips outbound">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                            :class="['pip-dot',
+                                disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                disconnectMode ? 'disconnect-ready' : '']"
+                            :draggable="!disconnectMode"
+                            @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                            @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                            @dragend="pipEndDrag($event)"
+                            @dragover="pipOverDrag($event)"
+                            @drop="pipDrop($event, 'outbound', pip)"
+                            :id="`${pip.label}-outbound-${pip.index}`"
+                            :title="pip.name">
+                        </div>
+                    </div>
+
+                </template>
+
+                <!-- ── PYFUNC node ── -->
+                <template v-else-if="panel.type === 'pyfunc'">
+
+                    <!-- inbound pips (left column, one per param) -->
+                    <div class="named-pips" style="border-right: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsInbound" :key="pip.index" class="named-pip-row">
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'inbound', pip)"
+                                :id="`${pip.label}-inbound-${pip.index}`"
+                                :title="pip.name + ' (' + pip.ptype + ')'"
+                            ></div>
+                            <span class="pip-name" :title="pip.ptype">{{ pip.name }}</span>
+                        </div>
+                        <div v-if="!panel.pipsInbound.length" class="pip-name" style="padding:4px 2px; color:#443355">no params</div>
+                    </div>
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="fetchFunctions" :disabled="fetchingFunctions" title="Reload function list">⟳</button>
+                                <button @click="resetPanel(panel)" title="Clear">↺</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- function selector -->
+                        <div class="field-row">
+                            <label>Function</label>
+                            <select @change="selectPyFunc(panel, $event.target.value)" :value="panel.fnName || ''">
+                                <option value="">-- select --</option>
+                                <option v-for="fn in pyFunctions" :key="fn.name" :value="fn.name" :title="fn.doc">{{ fn.name }}</option>
+                            </select>
+                        </div>
+
+                        <!-- inline param editors (for pips without a wired source) -->
+                        <div v-if="panel.fnName" class="pyfunc-params">
+                            <div v-for="pip in panel.pipsInbound" :key="pip.index" class="pyfunc-param-row">
+                                <label class="pyfunc-param-label" :title="pip.ptype">{{ pip.name }}</label>
+                                <input class="pyfunc-param-input"
+                                       :type="pip.ptype === 'int' || pip.ptype === 'float' ? 'number' : 'text'"
+                                       v-model="panel.values[pip.name]"
+                                       :placeholder="pip.ptype" />
+                            </div>
+                        </div>
+
+                        <!-- auto-call + manual call -->
+                        <div class="pyfunc-actions">
+                            <label class="pyfunc-auto" title="Call automatically whenever an inbound pip receives a signal">
+                                <input type="checkbox" v-model="panel.autoCall" />
+                                Auto
+                            </label>
+                            <button class="pyfunc-call-btn"
+                                    @click="callPyFunc(panel)"
+                                    :disabled="!panel.fnName || panel.state === 'running'">
+                                {{ panel.state === 'running' ? '● Running…' : '▶ Call' }}
+                            </button>
+                        </div>
+
+                        <!-- result / error -->
+                        <div v-if="panel.lastOutput" class="pyfunc-result">
+                            {{ panel.lastOutput.text }}
+                        </div>
+                        <div v-if="panel.lastError" class="pyfunc-error">⚠ {{ panel.lastError }}</div>
+                    </div>
+
+                    <!-- outbound pip (right) -->
+                    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+                            <span class="pip-name">{{ pip.name }}</span>
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'outbound', pip)"
+                                :id="`${pip.label}-outbound-${pip.index}`"
+                                :title="pip.name"
+                            ></div>
+                        </div>
+                    </div>
+
+                </template>
+
+                <!-- ── EVENT INPUT node ── -->
+                <template v-else-if="panel.type === 'event-input'">
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="resetPanel(panel)" title="Clear last event">↺</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- event name config -->
+                        <div class="field-row">
+                            <label>Event</label>
+                            <input v-model="panel.eventName"
+                                   @change="remountEventInput(panel)"
+                                   placeholder="graph:input"
+                                   title="DOM CustomEvent name to listen for" />
+                        </div>
+
+                        <!-- last received -->
+                        <div class="event-status" :class="'state-' + panel.state">
+                            <span v-if="panel.lastReceived" class="event-time">{{ panel.lastReceived }}</span>
+                            <span v-if="panel.lastDetail"   class="event-detail">{{ panel.lastDetail }}</span>
+                            <span v-else class="event-idle">listening…</span>
+                        </div>
+
+                        <!-- test + outbound pip management -->
+                        <div class="event-actions">
+                            <button @click="dispatchTestEvent(panel)" title="Dispatch a test event on this node's event name">⚡ Test</button>
+                            <button class="pip-add" @click="addEventOutboundPip(panel)" style="margin-left:auto">＋ pip</button>
+                        </div>
+                    </div>
+
+                    <!-- outbound pips (right column, named, add/remove) -->
+                    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+                            <input class="pip-name-edit" v-model="pip.name"
+                                   :title="'Key in event detail to route here. Rename freely.'" style="width:54px;text-align:right" />
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'outbound', pip)"
+                                :id="`${pip.label}-outbound-${pip.index}`"
+                                :title="pip.name"
+                            ></div>
+                            <button class="pip-del" @click="removeEventOutboundPip(panel, pip.index)" v-if="panel.pipsOutbound.length > 1">×</button>
+                        </div>
+                    </div>
+
+                </template>
+
                 <!-- ── TRANSFORM node ── -->
                 <template v-else-if="panel.type === 'transform'">
                     <div class="transform-layout">
@@ -444,6 +676,8 @@
 <script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-persist.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-transform.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-pyfunc.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-event.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
 
 </body>

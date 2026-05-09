@@ -34,6 +34,10 @@ const COMPONENT_CATALOG = [
     { key: 'text-display', group: 'Display', type: 'text-display', label: 'Text Display' },
     { key: 'transform',    group: 'Process', type: 'transform',    label: 'Transform'    },
 
+    { key: 'delay',          group: 'Flow',    type: 'delay',        label: 'Delay'        },
+    { key: 'pyfunc',         group: 'Flow',    type: 'pyfunc',       label: 'Python Func'  },
+    { key: 'event-input',    group: 'Input',   type: 'event-input',  label: 'Event Input'  },
+
     // Transform presets
     { key: 'transform-upper',
       group: 'Process', type: 'transform', label: 'Uppercase',
@@ -106,6 +110,49 @@ function makeTextDisplayPanel(id, p = {}) {
         sources:      {},
         pipsInbound:  [{ label: id, index: 0, name: 'in'   }],
         pipsOutbound: [{ label: id, index: 0, name: 'pass' }],
+    }
+}
+
+function makePyFuncPanel(id, p = {}) {
+    return {
+        type:         'pyfunc',
+        label:        p.label || 'Python Func',
+        state:        'idle',    // 'idle' | 'running' | 'error'
+        fnName:       null,      // selected function name string
+        values:       {},        // { paramName: string } — current inbound values
+        lastOutput:   null,      // last { text, meta } signal emitted
+        lastError:    null,      // last error string, or null
+        autoCall:     false,     // call automatically when all required pips have values
+        pipsInbound:  [],        // rebuilt when a function is selected
+        pipsOutbound: [{ label: id, index: 0, name: 'result' }],
+    }
+}
+
+function makeEventInputPanel(id, p = {}) {
+    const outputs = p.outputs || [{ name: 'out', index: 0 }]
+    return {
+        type:          'event-input',
+        label:         p.label     || 'Event Input',
+        state:         'idle',                         // 'idle' | 'active'
+        eventName:     p.eventName || 'graph:input',   // DOM event name to listen for
+        lastDetail:    null,                           // raw detail of last fired event
+        lastReceived:  null,                           // time string of last event
+        _listener:     null,                           // runtime only — not serialised
+        pipsInbound:   [],
+        pipsOutbound:  outputs.map(o => ({ label: id, index: o.index, name: o.name })),
+    }
+}
+
+function makeDelayPanel(id, p = {}) {
+    return {
+        type:         'delay',
+        label:        p.label || 'Delay',
+        state:        'idle',    // 'idle' | 'waiting' | 'paused'
+        delayMs:      p.delayMs ?? 1000,  // milliseconds to wait before forwarding
+        paused:       false,              // when true, hold queue until released
+        queue:        [],                 // [{ signal, timerId }] pending signals
+        pipsInbound:  [{ label: id, index: 0, name: 'in'  }],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }
 }
 

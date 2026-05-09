@@ -27,17 +27,36 @@ const SpawnMethods = {
         if (preset.type === 'llm')          this._makeAndSpawn(makeLLMPanel,         id, preset)
         if (preset.type === 'text-display') this._makeAndSpawn(makeTextDisplayPanel, id, preset)
         if (preset.type === 'transform')    this._makeAndSpawn(makeTransformPanel,   id, preset)
+        if (preset.type === 'delay')        this._makeAndSpawn(makeDelayPanel,       id, preset)
+        if (preset.type === 'pyfunc')       this._makeAndSpawn(makePyFuncPanel,      id, preset)
+        if (preset.type === 'event-input')  this.addEventInput(preset)
     },
 
     addTextInput()   { const id = _uid + 1; this._makeAndSpawn(makeTextInputPanel,   id) },
     addLLM()         { const id = _uid + 1; this._makeAndSpawn(makeLLMPanel,         id) },
     addTextDisplay() { const id = _uid + 1; this._makeAndSpawn(makeTextDisplayPanel, id) },
     addTransform()   { const id = _uid + 1; this._makeAndSpawn(makeTransformPanel,   id) },
+    addDelay()       { const id = _uid + 1; this._makeAndSpawn(makeDelayPanel,       id) },
+    addPyFunc()      { const id = _uid + 1; this._makeAndSpawn(makePyFuncPanel,      id) },
+
+    addEventInput(preset) {
+        const id    = _uid + 1
+        const panel = makePanel(makeEventInputPanel(id, preset || {}))
+        this.panels.push(panel)
+        nextTick(() => {
+            const el = this.$refs[`panel-${panel.id}`][0]
+            stickAll(el)
+            dragHost.enable(el)
+            this.mountEventInput(panel)
+        })
+    },
 
     removePanel(i) {
         const p = this.panels[i]
         // Abort any in-flight LLM request
         if (p.type === 'llm' && p._chat) p._chat.abort()
+        // Unmount event listeners
+        if (p.type === 'event-input') this.unmountEventInput(p)
         // Emit null from all outbound pips so downstream nodes clear
         ;(p.pipsOutbound || []).forEach(pip => {
             this._emitFromPip(p, pip.index, null)
@@ -70,6 +89,26 @@ const SpawnMethods = {
             panel.values   = {}
             panel.fnError  = null
             panel.state    = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+        }
+        if (panel.type === 'delay') {
+            // Cancel all pending timers, clear queue
+            panel.queue.forEach(entry => clearTimeout(entry.timerId))
+            panel.queue  = []
+            panel.paused = false
+            panel.state  = 'idle'
+        }
+        if (panel.type === 'pyfunc') {
+            panel.values     = {}
+            panel.lastOutput = null
+            panel.lastError  = null
+            panel.state      = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+        }
+        if (panel.type === 'event-input') {
+            panel.lastDetail   = null
+            panel.lastReceived = null
+            panel.state        = 'idle'
             panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
         }
     },
