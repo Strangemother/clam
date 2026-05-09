@@ -18,17 +18,34 @@
 
 const LLMMethods = {
 
+    /* ── endpoint resolution ─────────────────────────────────────────── */
+
+    // Return the URL the Chat class should post to for this panel.
+    // Proxy endpoints route through /prompting/proxy/?service=<key>.
+    _resolveEndpoint(panel) {
+        const key = panel.endpointKey
+        if (!key) return panel.endpoint || DEFAULT_ENDPOINT
+        const cfg = (this.endpoints || []).find(e => e.key === key)
+        if (!cfg) return panel.endpoint || DEFAULT_ENDPOINT
+        if (cfg.proxy) return `${PROMPTING_API_BASE}/proxy/?service=${encodeURIComponent(key)}`
+        return cfg.models_url
+            ? cfg.models_url.replace(/\/?$/, '').replace(/\/models.*$/, '') + '/chat'
+            : panel.endpoint || DEFAULT_ENDPOINT
+    },
+
     /* ── Chat instance management ──────────────────────────────────── */
 
     _getLLMChat(panel) {
-        if (!panel._chat || panel._chat.options.endpoint !== panel.endpoint) {
+        const resolvedEndpoint = this._resolveEndpoint(panel)
+        if (!panel._chat || panel._chat.options.endpoint !== resolvedEndpoint) {
             panel._chat = new Chat({
-                endpoint: panel.endpoint,
+                endpoint: resolvedEndpoint,
                 model:    panel.model,
                 system:   panel.prompt?.content || panel._pendingSystem || '',
             })
         }
-        panel._chat.options.model  = panel.model
+        panel._chat.options.model    = panel.model
+        panel._chat.options.endpoint = resolvedEndpoint  // keep in sync on key change
         // Priority: system pip override > loaded prompt file > pending > empty
         const sysOverride = panel._systemOverride ?? panel.prompt?.content ?? panel._pendingSystem ?? ''
         panel._chat.options.system = sysOverride
@@ -120,12 +137,29 @@ const LLMMethods = {
         }
     },
 
+    /* ── endpoint list ──────────────────────────────────────────────── */
+
+    async fetchEndpoints() {
+        try {
+            const res       = await fetch(`${PROMPTING_API_BASE}/endpoints/`)
+            this.endpoints  = await res.json()
+        } catch (e) {
+            console.error('[fetchEndpoints]', e)
+        }
+    },
+
     /* ── model list ─────────────────────────────────────────────────── */
 
     async fetchModels() {
         this.fetching = true
         try {
-            const ep = this.modelsEndpoint || DEFAULT_ENDPOINT
+            // Only direct (non-proxy) endpoints expose a model list.
+            const selectedEp = (this.endpoints || []).find(e => e.key === this.modelsEndpointKey)
+            if (selectedEp?.proxy) {
+                console.warn('[fetchModels] proxy endpoints do not expose a model list')
+                return
+            }
+            const ep = (selectedEp?.models_url) || this.modelsEndpoint || DEFAULT_ENDPOINT
             const ml = new ModelList({ endpoint: ep })
             ml.onResult = (models) => { this.modelIds = models.map(m => m.id) }
             await ml.getList()

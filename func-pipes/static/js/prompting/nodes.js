@@ -22,9 +22,10 @@
                    fn(text, name, inputs) → string | { pipName: string } | null
 */
 
-const PROMPTING_API_BASE = '/prompting'
-const DEFAULT_ENDPOINT   = 'http://192.168.50.60:1234/api/v1/chat/'
-const DEFAULT_MODEL      = ''
+const PROMPTING_API_BASE   = '/prompting'
+const DEFAULT_ENDPOINT     = 'http://192.168.50.60:1234/api/v1/chat/'
+const DEFAULT_ENDPOINT_KEY = 'lmstudio'   // must match a key in ENDPOINT_CONFIGS (prompting.py)
+const DEFAULT_MODEL        = ''
 
 // ── component catalogue ──────────────────────────────────────────────────────
 
@@ -79,11 +80,12 @@ function makeTextInputPanel(id, p = {}) {
 
 function makeLLMPanel(id, p = {}) {
     return {
-        type:        'llm',
-        label:       p.label    || 'LLM',
-        state:       'idle',     // 'idle' | 'pending' | 'error'
-        endpoint:    p.endpoint || DEFAULT_ENDPOINT,
-        model:       p.model    || DEFAULT_MODEL,
+        type:         'llm',
+        label:        p.label       || 'LLM',
+        state:        'idle',        // 'idle' | 'pending' | 'error'
+        endpointKey:  p.endpointKey || DEFAULT_ENDPOINT_KEY,
+        endpoint:     p.endpoint    || DEFAULT_ENDPOINT,  // resolved at runtime by _getLLMChat
+        model:        p.model       || DEFAULT_MODEL,
         mode:        p.mode     || 'chat',     // 'chat' | 'prompt'
         templated:   p.templated ?? false,
         _manualInput: '',        // direct-test textarea

@@ -44,10 +44,11 @@
             <!-- Model endpoint + refresh -->
             <div class="toolbar-group">
                 <span class="toolbar-label">LLM</span>
-                <input v-model="modelsEndpoint"
-                       placeholder="http://localhost:1234/api/v1/chat/"
-                       style="width:260px"
-                       title="Base endpoint — used for model list and new LLM nodes" />
+                <select v-model="modelsEndpointKey" style="min-width:140px"
+                        title="Endpoint used for model-list fetch (direct endpoints only)">
+                    <option v-for="ep in endpoints" :key="ep.key" :value="ep.key"
+                            :disabled="ep.proxy">{{ ep.label }}{{ ep.proxy ? ' (proxy)' : '' }}</option>
+                </select>
                 <button @click="fetchModels" :disabled="fetching">
                     {{ fetching ? 'Loading…' : '⟳ Models' }}
                 </button>
@@ -167,7 +168,13 @@
 
                         <!-- controls -->
                         <div class="llm-controls">
-                            <input v-model="panel.endpoint" placeholder="endpoint" style="flex:2" />
+                            <select v-model="panel.endpointKey"
+                                    @change="panel._chat = null"
+                                    title="LLM service endpoint">
+                                <option v-for="ep in endpoints" :key="ep.key" :value="ep.key">
+                                    {{ ep.label }}{{ ep.proxy ? ' ⤷' : '' }}
+                                </option>
+                            </select>
                             <select v-model="panel.model">
                                 <option value="">— model —</option>
                                 <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>

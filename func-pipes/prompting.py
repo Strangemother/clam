@@ -18,6 +18,7 @@ import pathlib
 import inspect
 import importlib
 import markdown
+import requests as _requests
 from datetime import datetime, timezone
 
 from jinja2 import Template, TemplateSyntaxError
@@ -27,6 +28,34 @@ from flask import Blueprint, render_template, jsonify, request
 
 _DEFAULT_PROMPTS = pathlib.Path(__file__).parent.parent / 'v5_2' / 'prompts'
 PROMPTS_DIR = pathlib.Path(os.environ.get('PROMPTS_DIR', str(_DEFAULT_PROMPTS)))
+
+# ── endpoint configuration ───────────────────────────────────────────────────
+#
+# Each entry:
+#   label      — human-readable name shown in the UI dropdown
+#   url        — target URL for LLM calls (and model listing for direct endpoints)
+#   proxy      — True  → calls go via /prompting/proxy/?service=<key> (Flask adds auth)
+#              — False → frontend calls the URL directly
+#   headers    — extra request headers sent by the proxy (e.g. Authorization)
+#   models_url — optional base URL used by ModelList for the model dropdown
+#                (leave absent for proxy endpoints that don't expose a models API)
+#
+ENDPOINT_CONFIGS = {
+    'lmstudio': {
+        'label':      'LM Studio (LAN)',
+        'url':        'http://192.168.50.60:1234/api/v1/chat',
+        'proxy':      False,
+        'models_url': 'http://192.168.50.60:1234/api/v1/',
+    },
+    'digital-ocean': {
+        'label':   'Digital Ocean Agent',
+        'url':     'https://esin7c5xg2zbu5e3oapo2w3f.agents.do-ai.run/api/v1/chat/completions',
+        'proxy':   True,
+        'headers': {
+            'Authorization': 'Bearer A5e3_jlOcpzAbDBTgVgMeYiWQx1xw2La',
+        },
+    },
+}
 
 # ── Blueprint ────────────────────────────────────────────────────────────────
 
@@ -252,3 +281,61 @@ def call_function():
         return jsonify({'result': str(result), 'error': None})
     except Exception as e:
         return jsonify({'result': None, 'error': str(e)}), 500
+
+
+# ── endpoint registry routes ──────────────────────────────────────────────────
+
+@prompting_bp.route('/endpoints/', strict_slashes=False)
+def list_endpoints():
+    """Return the set of configured LLM endpoints (no sensitive headers exposed).
+
+    Returns a list of:
+      key        — config key used as panel.endpointKey
+      label      — human-readable name for the UI dropdown
+      proxy      — true if calls are routed through /prompting/proxy/
+      models_url — base URL for model-list fetching (absent for proxy endpoints)
+    """
+    result = []
+    for key, cfg in ENDPOINT_CONFIGS.items():
+        entry = {
+            'key':   key,
+            'label': cfg['label'],
+            'proxy': cfg.get('proxy', False),
+        }
+        if 'models_url' in cfg:
+            entry['models_url'] = cfg['models_url']
+        result.append(entry)
+    return jsonify(result)
+
+
+@prompting_bp.route('/proxy/', strict_slashes=False, methods=['POST'])
+def proxy_request():
+    """Proxy an LLM chat request to a configured backend endpoint.
+
+    Query params:
+      service  — key from ENDPOINT_CONFIGS (required)
+
+    POST body: standard chat payload forwarded verbatim to the target URL.
+    The proxy adds authentication headers from the endpoint config before sending.
+
+    Returns the target service's JSON response with its original HTTP status code.
+    """
+    service = request.args.get('service', '').strip()
+    cfg     = ENDPOINT_CONFIGS.get(service)
+
+    if not cfg:
+        return jsonify({'error': f'unknown service: {service!r}'}), 400
+    if not cfg.get('proxy'):
+        return jsonify({'error': 'endpoint is not configured as a proxy service'}), 400
+
+    payload = request.get_json(silent=True) or {}
+    headers = dict(cfg.get('headers', {}))
+    headers['Content-Type'] = 'application/json'
+
+    try:
+        resp = _requests.post(cfg['url'], json=payload, headers=headers, timeout=120)
+        return jsonify(resp.json()), resp.status_code
+    except _requests.Timeout:
+        return jsonify({'error': 'upstream request timed out'}), 504
+    except _requests.RequestException as e:
+        return jsonify({'error': str(e)}), 502

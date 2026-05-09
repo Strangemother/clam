@@ -54,13 +54,14 @@ const PersistMethods = {
             let config
             if (p.type === 'llm') {
                 config = {
-                    label:       p.label,
-                    endpoint:    p.endpoint,
-                    model:       p.model,
-                    mode:        p.mode,
-                    templated:   p.templated,
-                    promptPath:  p.prompt?.path  || null,
-                    promptTitle: p.prompt?.title || null,
+                    label:        p.label,
+                    endpointKey:  p.endpointKey,
+                    endpoint:     p.endpoint,
+                    model:        p.model,
+                    mode:         p.mode,
+                    templated:    p.templated,
+                    promptPath:   p.prompt?.path  || null,
+                    promptTitle:  p.prompt?.title || null,
                 }
             } else if (p.type === 'transform') {
                 config = {

@@ -41,17 +41,20 @@ createApp({
             disconnectFirst:  null,
             transformPresets: TRANSFORM_PRESETS,
             // LLM toolbar state
-            modelsEndpoint:    DEFAULT_ENDPOINT,
-            modelIds:          [],
-            prompts:           [],
-            fetching:          false,
+            endpoints:          [],               // loaded from /prompting/endpoints/
+            modelsEndpointKey:  DEFAULT_ENDPOINT_KEY,
+            modelsEndpoint:     DEFAULT_ENDPOINT, // fallback free-text (legacy)
+            modelIds:           [],
+            prompts:            [],
+            fetching:           false,
             // PyFunc toolbar state
-            pyFunctions:       [],
-            fetchingFunctions: false,
+            pyFunctions:        [],
+            fetchingFunctions:  false,
         }
     },
 
     async mounted() {
+        await this.fetchEndpoints()
         await this.fetchPrompts()
         await this.fetchFunctions()
         // Models must be fetched manually via the toolbar after setting the endpoint.
