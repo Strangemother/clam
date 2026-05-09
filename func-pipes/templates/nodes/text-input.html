@@ -1,0 +1,47 @@
+{% raw %}
+<!-- ── TEXT INPUT node ── -->
+<template v-if="panel.type === 'text-input'">
+
+    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+        <div class="panel-head">
+            <span class="panel-title">{{ panel.title }}</span>
+            <div class="panel-btns">
+                <button @click="resetPanel(panel)" title="Clear">↺</button>
+                <button @click="removePanel(i)">✕</button>
+            </div>
+        </div>
+
+        <div class="messages" :ref="'msgs-' + panel.id">
+            <div v-for="(m, j) in panel.messages" :key="j"
+                class="msg" :class="m.role">{{ m.text }}</div>
+        </div>
+
+        <div class="panel-input">
+            <textarea
+                v-model="panel.input"
+                placeholder="Type a message… (Enter to send)"
+                @keydown.enter.exact.prevent="sendTextInput(panel)"
+            ></textarea>
+            <button @click="sendTextInput(panel)">Send</button>
+        </div>
+
+        <!-- outbound pips along the bottom -->
+        <div class="pips-bottom">
+            <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                :class="['pip-dot',
+                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                    disconnectMode ? 'disconnect-ready' : '']"
+                :draggable="!disconnectMode"
+                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                @dragend="pipEndDrag($event)"
+                @dragover="pipOverDrag($event)"
+                @drop="pipDrop($event, 'outbound', pip)"
+                :id="`${pip.label}-outbound-${pip.index}`"
+                :title="pip.name || 'out'">
+            </div>
+        </div>
+    </div>
+
+</template>
+{% endraw %}
