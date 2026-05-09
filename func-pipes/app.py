@@ -1,6 +1,8 @@
 from flask import Flask, render_template
+from prompting import prompting_bp
 
 app = Flask(__name__)
+app.register_blueprint(prompting_bp)
 
 
 @app.route('/')

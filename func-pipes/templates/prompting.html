@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prompting</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/prompting.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <!-- Quick-add node buttons -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Add</span>
+                <button class="btn-text-input"   @click="addTextInput">✎ Text Input</button>
+                <button class="btn-llm"          @click="addLLM">⬡ LLM</button>
+                <button class="btn-text-display" @click="addTextDisplay">◈ Display</button>
+                <button class="btn-transform"    @click="addTransform">ƒ Transform</button>
+            </div>
+
+            <!-- Catalogue presets -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Preset</span>
+                <select class="catalog-select"
+                        @change="addFromCatalog($event.target.value); $event.target.value = ''">
+                    <option value="">— select node —</option>
+                    <optgroup v-for="(items, group) in catalogGroups" :key="group" :label="group">
+                        <option v-for="c in items" :key="c.key" :value="c.key">{{ c.label }}</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Model refresh -->
+            <div class="toolbar-group">
+                <button class="ghost" @click="fetchModels" :disabled="fetching">
+                    {{ fetching ? 'Loading…' : '⟳ Models' }}
+                </button>
+                <span style="font-size:10px; color:#554466">{{ modelIds.length }} model(s)</span>
+            </div>
+
+            <span class="toolbar-sep"></span>
+
+            <!-- Layout persistence -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Layout</span>
+                <button @click="saveLayout"   title="Save to browser storage">💾 Save</button>
+                <button @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <button @click="exportJSON"   title="Download as JSON">⬇ Export</button>
+                <button @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+            </div>
+
+            <!-- Disconnect mode -->
+            <button :class="['disconnect-toggle', disconnectMode ? 'active' : '']"
+                    @click="disconnectMode = !disconnectMode; if (!disconnectMode) disconnectFirst = null"
+                    title="Two-click wire removal: click a pip, then click the pip it connects to.">
+                ✂ {{ disconnectMode ? (disconnectFirst ? 'Now click the other pip…' : 'Select a pip') : 'Disconnect' }}
+            </button>
+        </div>
+
+        <div id="panels">
+
+            <div class="panel"
+                :class="['type-' + panel.type, 'state-' + panel.state]"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+
+                <!-- ── TEXT INPUT node ── -->
+                <template v-if="panel.type === 'text-input'">
+
+                    <!-- outbound named pip (right side) -->
+                    <div class="pips outbound">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                            :class="['pip-dot',
+                                disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                disconnectMode ? 'disconnect-ready' : '']"
+                            :draggable="!disconnectMode"
+                            @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                            @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                            @dragend="pipEndDrag($event)"
+                            @dragover="pipOverDrag($event)"
+                            @drop="pipDrop($event, 'outbound', pip)"
+                            :id="`${pip.label}-outbound-${pip.index}`"
+                            :title="pip.name">
+                        </div>
+                    </div>
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="resetPanel(panel)" title="Clear">↺</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <div class="messages" :ref="'msgs-' + panel.id">
+                            <div v-for="(m, j) in panel.messages" :key="j"
+                                class="msg" :class="m.role">{{ m.text }}</div>
+                        </div>
+
+                        <div class="panel-input">
+                            <textarea
+                                v-model="panel.input"
+                                placeholder="Type a message… (Enter to send)"
+                                @keydown.enter.exact.prevent="sendTextInput(panel)"
+                            ></textarea>
+                            <button @click="sendTextInput(panel)">Send</button>
+                        </div>
+                    </div>
+
+                </template>
+
+                <!-- ── LLM node ── -->
+                <template v-else-if="panel.type === 'llm'">
+
+                    <!-- inbound named pips (left side) -->
+                    <div class="named-pips" style="border-right: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsInbound" :key="pip.index" class="named-pip-row">
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'inbound', pip)"
+                                :id="`${pip.label}-inbound-${pip.index}`"
+                                :title="pip.name">
+                            </div>
+                            <span class="pip-name">{{ pip.name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="resetPanel(panel)" title="Reset chat history">↺</button>
+                                <button @click="stopLLM(panel)" :disabled="panel.state !== 'pending'" title="Stop">■</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- state badge -->
+                        <div v-if="panel.state !== 'idle'" class="state-badge" :class="panel.state">
+                            {{ panel.state === 'pending' ? '● Thinking…' : panel.state === 'error' ? '✕ Error' : '' }}
+                        </div>
+
+                        <!-- controls -->
+                        <div class="llm-controls">
+                            <input v-model="panel.endpoint" placeholder="endpoint" style="flex:2" />
+                            <select v-model="panel.model">
+                                <option value="">— model —</option>
+                                <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                            </select>
+                            <select @change="selectPrompt(panel, $event.target.value)">
+                                <option value="">— system prompt —</option>
+                                <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
+                            </select>
+                            <label class="mode-toggle" title="History or one-shot mode">
+                                <input type="checkbox"
+                                    :checked="panel.mode === 'chat'"
+                                    @change="panel.mode = $event.target.checked ? 'chat' : 'prompt'" />
+                                <span>{{ panel.mode === 'chat' ? 'History' : 'One-shot' }}</span>
+                            </label>
+                            <label v-if="panel.mode === 'prompt'" class="mode-toggle"
+                                   title="Render system prompt as Jinja2 template before each send">
+                                <input type="checkbox" v-model="panel.templated" />
+                                <span>Template</span>
+                            </label>
+                        </div>
+
+                        <!-- prompt description / preview -->
+                        <div v-if="panel.prompt" class="prompt-description">
+                            <span class="prompt-description-toggle"
+                                 @click="panel.showPrompt = !panel.showPrompt">
+                                <span>{{ panel.showPrompt ? '▾' : '▸' }}</span>
+                                {{ panel.description || panel.prompt.title || 'System prompt' }}
+                            </span>
+                            <textarea v-if="panel.showPrompt"
+                                class="prompt-preview"
+                                v-model="panel.prompt.content">
+                            </textarea>
+                        </div>
+
+                        <!-- message log -->
+                        <div class="messages" :ref="'msgs-' + panel.id">
+                            <div v-for="(m, j) in panel.messages" :key="j"
+                                class="msg" :class="m.role">{{ m.content }}</div>
+                            <div v-if="panel.state === 'pending'" class="msg status">thinking…</div>
+                        </div>
+
+                        <!-- manual input (optional, for direct testing) -->
+                        <div class="panel-input">
+                            <textarea
+                                v-model="panel._manualInput"
+                                placeholder="Manual test input (Enter to send)…"
+                                @keydown.enter.exact.prevent="sendLLMManual(panel)"
+                            ></textarea>
+                            <button @click="sendLLMManual(panel)" :disabled="panel.state === 'pending'">Send</button>
+                        </div>
+                    </div>
+
+                    <!-- outbound pip (right side) -->
+                    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+                            <span class="pip-name">{{ pip.name }}</span>
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'outbound', pip)"
+                                :id="`${pip.label}-outbound-${pip.index}`"
+                                :title="pip.name">
+                            </div>
+                        </div>
+                    </div>
+
+                </template>
+
+                <!-- ── TEXT DISPLAY node ── -->
+                <template v-else-if="panel.type === 'text-display'">
+
+                    <!-- inbound pip (left) -->
+                    <div class="named-pips" style="border-right: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsInbound" :key="pip.index" class="named-pip-row">
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'inbound', pip)"
+                                :id="`${pip.label}-inbound-${pip.index}`"
+                                :title="pip.name">
+                            </div>
+                            <span class="pip-name">{{ pip.name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                        <div class="panel-head">
+                            <span class="panel-title">{{ panel.title }}</span>
+                            <div class="panel-btns">
+                                <button @click="resetPanel(panel)" title="Clear">↺</button>
+                                <button @click="removePanel(i)">✕</button>
+                            </div>
+                        </div>
+
+                        <div class="messages" :ref="'msgs-' + panel.id">
+                            <div v-if="!panel.messages.length" class="display-null">— no signal —</div>
+                            <div v-for="(m, j) in panel.messages" :key="j"
+                                class="msg" :class="m.role">{{ m.text }}</div>
+                        </div>
+                    </div>
+
+                    <!-- pass-through outbound pip (right) -->
+                    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+                        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+                            <span class="pip-name">{{ pip.name }}</span>
+                            <div
+                                :class="['pip-dot',
+                                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                    disconnectMode ? 'disconnect-ready' : '']"
+                                :draggable="!disconnectMode"
+                                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                @dragend="pipEndDrag($event)"
+                                @dragover="pipOverDrag($event)"
+                                @drop="pipDrop($event, 'outbound', pip)"
+                                :id="`${pip.label}-outbound-${pip.index}`"
+                                :title="pip.name">
+                            </div>
+                        </div>
+                    </div>
+
+                </template>
+
+                <!-- ── TRANSFORM node ── -->
+                <template v-else-if="panel.type === 'transform'">
+                    <div class="transform-layout">
+
+                        <!-- named inbound pips (left column) -->
+                        <div class="transform-pips-col">
+                            <div v-for="pip in panel.pipsInbound" :key="pip.index" class="tpip-row">
+                                <div
+                                    :class="['pip-dot',
+                                        disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                        disconnectMode ? 'disconnect-ready' : '']"
+                                    :draggable="!disconnectMode"
+                                    @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                    @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                    @dragend="pipEndDrag($event)"
+                                    @dragover="pipOverDrag($event)"
+                                    @drop="pipDrop($event, 'inbound', pip)"
+                                    :id="`${pip.label}-inbound-${pip.index}`"
+                                    :title="pip.name">
+                                </div>
+                                <input class="pip-name-edit" v-model="pip.name" :title="'Rename: ' + pip.name" />
+                                <button class="pip-del" @click="removeInboundPip(panel, pip.index)">×</button>
+                            </div>
+                            <button class="pip-add" @click="addInboundPip(panel)">＋</button>
+                        </div>
+
+                        <!-- body -->
+                        <div class="transform-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+                            <div class="panel-head">
+                                <span class="panel-title">{{ panel.title }}</span>
+                                <div class="panel-btns">
+                                    <button @click="resetPanel(panel)" title="Reset">↺</button>
+                                    <button @click="removePanel(i)">✕</button>
+                                </div>
+                            </div>
+
+                            <!-- live values readout -->
+                            <div class="transform-vals" v-if="panel.pipsInbound.length">
+                                <span v-for="pip in panel.pipsInbound" :key="pip.index" class="tv-chip">
+                                    <span class="tv-name">{{ pip.name }}</span>
+                                    <span class="tv-val">{{ panel.values[pip.name] !== undefined ? panel.values[pip.name] : '—' }}</span>
+                                </span>
+                            </div>
+
+                            <!-- gate configuration -->
+                            <div class="fn-section">
+                                <div class="field-row">
+                                    <label>Gate</label>
+                                    <select v-model="panel.gatePip">
+                                        <option :value="null">off</option>
+                                        <option v-for="pip in panel.pipsInbound" :key="pip.index" :value="pip.name">{{ pip.name }}</option>
+                                    </select>
+                                </div>
+                                <template v-if="panel.gatePip">
+                                    <div class="field-row">
+                                        <label>Mode</label>
+                                        <select v-model="panel.gateMode">
+                                            <option value="truthy">truthy</option>
+                                            <option value="matches">matches regex</option>
+                                            <option value="always">always</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-row" v-if="panel.gateMode === 'matches'">
+                                        <label>Pattern</label>
+                                        <input type="text" v-model="panel.gatePattern" placeholder="regex" />
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- preset picker -->
+                            <div class="field-row">
+                                <label>Preset</label>
+                                <select @change="setTransformPreset(panel, $event.target.value); $event.target.value = ''">
+                                    <option value="">— presets —</option>
+                                    <option v-for="p in transformPresets" :key="p.label" :value="p.src">{{ p.label }}</option>
+                                </select>
+                            </div>
+
+                            <!-- function editor -->
+                            <textarea class="fn-editor"
+                                v-model="panel.fnSrc"
+                                @change="_rerunTransform(panel)"
+                                spellcheck="false">
+                            </textarea>
+                            <div class="fn-sig">fn(text, name, inputs) → string | object | null</div>
+                            <div v-if="panel.fnError" class="fn-error">⚠ {{ panel.fnError }}</div>
+                        </div>
+
+                        <!-- named outbound pips (right column) -->
+                        <div class="transform-pips-col" style="align-items: flex-end">
+                            <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="tpip-row">
+                                <button class="pip-del" @click="removeOutboundPip(panel, pip.index)">×</button>
+                                <input class="pip-name-edit" v-model="pip.name" :title="'Rename: ' + pip.name" style="text-align:right" />
+                                <div
+                                    :class="['pip-dot',
+                                        disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                        disconnectMode ? 'disconnect-ready' : '']"
+                                    :draggable="!disconnectMode"
+                                    @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                    @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                    @dragend="pipEndDrag($event)"
+                                    @dragover="pipOverDrag($event)"
+                                    @drop="pipDrop($event, 'outbound', pip)"
+                                    :id="`${pip.label}-outbound-${pip.index}`"
+                                    :title="pip.name">
+                                </div>
+                            </div>
+                            <button class="pip-add" @click="addOutboundPip(panel)">＋</button>
+                        </div>
+
+                    </div>
+                </template>
+
+            </div>
+        </div>
+
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<!-- Vendors -->
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/model-list.js') }}"></script>
+
+<!-- Pipes runtime -->
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/graph-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+
+<!-- Prompting app modules -->
+<script src="{{ url_for('static', filename='js/prompting/nodes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-spawn.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-signal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-llm.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-persist.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-transform.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
+
+</body>
+</html>
