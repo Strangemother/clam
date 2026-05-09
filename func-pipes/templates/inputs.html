@@ -22,6 +22,7 @@
                 <span class="toolbar-label">Add</span>
                 <button class="btn-gamepad" @click="addGamepad">🎮 Gamepad</button>
                 <button class="btn-value"   @click="addValue">◈ Value</button>
+                <button class="btn-compute" @click="addCompute">ƒ Compute</button>
             </div>
 
             <!-- Catalogue presets -->
@@ -178,6 +179,111 @@
                     </div>
                 </template>
 
+                <!-- ── COMPUTE ── -->
+                <template v-else-if="panel.type === 'compute'">
+                    <div class="compute-layout">
+
+                        <!-- named inbound pips (left column) -->
+                        <div class="compute-pips-col compute-pips-in">
+                            <div v-for="pip in panel.pipsInbound" :key="pip.index" class="cpip-row">
+                                <div
+                                    :class="['pip-dot',
+                                        disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                        disconnectMode ? 'disconnect-ready' : '']"
+                                    :draggable="!disconnectMode"
+                                    @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                                    @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                                    @dragend="pipEndDrag($event)"
+                                    @dragover="pipOverDrag($event)"
+                                    @drop="pipDrop($event, 'inbound', pip)"
+                                    :id="`${pip.label}-inbound-${pip.index}`"
+                                    :title="pip.name">
+                                </div>
+                                <input class="pip-name-edit" v-model="pip.name" :title="'Rename ' + pip.name" />
+                                <button class="pip-del" @click="removeInboundPip(panel, pip.index)">×</button>
+                            </div>
+                            <button class="pip-add" @click="addInboundPip(panel)">＋</button>
+                        </div>
+
+                        <!-- body -->
+                        <div class="compute-body">
+
+                            <!-- live values readout -->
+                            <div class="compute-vals" v-if="panel.pipsInbound.length">
+                                <span v-for="pip in panel.pipsInbound" :key="pip.index" class="cv-chip">
+                                    <span class="cv-name">{{ pip.name }}</span>
+                                    <span class="cv-val">{{ panel.values[pip.name] !== undefined ? (+panel.values[pip.name]).toFixed(3) : '—' }}</span>
+                                </span>
+                            </div>
+
+                            <!-- gate configuration -->
+                            <div class="fn-section">
+                                <div class="field-row">
+                                    <label>Gate</label>
+                                    <select v-model="panel.gatePip">
+                                        <option :value="null">off</option>
+                                        <option v-for="pip in panel.pipsInbound" :key="pip.index" :value="pip.name">{{ pip.name }}</option>
+                                    </select>
+                                </div>
+                                <template v-if="panel.gatePip">
+                                    <div class="field-row">
+                                        <label>Mode</label>
+                                        <select v-model="panel.gateMode">
+                                            <option value="above">&ge; thresh</option>
+                                            <option value="below">&le; thresh</option>
+                                            <option value="nonzero">&ne; 0</option>
+                                            <option value="always">always</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-row" v-if="panel.gateMode !== 'nonzero' && panel.gateMode !== 'always'">
+                                        <label>Thresh</label>
+                                        <input type="number" v-model.number="panel.gateThresh" step="0.01" min="-1" max="1" />
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- preset picker -->
+                            <div class="field-row">
+                                <label>Preset</label>
+                                <select @change="setComputePreset(panel, $event.target.value); $event.target.value = ''">
+                                    <option value="">— presets —</option>
+                                    <option v-for="p in computePresets" :key="p.label" :value="p.src">{{ p.label }}</option>
+                                </select>
+                            </div>
+
+                            <!-- function body editor -->
+                            <textarea class="fn-editor" v-model="panel.fnSrc" rows="3"
+                                spellcheck="false" placeholder="return value"></textarea>
+                            <div class="fn-sig">fn(value, name, inputs) &rarr; value | { pipName: value }</div>
+                            <div class="fn-error" v-if="panel.fnError">&otimes; {{ panel.fnError }}</div>
+
+                        </div>
+
+                        <!-- named outbound pips (right column) -->
+                        <div class="compute-pips-col compute-pips-out">
+                            <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="cpip-row">
+                                <button class="pip-del" @click="removeOutboundPip(panel, pip.index)">×</button>
+                                <input class="pip-name-edit" v-model="pip.name" :title="'Rename ' + pip.name" />
+                                <div
+                                    :class="['pip-dot',
+                                        disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                                        disconnectMode ? 'disconnect-ready' : '']"
+                                    :draggable="!disconnectMode"
+                                    @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                                    @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                                    @dragend="pipEndDrag($event)"
+                                    @dragover="pipOverDrag($event)"
+                                    @drop="pipDrop($event, 'outbound', pip)"
+                                    :id="`${pip.label}-outbound-${pip.index}`"
+                                    :title="pip.name">
+                                </div>
+                            </div>
+                            <button class="pip-add" @click="addOutboundPip(panel)">＋</button>
+                        </div>
+
+                    </div>
+                </template>
+
                 <!-- outbound anonymous pips (right edge, non-named) -->
                 <div class="pips outbound" v-if="panel.pipsOutbound && panel.pipsOutbound.length && !panel.pipsOutbound[0].name">
                     <div v-for="pip in panel.pipsOutbound" :key="pip.index"
@@ -217,6 +323,7 @@
 <script src="{{ url_for('static', filename='js/inputs/inputs-gamepad.js') }}"></script>
 <script src="{{ url_for('static', filename='js/inputs/inputs-wiring.js') }}"></script>
 <script src="{{ url_for('static', filename='js/inputs/inputs-persist.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inputs/inputs-compute.js') }}"></script>
 <script src="{{ url_for('static', filename='js/inputs/index.js') }}"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 
   Load order in inputs.html:
     nodes.js → inputs-spawn.js → inputs-signal.js → inputs-gamepad.js →
-    inputs-wiring.js → inputs-persist.js → index.js
+    inputs-wiring.js → inputs-persist.js → inputs-compute.js → index.js
 */
 
 const { createApp, nextTick } = Vue
@@ -38,6 +38,7 @@ createApp({
             catalogGroups:   catalogByGroup(),
             disconnectMode:  false,
             disconnectFirst: null,
+            computePresets:  COMPUTE_PRESETS,
         }
     },
 
@@ -55,6 +56,7 @@ createApp({
         ...GamepadMethods,
         ...WiringMethods,
         ...PersistMethods,
+        ...ComputeMethods,
     },
 
 }).mount('#app')

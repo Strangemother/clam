@@ -15,11 +15,24 @@ const SignalMethods = {
     /* ── receive ────────────────────────────────────────────────────── */
 
     /*
-      receive(panel, signal, sourceId)
+      receive(panel, signal, sourceId, inPipIndex)
       Accumulates per-source signals on the panel, then applies
       the node's processor so it can update its display state.
+
+      inPipIndex — the receiver pip index on this panel (passed by _emitFromPip).
+      Compute nodes use it to map the incoming value to a named pip.
     */
-    receive(panel, signal, sourceId = null) {
+    receive(panel, signal, sourceId = null, inPipIndex = null) {
+        // Compute nodes track values by named pip, not by source id.
+        if (panel.type === 'compute' && inPipIndex !== null) {
+            const pip     = panel.pipsInbound.find(p => p.index === inPipIndex)
+            const pipName = pip?.name ?? String(inPipIndex)
+            if (signal === null) delete panel.values[pipName]
+            else                 panel.values[pipName] = signal.value ?? null
+            this._applyCompute(panel, pipName)
+            return
+        }
+
         if (sourceId !== null) {
             if (signal === null) delete panel.sources[sourceId]
             else                 panel.sources[sourceId] = signal
@@ -75,12 +88,13 @@ const SignalMethods = {
     },
 
     // Emit a signal from one specific outbound pip (used by gamepad per-button).
+    // inPip is forwarded to receive so compute nodes can identify which named pip changed.
     _emitFromPip(panel, pipIndex, signal) {
         if (typeof pipesWalker === 'undefined') return
         const sourceId = String(panel.id)
-        this._getOutboundConns(panel, pipIndex).forEach(({ inLabel }) => {
+        this._getOutboundConns(panel, pipIndex).forEach(({ inLabel, inPip }) => {
             const target = this.panels.find(p => String(p.id) === String(inLabel))
-            if (target) this.receive(target, signal, sourceId)
+            if (target) this.receive(target, signal, sourceId, inPip)
         })
     },
 

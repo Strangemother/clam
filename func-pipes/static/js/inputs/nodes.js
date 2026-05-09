@@ -53,6 +53,19 @@ const GAMEPAD_PIP_DEFS = [
 const COMPONENT_CATALOG = [
     { key: 'gamepad', group: 'Input',   type: 'gamepad', label: 'Gamepad' },
     { key: 'value',   group: 'Display', type: 'value',   label: 'Value'   },
+    // Compute presets
+    { key: 'compute',      group: 'Process', type: 'compute', label: 'Compute',
+      inputs: [{ name: 'in', index: 0 }], outputs: [{ name: 'out', index: 0 }],
+      fnSrc: 'return value' },
+    { key: 'compute-xy-mag', group: 'Process', type: 'compute', label: 'XY → Magnitude',
+      inputs: [{ name: 'X', index: 0 }, { name: 'Y', index: 1 }], outputs: [{ name: 'mag', index: 0 }],
+      fnSrc: 'return Math.hypot(inputs.X ?? 0, inputs.Y ?? 0)' },
+    { key: 'compute-xy-angle', group: 'Process', type: 'compute', label: 'XY → Angle',
+      inputs: [{ name: 'X', index: 0 }, { name: 'Y', index: 1 }], outputs: [{ name: 'deg', index: 0 }],
+      fnSrc: 'return Math.atan2(inputs.Y ?? 0, inputs.X ?? 0) * 180 / Math.PI' },
+    { key: 'compute-clamp', group: 'Process', type: 'compute', label: 'Clamp 0–1',
+      inputs: [{ name: 'in', index: 0 }], outputs: [{ name: 'out', index: 0 }],
+      fnSrc: 'return Math.max(0, Math.min(1, value))' },
 ]
 
 // ── factories ────────────────────────────────────────────────────────────────
@@ -79,5 +92,27 @@ function makeValuePanel(id, p = {}) {
         sources:      {},        // { [sourceId]: signal | null }
         pipsInbound:  [{ label: id, index: 0, name: 'in' }],
         pipsOutbound: [],
+    }
+}
+
+function makeComputePanel(id, p = {}) {
+    const inDefs  = p.inputs  || [{ name: 'in',  index: 0 }]
+    const outDefs = p.outputs || [{ name: 'out', index: 0 }]
+    return {
+        type:         'compute',
+        label:        p.label    || 'Compute',
+        state:        'idle',    // 'idle' | 'active' | 'error'
+        // Named pip values — keyed by pip name (e.g. { X: 0.3, Y: -0.7 })
+        values:       {},
+        sources:      {},
+        // Gate: only run fn when a designated pip meets a condition
+        gatePip:      p.gatePip    ?? null,   // pip name | null
+        gateThresh:   p.gateThresh ?? 0.5,
+        gateMode:     p.gateMode   ?? 'above', // 'above' | 'below' | 'nonzero' | 'always'
+        // Compute function body (string, executed via new Function)
+        fnSrc:        p.fnSrc      || 'return value',
+        fnError:      null,
+        pipsInbound:  inDefs.map(d  => ({ label: id, index: d.index ?? inDefs.indexOf(d),  name: d.name })),
+        pipsOutbound: outDefs.map(d => ({ label: id, index: d.index ?? outDefs.indexOf(d), name: d.name })),
     }
 }

@@ -51,9 +51,22 @@ const PersistMethods = {
             const ref = this.$refs[`panel-${p.id}`]
             const el  = Array.isArray(ref) ? ref[0] : ref
             const pos = el ? { left: el.style.left, top: el.style.top } : null
-            const config = p.type === 'gamepad'
-                ? { gamepadIndex: p.gamepadIndex }
-                : { label: p.label }
+            let config
+            if (p.type === 'gamepad') {
+                config = { gamepadIndex: p.gamepadIndex }
+            } else if (p.type === 'compute') {
+                config = {
+                    label:      p.label,
+                    inputs:     p.pipsInbound.map(pip  => ({ name: pip.name,  index: pip.index })),
+                    outputs:    p.pipsOutbound.map(pip => ({ name: pip.name,  index: pip.index })),
+                    fnSrc:      p.fnSrc,
+                    gatePip:    p.gatePip,
+                    gateThresh: p.gateThresh,
+                    gateMode:   p.gateMode,
+                }
+            } else {
+                config = { label: p.label }
+            }
             return { id: p.id, type: p.type, title: p.title || p.label, config, pos }
         })
 
@@ -73,7 +86,7 @@ const PersistMethods = {
         this._clearAll()
         await nextTick()
 
-        const factoryMap = { gamepad: makeGamepadPanel, value: makeValuePanel }
+        const factoryMap = { gamepad: makeGamepadPanel, value: makeValuePanel, compute: makeComputePanel }
         const maxId = Math.max(0, ...layout.nodes.map(n => n.id))
 
         for (const node of layout.nodes) {
