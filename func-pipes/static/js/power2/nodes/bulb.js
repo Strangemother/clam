@@ -8,8 +8,9 @@
   ──────────────
   watts       number  — rated wattage (determines amp draw)
   maxVolts    number  — above this the bulb blows (overvoltage)
+  maxAmps     number  — above this the bulb blows (overcurrent)
   brightness  number  — 0.0–1.0 (used for CSS / animation)
-  blown       bool    — destroyed by overvoltage; requires manual reset
+  blown       bool    — destroyed by overvoltage or overcurrent; requires manual reset
 
   States: 'off' | 'dim' | 'on' | 'blown'
 */
@@ -28,10 +29,12 @@ class Bulb extends NodeBase {
     ]
 
     static defaults(id, preset = {}) {
+        const watts = preset.watts ?? 60
         return {
             ...super.defaults(id, preset),
-            watts:      preset.watts    ?? 60,
+            watts,
             maxVolts:   preset.maxVolts ?? (preset.volts ? preset.volts * 1.2 : 288),
+            maxAmps:    preset.maxAmps  ?? +((watts / NOMINAL_VOLTS) * 2).toFixed(3),
             brightness: 0,
             blown:      false,
             // Bulbs are sinks — no outbound pip
@@ -40,7 +43,7 @@ class Bulb extends NodeBase {
     }
 
     static configFields() {
-        return [...super.configFields(), 'watts', 'maxVolts']
+        return [...super.configFields(), 'watts', 'maxVolts', 'maxAmps']
     }
 
     static apply(panel, signal, graph) {
@@ -60,7 +63,18 @@ class Bulb extends NodeBase {
             panel.blown      = true
             panel.state      = 'blown'
             panel.brightness = 0
-            Bulb.dispatch(panel, 'bulb:blown', { volts: signal.v, maxVolts: panel.maxVolts })
+            Bulb.dispatch(panel, 'bulb:blown', { reason: 'overvoltage', volts: signal.v, maxVolts: panel.maxVolts })
+            Bulb.dispatch(panel, 'state:change', { from: prev, to: 'blown' })
+            graph.emit(panel, null)
+            return
+        }
+
+        if (signal.a > panel.maxAmps) {
+            const prev = panel.state
+            panel.blown      = true
+            panel.state      = 'blown'
+            panel.brightness = 0
+            Bulb.dispatch(panel, 'bulb:blown', { reason: 'overcurrent', amps: signal.a, maxAmps: panel.maxAmps })
             Bulb.dispatch(panel, 'state:change', { from: prev, to: 'blown' })
             graph.emit(panel, null)
             return

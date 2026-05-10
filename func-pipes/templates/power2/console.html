@@ -8,9 +8,16 @@
 <template v-else-if="panel.type === 'console'">
     <div class="node-body">
         <div class="field-row">
-            <label>Draw</label>
+            <label>Rated</label>
             <input type="number" v-model.number="panel.watts" min="0" step="5"
                    @change="loadParamsChanged(panel)" />
+            <span class="unit">W</span>
+        </div>
+        <div class="field-row" v-if="panel.bootState !== 'off'">
+            <label>Live draw</label>
+            <span class="unit" style="min-width:42px; text-align:right; color:#88ccff">
+                {{ panel._effectiveWatts != null ? panel._effectiveWatts.toFixed(1) : '0.0' }}
+            </span>
             <span class="unit">W</span>
         </div>
         <div class="field-row">

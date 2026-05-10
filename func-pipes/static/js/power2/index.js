@@ -133,6 +133,12 @@ createApp({
         decisionReRoute(panel)       { DecisionNode.reRoute(panel, this.graph) },
         decisionSetDefault(panel, i)  { DecisionNode.setDefault(panel, i, this.graph) },
 
+        // ── Bus Bar ───────────────────────────────────────────────────────────
+        addBusBar()                          { this.graph.addType('bus-bar') },
+        busBarSetWeight(panel, index, value)  { BusBar.setChannelWeight(panel, index, value, this.graph) },
+        busBarEqualise(panel)                 { BusBar.equalise(panel, this.graph) },
+        busBarApplyWeights(panel)             { BusBar.applyWeights(panel, this.graph) },
+
         // ── Ripple ───────────────────────────────────────────────────────────
         toggleRipple(panel)      { this.graph.toggleRipple(panel) },
         rippleParamsChanged(p)   { this.graph.rippleParamsChanged(p) },

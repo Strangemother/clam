@@ -23,6 +23,11 @@
             <input type="number" v-model.number="panel.maxVolts" min="1" step="1" :disabled="panel.blown" />
             <span class="unit">V</span>
         </div>
+        <div class="field-row">
+            <label>Max A</label>
+            <input type="number" v-model.number="panel.maxAmps" min="0.001" step="0.01" :disabled="panel.blown" />
+            <span class="unit">A</span>
+        </div>
         <div class="blown-notice" v-if="panel.blown">
             ⚡ BLOWN — press ↺ to replace
         </div>

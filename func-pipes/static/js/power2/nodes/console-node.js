@@ -13,10 +13,19 @@
 
   Extra state
   ───────────
-  bootState    string  — 'off' | 'booting' | 'ready' | 'shutdown'
-  bootProgress number  — 0–100 (% through the boot sequence)
-  bootDuration number  — seconds to fully boot (default 5)
-  shutdownDuration number — seconds to gracefully shutdown (default 2)
+  bootState        string  — 'off' | 'booting' | 'ready' | 'shutdown'
+  bootProgress     number  — 0–100 (% through the boot sequence)
+  bootDuration     number  — seconds to fully boot (default 5)
+  shutdownDuration number  — seconds to gracefully shutdown (default 2)
+  _effectiveWatts  number  — current actual draw (ramps with boot, oscillates ±10% at ready)
+  _loadAccum       number  — time accumulator driving idle power fluctuation
+
+  Power draw model
+  ────────────────
+  booting  — ramps from 0 → watts proportional to bootProgress
+  ready    — oscillates between ~90–100% of rated watts (slow sine, ±10%)
+  shutdown — ramps from current draw back down to 0
+  off      — 0 W
 
   Power/capacitor logic inherited from Load.
   States: inherited from Load ('off' | 'on' | 'brownout' | 'capacitor' | 'blown')
@@ -43,11 +52,14 @@ class ConsoleNode extends Load {
             minVolts:        preset.minVolts ?? 180,
             capacitance:     preset.capacitance ?? 20,
             // Boot simulation
-            bootState:       'off',   // 'off' | 'booting' | 'ready' | 'shutdown'
-            bootProgress:    0,       // 0–100
-            bootDuration:    preset.bootDuration    ?? 5,
+            bootState:        'off',   // 'off' | 'booting' | 'ready' | 'shutdown'
+            bootProgress:     0,       // 0–100
+            bootDuration:     preset.bootDuration     ?? 5,
             shutdownDuration: preset.shutdownDuration ?? 2,
-            _shutdownTimer:  0,
+            _shutdownTimer:   0,
+            // Dynamic power draw
+            _effectiveWatts:  0,
+            _loadAccum:       0,
         }
     }
 
@@ -55,8 +67,19 @@ class ConsoleNode extends Load {
         return [...super.configFields(), 'bootDuration', 'shutdownDuration']
     }
 
+    /**
+     * Swap in the dynamic draw, delegate to Load.apply(), then restore rated watts.
+     * This means the upstream current budget always reflects actual console load.
+     */
+    static apply(panel, signal, graph) {
+        const rated      = panel.watts
+        panel.watts      = panel._effectiveWatts ?? 0
+        super.apply(panel, signal, graph)
+        panel.watts      = rated
+    }
+
     static tick(panel, dt, graph) {
-        // Capacitor drain / charge from Load
+        // Capacitor drain / charge from Load (uses _effectiveWatts via apply swap)
         super.tick(panel, dt, graph)
 
         const powered  = panel.state === 'on' || panel.state === 'capacitor'
@@ -84,6 +107,29 @@ class ConsoleNode extends Load {
             }
         }
 
+        // ── Dynamic power draw ──────────────────────────────────────────────
+        panel._loadAccum += dt
+        const rated = panel.watts
+
+        if (panel.bootState === 'off') {
+            panel._effectiveWatts = 0
+        } else if (panel.bootState === 'booting') {
+            // Ramp from 0 → rated proportional to boot progress
+            const ramp = panel.bootProgress / 100
+            panel._effectiveWatts = rated * ramp
+        } else if (panel.bootState === 'ready') {
+            // Oscillate ±10% around 90% of rated (slow sine, ~20 s period)
+            const sine = Math.sin(panel._loadAccum * 0.314)  // 2π / 20s ≈ 0.314
+            panel._effectiveWatts = rated * (0.9 + 0.1 * sine)
+        } else if (panel.bootState === 'shutdown') {
+            // Ramp back down as shutdown progresses
+            const remaining = panel.bootProgress / 100   // bootProgress counts down during shutdown
+            panel._effectiveWatts = rated * remaining * 0.9
+        }
+
+        // Expose to graph.computeGenDraw() via the currentWatts convention
+        panel.currentWatts = panel._effectiveWatts
+
         if (panel.bootState !== prevBoot)
             ConsoleNode.dispatch(panel, 'console:boot-state', { from: prevBoot, to: panel.bootState })
 
@@ -97,10 +143,13 @@ class ConsoleNode extends Load {
     }
 
     static reset(panel, graph) {
-        panel.bootState      = 'off'
-        panel.bootProgress   = 0
-        panel._shutdownTimer = 0
-        panel._lastBootPct   = null
+        panel.bootState       = 'off'
+        panel.bootProgress    = 0
+        panel._shutdownTimer  = 0
+        panel._lastBootPct    = null
+        panel._effectiveWatts = 0
+        panel._loadAccum      = 0
+        panel.currentWatts    = 0
         ConsoleNode.dispatch(panel, 'console:reset', {})
         super.reset(panel, graph)
     }

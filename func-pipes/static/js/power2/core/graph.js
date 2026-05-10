@@ -355,7 +355,7 @@ class PowerGraph {
                 if (Cls) Cls.apply(p, p.signal, this)
             }
 
-            if (p.type === 'series-bat' && p.state === 'boosting' && p.signal) {
+            if (p.type === 'series-bat' && p.live && p.state !== 'dead' && p.state !== 'off' && p.signal !== undefined) {
                 const Cls = NodeRegistry.get('series-bat')
                 if (Cls) Cls.apply(p, p.signal, this)
             }
@@ -437,7 +437,19 @@ class PowerGraph {
     /** Toggle the enabled/disabled off-switch on a panel and re-propagate. */
     toggleEnabled(panel) {
         panel.enabled = panel.enabled === false ? true : false
-        this.receive(panel, panel.signal)
+
+        // Sources (no inbound pips) must be handled directly — receive() is a no-op for them.
+        const Cls = NodeRegistry.get(panel.type)
+        if (!panel.pipsInbound?.length) {
+            if (panel.enabled === false) {
+                if (typeof Cls?.onDisabled === 'function') Cls.onDisabled(panel, this)
+                else this.emit(panel, null)
+            } else if (panel.live && panel.state !== 'tripped') {
+                this.emit(panel, { v: panel.volts, a: panel.amps })
+            }
+        } else {
+            this.receive(panel, panel.signal)
+        }
         this.updateAllGenDraws()
     }
 

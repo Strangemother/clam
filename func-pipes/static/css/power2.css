@@ -72,6 +72,26 @@
         .decision-reroute-btn:hover { border-color:#44aaff; color:#44aaff; }
         .decision-config  { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:4px; }
         .decision-field   { display:flex; align-items:center; gap:4px; }
+
+        /* ── Bus Bar node ─────────────────────────────────────────────── */
+        .busbar-body      { font-size:12px; }
+        .busbar-channels  { display:flex; flex-direction:column; gap:3px; margin:6px 0; }
+        .busbar-channel   { display:flex; align-items:center; gap:5px; }
+        .busbar-ch-label  { width:30px; font-size:10px; color:#779; text-align:right; flex-shrink:0; }
+        .busbar-weight-input {
+            width:52px; padding:2px 4px; background:#111827; border:1px solid #334;
+            border-radius:3px; color:#cce; font-size:11px; text-align:right;
+        }
+        .busbar-weight-input:focus { outline:none; border-color:#44aaff; }
+        .busbar-pct       { width:42px; font-size:11px; color:#88ccff; text-align:right; flex-shrink:0; }
+        .busbar-flow      { font-size:11px; color:#334; flex-shrink:0; }
+        .busbar-flow.active { color:#44aaff; }
+        .busbar-equalise-btn {
+            width:100%; padding:3px; background:#1a1a2e; border:1px solid #334;
+            border-radius:3px; color:#889; cursor:pointer; font-size:11px; margin-top:2px;
+        }
+        .busbar-equalise-btn:hover { border-color:#44aaff; color:#44aaff; }
+        .busbar-footer    { font-size:10px; color:#556; text-align:center; margin-top:4px; }
         .series-btns      { display:flex; gap:4px; margin-top:6px; }
         .series-btns .big-toggle { flex:1; }
         .series-pass-btn  { padding:4px 8px; background:#1a2a3a; border:1px solid #44aaff44; border-radius:4px; color:#44aaff; cursor:pointer; font-size:11px; white-space:nowrap; }

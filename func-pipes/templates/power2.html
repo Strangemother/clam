@@ -45,6 +45,7 @@
                 <button class="btn-load"      @click="addConsole"       title="Console with boot sequence">🖥 Console</button>
                 <button class="btn-gen"       @click="addSeriesBattery" title="Series battery — chain to boost voltage">🔋 Series</button>
                 <button class="btn-converter" @click="addDecision"       title="Decision node — route signal to one of N outputs">⑂ Decision</button>
+                <button class="btn-converter" @click="addBusBar"          title="Bus Bar — distribute power across N channels with editable weights">⑃ Bus Bar</button>
             </div>
 
             <!-- Catalogue presets (driven by NodeRegistry — auto-includes all registered types) -->
@@ -152,6 +153,7 @@
                 {% include 'power2/heater.html' %}
                 {% include 'power2/console.html' %}
                 {% include 'power2/series-battery.html' %}
+                {% include 'power2/bus-bar.html' %}
                 {% include 'power2/decision.html' %}
 
                 {% raw %}
@@ -263,6 +265,7 @@
 <script src="{{ url_for('static', filename='js/power2/nodes/console-node.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/series-battery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/decision.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/bus-bar.js') }}"></script>
 
 <!-- ── App bootstrap (must be last) ─────────────────────────────────────── -->
 <script src="{{ url_for('static', filename='js/power2/index.js') }}"></script>
