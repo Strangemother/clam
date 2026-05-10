@@ -128,6 +128,11 @@ createApp({
         toggleSeriesBatteryPass(panel)    { SeriesBattery.togglePass(panel, this.graph) },
         seriesBatteryParamsChanged(panel) { SeriesBattery.paramsChanged(panel, this.graph) },
 
+        // ── Decision ─────────────────────────────────────────────────────────
+        addDecision()                { this.graph.addType('decision') },
+        decisionReRoute(panel)       { DecisionNode.reRoute(panel, this.graph) },
+        decisionSetDefault(panel, i)  { DecisionNode.setDefault(panel, i, this.graph) },
+
         // ── Ripple ───────────────────────────────────────────────────────────
         toggleRipple(panel)      { this.graph.toggleRipple(panel) },
         rippleParamsChanged(p)   { this.graph.rippleParamsChanged(p) },

@@ -118,6 +118,27 @@ class PowerGraph {
         })
     }
 
+    /**
+     * Forward signal from a specific outbound pip index.
+     * Used by multi-output nodes (e.g. DecisionNode) to route to a chosen output.
+     * sourceId is `${panel.id}:${pipIndex}` so downstream nodes track each pip separately.
+     *
+     * @param {Object}      panel    — source panel
+     * @param {number}      pipIndex — which outbound pip to emit from
+     * @param {Object|null} signal   — { v, a } or null
+     */
+    emitTo(panel, pipIndex, signal) {
+        if (typeof pipesWalker === 'undefined') return
+        const sourceId = `${panel.id}:${pipIndex}`
+        this._getOutboundConns(panel, pipIndex).forEach(({ inLabel, connKey }) => {
+            const target = this._findPanel(inLabel)
+            if (target) {
+                const transformed = EdgeStore2.applyEdge(signal, connKey)
+                this.receive(target, transformed, sourceId)
+            }
+        })
+    }
+
     /** Re-broadcast from every live generator after a topology change. */
     repropagateAll() {
         this.panels.forEach(p => {

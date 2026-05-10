@@ -63,6 +63,29 @@
         .series-state-badge.series-dead        { background:#3a0000; color:#ff6644; }
         .series-state-badge.series-off         { background:#1a1a2e; color:#556; }
         .series-state-badge.series-pass        { background:#1a2a3a; color:#44aaff; }
+        /* ── Decision node ───────────────────────────────────────────── */
+        .decision-header  { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+        .decision-badge   { display:inline-block; padding:1px 5px; border-radius:3px; font-size:10px; font-weight:bold; letter-spacing:.05em; }
+        .decision-badge.decision-routing { background:#1a2a3a; color:#44aaff; }
+        .decision-badge.decision-blocked { background:#3a2a00; color:#ffaa44; }
+        .decision-badge.decision-off     { background:#1a1a2e; color:#556; }
+        .decision-badge.decision-error   { background:#3a0000; color:#ff6644; }
+        .decision-signal  { font-size:11px; color:#aaa; }
+        .decision-signal.zero { color:#556; font-style:italic; }
+        .decision-outputs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+        .decision-out     { display:flex; align-items:center; gap:3px; padding:2px 6px; border-radius:3px; background:#1a1a2e; border:1px solid #334; font-size:11px; color:#556; }
+        .decision-out.active { background:#0a1e30; border-color:#44aaff; color:#44aaff; }
+        .decision-out.pinned { border-style:dashed; border-color:#88aacc; }
+        .decision-out.active.pinned { border-style:solid; border-color:#44aaff; }
+        .decision-out { cursor:pointer; }
+        .decision-out:hover { border-color:#667; }
+        .decision-out-pin  { font-size:9px; line-height:1; }
+        .decision-out-label { font-size:10px; }
+        .decision-out-arrow { font-size:12px; }
+        .decision-reroute-btn { width:100%; padding:3px; background:#1a1a2e; border:1px solid #334; border-radius:3px; color:#889; cursor:pointer; font-size:11px; margin-bottom:4px; }
+        .decision-reroute-btn:hover { border-color:#44aaff; color:#44aaff; }
+        .decision-config  { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:4px; }
+        .decision-field   { display:flex; align-items:center; gap:4px; }
         .series-btns      { display:flex; gap:4px; margin-top:6px; }
         .series-btns .big-toggle { flex:1; }
         .series-pass-btn  { padding:4px 8px; background:#1a2a3a; border:1px solid #44aaff44; border-radius:4px; color:#44aaff; cursor:pointer; font-size:11px; white-space:nowrap; }
@@ -105,6 +128,7 @@
                 <button class="btn-load"      @click="addHeater"        title="Electric heater with thermal simulation">🔥 Heater</button>
                 <button class="btn-load"      @click="addConsole"       title="Console with boot sequence">🖥 Console</button>
                 <button class="btn-gen"       @click="addSeriesBattery" title="Series battery — chain to boost voltage">🔋 Series</button>
+                <button class="btn-converter" @click="addDecision"       title="Decision node — route signal to one of N outputs">⑂ Decision</button>
             </div>
 
             <!-- Catalogue presets (driven by NodeRegistry — auto-includes all registered types) -->
@@ -212,6 +236,7 @@
                 {% include 'power2/heater.html' %}
                 {% include 'power2/console.html' %}
                 {% include 'power2/series-battery.html' %}
+                {% include 'power2/decision.html' %}
 
                 {% raw %}
                 <!-- ── Outbound pips ────────────────────────────────────── -->
@@ -319,6 +344,7 @@
 <script src="{{ url_for('static', filename='js/power2/nodes/heater.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/console-node.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/series-battery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/decision.js') }}"></script>
 
 <!-- ── App bootstrap (must be last) ─────────────────────────────────────── -->
 <script src="{{ url_for('static', filename='js/power2/index.js') }}"></script>
