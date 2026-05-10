@@ -30,5 +30,10 @@ def inputs():
     return render_template('inputs.html')
 
 
+@app.route('/power2')
+def power2():
+    return render_template('power2.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

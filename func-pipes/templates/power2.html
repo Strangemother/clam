@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Backbone 2.0</title>
+    <!--
+        power2.html
+        ────────────────────────────────────────────────────────────────────────
+        Class-based, registry-driven power simulation.
+        Route: /power2
+
+        To add a new node type:
+          1. Create js/power2/nodes/mynode.js (extend NodeBase or Load)
+          2. Call NodeRegistry.register(MyNode) at the bottom of that file
+          3. Add a <script> tag for it below (before index.js)
+          4. Add a toolbar button (@click="addType('mytype')")
+          5. Add a <template v-else-if="panel.type === 'mytype'"> block
+    -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/power.css') }}">
+    <style>
+        /* ── Power-2 additions ───────────────────────────────────────── */
+
+        /* Heater thermal display */
+        .heat-bar-bg    { height:8px; background:#1a1a2e; border-radius:4px; margin:6px 0 2px; overflow:hidden; }
+        .heat-bar-fill  { height:100%; border-radius:4px; transition:width 0.4s ease; background:#ff6600; }
+        .heat-bar-fill.cold    { background:#4488ff; }
+        .heat-bar-fill.warming { background:#ff9900; }
+        .heat-bar-fill.hot     { background:#ff2200; }
+        .heat-state-badge {
+            display:inline-block; padding:1px 6px; border-radius:3px;
+            font-size:10px; font-weight:bold; letter-spacing:.05em; text-transform:uppercase;
+        }
+        .heat-state-badge.cold    { background:#1e3a6e; color:#88aaff; }
+        .heat-state-badge.warming { background:#5a3000; color:#ffaa44; }
+        .heat-state-badge.hot     { background:#5a0000; color:#ff6644; }
+
+        /* Console boot progress */
+        .boot-bar-bg   { height:8px; background:#1a1a2e; border-radius:4px; margin:6px 0 2px; overflow:hidden; }
+        .boot-bar-fill { height:100%; border-radius:4px; transition:width 0.25s linear; background:#00cc88; }
+        .boot-bar-fill.shutdown { background:#ff6600; }
+        .boot-state-badge {
+            display:inline-block; padding:1px 6px; border-radius:3px;
+            font-size:10px; font-weight:bold; letter-spacing:.05em; text-transform:uppercase;
+        }
+        .boot-state-badge.booting  { background:#003322; color:#00cc88; }
+        .boot-state-badge.ready    { background:#004400; color:#44ff88; }
+        .boot-state-badge.shutdown { background:#442200; color:#ffaa44; }
+        .boot-state-badge.off      { background:#1a1a2e; color:#556; }
+    </style>
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <!-- Quick-add buttons -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Add</span>
+                <button class="btn-gen"       @click="addGen">⚡ Gen</button>
+                <button class="btn-breaker"   @click="addBreaker">⊣ Breaker</button>
+                <button class="btn-bulb"      @click="addBulb">◉ Bulb</button>
+                <button class="btn-load"      @click="addLoad">□ Load</button>
+                <button class="btn-meter"     @click="addMeter">⊞ Meter</button>
+                <button class="btn-converter" @click="addConverter">⇅ Converter</button>
+                <button class="btn-load"      @click="addHeater"  title="Electric heater with thermal simulation">🔥 Heater</button>
+                <button class="btn-load"      @click="addConsole" title="Console with boot sequence">🖥 Console</button>
+            </div>
+
+            <!-- Catalogue presets (driven by NodeRegistry — auto-includes all registered types) -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Preset</span>
+                <select class="catalog-select" @change="addFromCatalog($event.target.value); $event.target.value = ''">
+                    <option value="">— select component —</option>
+                    <optgroup v-for="(items, group) in catalogGroups" :key="group" :label="group">
+                        <option v-for="c in items" :key="c.key" :value="c.key">
+                            {{ c.label }}
+                        </option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <span class="toolbar-sep"></span>
+
+            <!-- Layout save / restore -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Layout</span>
+                <button class="btn-save"   @click="saveLayout"   title="Save to browser storage">💾 Save</button>
+                <button class="btn-load"   @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <button class="btn-export" @click="exportJSON"   title="Download as JSON">⬇ Export</button>
+                <button class="btn-import" @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+            </div>
+
+            <!-- Disconnect mode -->
+            <button :class="['disconnect-toggle', disconnectMode ? 'active' : '']"
+                    @click="disconnectMode = !disconnectMode; edgeMode = false; if (!disconnectMode) disconnectFirst = null"
+                    title="Step 1: click a pip. Step 2: click the pip it connects to.">
+                ✂ {{ disconnectMode
+                        ? (disconnectFirst ? 'Now click the other pip…' : 'Select a pip')
+                        : 'Disconnect' }}
+            </button>
+
+            <!-- Edge inspector mode -->
+            <button :class="['disconnect-toggle', edgeMode ? 'active' : '']"
+                    @click="edgeMode = !edgeMode; disconnectMode = false; if (!edgeMode) { edgeFirst = null }"
+                    title="Step 1: click a pip. Step 2: click the connected pip to edit that wire.">
+                ⚙ {{ edgeMode
+                        ? (edgeFirst ? 'Now click the other pip…' : 'Select a pip')
+                        : 'Edge' }}
+            </button>
+
+            <span class="toolbar-sep"></span>
+
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Simulation active' : 'Simulation paused'">
+                {{ graphRunning ? '⏹ Pause' : '▶ Run' }}
+            </button>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- PANELS                                                          -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="panels">
+            <div class="panel"
+                 :class="['type-' + panel.type, 'state-' + panel.state]"
+                 v-for="(panel, i) in panels"
+                 :ref="'panel-' + panel.id"
+                 :key="panel.id">
+
+                <!-- ── Inbound pips ─────────────────────────────────── -->
+                <div class="pips inbound" v-if="panel.pipsInbound && panel.pipsInbound.length">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' :
+                            edgeMode && edgeFirst && edgeFirst.pip.label === pip.label && edgeFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            edgeMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode && !edgeMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'inbound') : edgeMode ? selectEdgePip(pip, 'inbound') : null"
+                        @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        :title="disconnectMode ? 'Click to select for disconnection' : 'Power in'">
+                    </div>
+                </div>
+
+                <!-- ── Panel header ───────────────────────────────────── -->
+                <div class="panel-head">
+                    <span :class="['panel-title', panel.type === 'gen' && panel.live ? 'live' : '']">
+                        {{ panel.title }}
+                    </span>
+                    <div class="panel-btns">
+                        <button @click="resetPanel(panel)" title="Reset">↺</button>
+                        <button @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                <!-- ════════════════════════════════════════════════════ -->
+                <!-- ── GENERATOR ──────────────────────────────────────── -->
+                <template v-if="panel.type === 'gen'">
+                    <div class="node-body">
+                        <div class="gen-readout">
+                            <div class="rvalue">
+                                <div class="rv-label">Volts</div>
+                                <div>
+                                    <input type="number" v-model.number="panel.volts"
+                                           min="1" step="1"
+                                           style="width:60px; font-size:14px; font-weight:bold; color:#ffd166; background:transparent; border:none; text-align:center; padding:0"
+                                           @change="genParamsChanged(panel)" />
+                                </div>
+                                <div class="rv-unit">V</div>
+                            </div>
+                            <div class="rvalue">
+                                <div class="rv-label">Amps</div>
+                                <div>
+                                    <input type="number" v-model.number="panel.amps"
+                                           min="0.1" step="0.5"
+                                           style="width:60px; font-size:14px; font-weight:bold; color:#ffd166; background:transparent; border:none; text-align:center; padding:0"
+                                           @change="genParamsChanged(panel)" />
+                                </div>
+                                <div class="rv-unit">A ({{ (panel.volts * panel.amps).toFixed(0) }}W)</div>
+                            </div>
+                        </div>
+
+                        <button :class="['big-toggle',
+                                         panel.state === 'tripped' ? 'tripped' :
+                                         panel.state === 'sag'     ? 'sagging' :
+                                         panel.live                ? 'live'    : 'dead']"
+                                @click="toggleGen(panel)">
+                            {{ panel.state === 'tripped' ? '⚡ TRIPPED — click to reset'
+                             : panel.state === 'sag'     ? '⚠ SAG — overloaded'
+                             : panel.live                ? '■ LIVE' : '○ OFF' }}
+                        </button>
+
+                        <!-- Load draw readout -->
+                        <div class="gen-draw" v-if="panel.live || panel.state === 'tripped'">
+                            <div class="draw-row">
+                                <span class="draw-label">Draw</span>
+                                <span :class="['draw-value',
+                                    panel.drawAmps > panel.amps * 1.3  ? 'draw-crit' :
+                                    panel.drawAmps > panel.amps        ? 'draw-over' :
+                                    panel.drawAmps >= panel.amps * 0.7 ? 'draw-warn' : 'draw-ok']">
+                                    {{ panel.drawWatts }}W / {{ panel.drawAmps }}A
+                                </span>
+                            </div>
+                            <div class="draw-bar-bg">
+                                <div class="draw-bar-fill"
+                                    :class="panel.drawAmps > panel.amps * 1.3  ? 'draw-crit' :
+                                            panel.drawAmps > panel.amps        ? 'draw-over' :
+                                            panel.drawAmps >= panel.amps * 0.7 ? 'draw-warn' : ''"
+                                    :style="{ width: Math.min(100, (panel.drawAmps / panel.amps) * 100) + '%' }">
+                                </div>
+                            </div>
+                            <div class="draw-legend">
+                                <span>0</span>
+                                <span>{{ (panel.volts * panel.amps).toFixed(0) }}W rated</span>
+                            </div>
+                        </div>
+
+                        <!-- Ripple controls -->
+                        <div class="ripple-row">
+                            <label class="ripple-toggle" :class="panel.ripple.enabled ? 'active' : ''">
+                                <input type="checkbox" v-model="panel.ripple.enabled" />
+                                ∿ Ripple
+                            </label>
+                            <template v-if="panel.ripple.enabled">
+                                <label class="ripple-field">
+                                    <span>±V</span>
+                                    <input type="number" min="0.01" step="0.1"
+                                           v-model.number="panel.ripple.amount"
+                                           @change="rippleParamsChanged(panel)" />
+                                </label>
+                                <label class="ripple-field">
+                                    <span>every</span>
+                                    <input type="number" min="0.05" step="0.05"
+                                           v-model.number="panel.ripple.interval"
+                                           @change="rippleParamsChanged(panel)" />
+                                    <span>s</span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── BREAKER ──────────────────────────────────────────── -->
+                <template v-else-if="panel.type === 'breaker'">
+                    <div class="node-body">
+                        <div class="field-row">
+                            <label>Rating</label>
+                            <input type="number" v-model.number="panel.ratingAmps" min="1" step="1" />
+                            <span class="unit">A</span>
+                        </div>
+
+                        <button :class="['breaker-toggle',
+                                         panel.tripped ? 'tripped' :
+                                         panel.closed  ? 'closed'  : 'open']"
+                                @click="toggleBreaker(panel)">
+                            {{ panel.tripped ? '⚡ TRIPPED — click to reset'
+                             : panel.closed  ? '━ CLOSED' : '╱ OPEN' }}
+                        </button>
+
+                        <div class="status-row" v-if="panel.signal">
+                            <span class="status-label">In</span>
+                            <span class="status-value sv-on">
+                                {{ panel.signal.v }}V / {{ panel.signal.a.toFixed(1) }}A
+                            </span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── BULB ─────────────────────────────────────────────── -->
+                <template v-else-if="panel.type === 'bulb'">
+                    <div class="node-body">
+                        <div class="bulb-shell">
+                            <div class="bulb-globe"
+                                :class="panel.state === 'blown' ? 'blown' : panel.state !== 'off' ? panel.state : ''"
+                                :style="panel.state === 'on' || panel.state === 'dim' ? {
+                                    background: `radial-gradient(circle,
+                                        rgba(255,255,180,${panel.brightness}) 0%,
+                                        rgba(255,200,0,${panel.brightness * 0.7}) 50%,
+                                        rgba(120,80,0,${panel.brightness * 0.3}) 100%)`,
+                                    boxShadow: `0 0 ${panel.brightness * 24}px rgba(255,220,0,${panel.brightness * 0.6}),
+                                                0 0 ${panel.brightness * 48}px rgba(255,180,0,${panel.brightness * 0.2})`
+                                } : {}">
+                            </div>
+                            <span :class="['bulb-label', panel.state === 'blown' ? 'blown-label' : '']">
+                                {{ panel.watts }}W — {{ panel.state.toUpperCase() }}
+                            </span>
+                        </div>
+                        <div class="field-row">
+                            <label>Max V</label>
+                            <input type="number" v-model.number="panel.maxVolts" min="1" step="1" :disabled="panel.blown" />
+                            <span class="unit">V</span>
+                        </div>
+                        <div class="blown-notice" v-if="panel.blown">
+                            ⚡ BLOWN — press ↺ to replace
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── LOAD ─────────────────────────────────────────────── -->
+                <template v-else-if="panel.type === 'load'">
+                    <div class="node-body">
+                        <div class="field-row">
+                            <label>Name</label>
+                            <input type="text" v-model="panel.label" style="text-align:left" />
+                        </div>
+                        <div class="field-row">
+                            <label>Draw</label>
+                            <input type="number" v-model.number="panel.watts" min="0" step="1"
+                                   @change="loadParamsChanged(panel)" />
+                            <span class="unit">W</span>
+                        </div>
+                        <div class="field-row">
+                            <label>Min V</label>
+                            <input type="number" v-model.number="panel.minVolts" min="0" step="1"
+                                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+                            <span class="unit">V</span>
+                        </div>
+                        <div class="field-row">
+                            <label>Max V</label>
+                            <input type="number" v-model.number="panel.maxVolts" min="0" step="1"
+                                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+                            <span class="unit">V</span>
+                        </div>
+
+                        <div class="blown-notice" v-if="panel.blown">
+                            ⚡ BLOWN — press ↺ to replace
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">State</span>
+                            <span :class="['status-value', 'sv-' + panel.state]">
+                                {{ panel.state.toUpperCase() }}
+                            </span>
+                        </div>
+
+                        <div class="cap-row" v-if="panel.capacitance > 0">
+                            <div class="cap-header">
+                                <span class="cap-label">Cap {{ panel.capacitance }}Ws</span>
+                                <span class="cap-pct">{{ chargePercent(panel).toFixed(0) }}%</span>
+                            </div>
+                            <div class="cap-bar-bg">
+                                <div class="cap-bar-fill" :style="{ width: chargePercent(panel) + '%' }"></div>
+                            </div>
+                        </div>
+
+                        <div class="ripple-row">
+                            <label class="ripple-toggle" :class="panel.ripple.enabled ? 'active' : ''">
+                                <input type="checkbox" v-model="panel.ripple.enabled" />
+                                ∿ Ripple
+                            </label>
+                            <template v-if="panel.ripple.enabled">
+                                <label class="ripple-field">
+                                    <span>±V</span>
+                                    <input type="number" min="0.01" step="0.1"
+                                           v-model.number="panel.ripple.amount"
+                                           @change="rippleParamsChanged(panel)" />
+                                </label>
+                                <label class="ripple-field">
+                                    <span>every</span>
+                                    <input type="number" min="0.05" step="0.05"
+                                           v-model.number="panel.ripple.interval"
+                                           @change="rippleParamsChanged(panel)" />
+                                    <span>s</span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── CONVERTER ────────────────────────────────────────── -->
+                <template v-else-if="panel.type === 'converter'">
+                    <div class="node-body">
+                        <div class="converter-readout">
+                            <div class="conv-row conv-io">
+                                <div class="conv-side">
+                                    <div class="conv-label">In</div>
+                                    <div :class="['conv-val', panel.inVolts === 0 ? 'zero' : '']">
+                                        {{ panel.inVolts.toFixed(1) }}<span class="conv-unit">V</span>
+                                    </div>
+                                    <div :class="['conv-val', panel.inAmps === 0 ? 'zero' : '']">
+                                        {{ panel.inAmps.toFixed(2) }}<span class="conv-unit">A</span>
+                                    </div>
+                                </div>
+                                <div class="conv-arrow">
+                                    <span :class="['conv-ratio-badge', 'state-' + panel.state]">
+                                        {{ panel.ratio !== null ? panel.ratio.toFixed(2) + '×' : '—' }}
+                                    </span>
+                                    <div class="conv-arrow-sym">&#x2192;</div>
+                                </div>
+                                <div class="conv-side">
+                                    <div class="conv-label">Out</div>
+                                    <div :class="['conv-val', panel.state === 'off' ? 'zero' : '']">
+                                        {{ panel.outVolts.toFixed(1) }}<span class="conv-unit">V</span>
+                                    </div>
+                                    <div :class="['conv-val', panel.outAmps === 0 ? 'zero' : '']">
+                                        {{ panel.outAmps.toFixed(2) }}<span class="conv-unit">A</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="conv-dial-row">
+                                <button class="conv-btn conv-down" @click="converterDialDown(panel)" title="Step down output voltage">▼</button>
+                                <span class="conv-step-label">±{{ panel.step }}V</span>
+                                <button class="conv-btn conv-up"   @click="converterDialUp(panel)"   title="Step up output voltage">▲</button>
+                            </div>
+
+                            <div class="conv-settings">
+                                <label class="conv-field">
+                                    <span>Out V</span>
+                                    <input type="number" min="1" step="1"
+                                           v-model.number="panel.outVolts"
+                                           @change="converterParamsChanged(panel)" />
+                                </label>
+                                <label class="conv-field">
+                                    <span>Step</span>
+                                    <input type="number" min="0.1" step="0.1"
+                                           v-model.number="panel.step"
+                                           @change="converterParamsChanged(panel)" />
+                                </label>
+                                <label class="conv-field">
+                                    <span>Eff %</span>
+                                    <input type="number" min="1" max="100" step="1"
+                                           :value="Math.round(panel.efficiency * 100)"
+                                           @change="panel.efficiency = $event.target.value / 100; converterParamsChanged(panel)" />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="ripple-row">
+                            <label class="ripple-toggle" :class="panel.ripple.enabled ? 'active' : ''">
+                                <input type="checkbox" v-model="panel.ripple.enabled" />
+                                ∿ Ripple
+                            </label>
+                            <template v-if="panel.ripple.enabled">
+                                <label class="ripple-field">
+                                    <span>±V</span>
+                                    <input type="number" min="0.01" step="0.1"
+                                           v-model.number="panel.ripple.amount"
+                                           @change="rippleParamsChanged(panel)" />
+                                </label>
+                                <label class="ripple-field">
+                                    <span>every</span>
+                                    <input type="number" min="0.05" step="0.05"
+                                           v-model.number="panel.ripple.interval"
+                                           @change="rippleParamsChanged(panel)" />
+                                    <span>s</span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── METER ────────────────────────────────────────────── -->
+                <template v-else-if="panel.type === 'meter'">
+                    <div class="node-body">
+                        <div class="meter-readout">
+                            <div class="meter-line">
+                                <span class="ml-label">V</span>
+                                <span :class="['ml-value', panel.volts === 0 ? 'zero' : '']">
+                                    {{ panel.volts.toFixed(1) }}
+                                </span>
+                                <span class="ml-unit">volts</span>
+                            </div>
+                            <div class="meter-line">
+                                <span class="ml-label">A</span>
+                                <span :class="['ml-value', panel.amps === 0 ? 'zero' : '']">
+                                    {{ panel.amps.toFixed(2) }}
+                                </span>
+                                <span class="ml-unit">amps</span>
+                            </div>
+                            <div class="meter-line">
+                                <span class="ml-label">W</span>
+                                <span :class="['ml-value', panel.watts === 0 ? 'zero' : '']">
+                                    {{ panel.watts }}
+                                </span>
+                                <span class="ml-unit">watts</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── HEATER ────────────────────────────────────────────── -->
+                <!--
+                    Custom node demonstrating class inheritance (extends Load).
+                    All power/brownout/capacitor logic is inherited.
+                    This template adds the thermal simulation display.
+                -->
+                <template v-else-if="panel.type === 'heater'">
+                    <div class="node-body">
+                        <div class="field-row">
+                            <label>Draw</label>
+                            <input type="number" v-model.number="panel.watts" min="0" step="10"
+                                   @change="loadParamsChanged(panel)" />
+                            <span class="unit">W</span>
+                        </div>
+                        <div class="field-row">
+                            <label>Min V</label>
+                            <input type="number" v-model.number="panel.minVolts" min="0" step="1"
+                                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+                            <span class="unit">V</span>
+                        </div>
+
+                        <div class="blown-notice" v-if="panel.blown">
+                            ⚡ BLOWN — press ↺ to replace
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Power</span>
+                            <span :class="['status-value', 'sv-' + panel.state]">
+                                {{ panel.state.toUpperCase() }}
+                            </span>
+                        </div>
+
+                        <!-- Thermal display -->
+                        <div class="status-row" style="margin-top:4px">
+                            <span class="status-label">Temp</span>
+                            <span :class="['heat-state-badge', panel.heatState]">
+                                {{ panel.heatState }}
+                            </span>
+                            <span style="margin-left:auto; font-size:11px; color:#888">
+                                {{ panel.temperature.toFixed(0) }}°
+                            </span>
+                        </div>
+                        <div class="heat-bar-bg">
+                            <div :class="['heat-bar-fill', panel.heatState]"
+                                 :style="{ width: panel.temperature + '%' }">
+                            </div>
+                        </div>
+
+                        <!-- Heat rate controls -->
+                        <div class="field-row" style="margin-top:6px">
+                            <label>Heat °/s</label>
+                            <input type="number" v-model.number="panel.heatRate" min="0.1" step="0.5" style="width:46px" />
+                        </div>
+                        <div class="field-row">
+                            <label>Cool °/s</label>
+                            <input type="number" v-model.number="panel.coolRate" min="0.1" step="0.5" style="width:46px" />
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── CONSOLE ───────────────────────────────────────────── -->
+                <!--
+                    Custom node demonstrating class inheritance (extends Load).
+                    Adds a boot-progress simulation: booting → ready → shutdown.
+                    Capacitor keeps it alive briefly after power loss (clean shutdown window).
+                -->
+                <template v-else-if="panel.type === 'console'">
+                    <div class="node-body">
+                        <div class="field-row">
+                            <label>Draw</label>
+                            <input type="number" v-model.number="panel.watts" min="0" step="5"
+                                   @change="loadParamsChanged(panel)" />
+                            <span class="unit">W</span>
+                        </div>
+                        <div class="field-row">
+                            <label>Min V</label>
+                            <input type="number" v-model.number="panel.minVolts" min="0" step="1"
+                                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+                            <span class="unit">V</span>
+                        </div>
+
+                        <div class="status-row" style="margin-top:4px">
+                            <span class="status-label">Power</span>
+                            <span :class="['status-value', 'sv-' + panel.state]">
+                                {{ panel.state.toUpperCase() }}
+                            </span>
+                        </div>
+
+                        <!-- Boot state display -->
+                        <div class="status-row" style="margin-top:4px">
+                            <span class="status-label">OS</span>
+                            <span :class="['boot-state-badge', panel.bootState]">
+                                {{ panel.bootState === 'booting'  ? '⬆ Booting'
+                                 : panel.bootState === 'ready'    ? '✓ Ready'
+                                 : panel.bootState === 'shutdown' ? '⬇ Shutdown'
+                                 : '— Off' }}
+                            </span>
+                        </div>
+                        <div class="boot-bar-bg" v-if="panel.bootState !== 'off'">
+                            <div :class="['boot-bar-fill', panel.bootState === 'shutdown' ? 'shutdown' : '']"
+                                 :style="{ width: panel.bootProgress + '%' }">
+                            </div>
+                        </div>
+
+                        <!-- Capacitor buffer (clean shutdown window) -->
+                        <div class="cap-row" v-if="panel.capacitance > 0">
+                            <div class="cap-header">
+                                <span class="cap-label">Buffer {{ panel.capacitance }}Ws</span>
+                                <span class="cap-pct">{{ chargePercent(panel).toFixed(0) }}%</span>
+                            </div>
+                            <div class="cap-bar-bg">
+                                <div class="cap-bar-fill" :style="{ width: chargePercent(panel) + '%' }"></div>
+                            </div>
+                        </div>
+
+                        <!-- Boot timing controls -->
+                        <div class="field-row" style="margin-top:6px">
+                            <label>Boot s</label>
+                            <input type="number" v-model.number="panel.bootDuration" min="0.5" step="0.5" style="width:46px" />
+                        </div>
+                        <div class="field-row">
+                            <label>Shutdown s</label>
+                            <input type="number" v-model.number="panel.shutdownDuration" min="0.2" step="0.2" style="width:46px" />
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ── Outbound pips ────────────────────────────────────── -->
+                <div class="pips outbound" v-if="panel.pipsOutbound && panel.pipsOutbound.length">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' :
+                            edgeMode && edgeFirst && edgeFirst.pip.label === pip.label && edgeFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            edgeMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode && !edgeMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'outbound') : edgeMode ? selectEdgePip(pip, 'outbound') : null"
+                        @dragstart="!disconnectMode && !edgeMode && pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        :title="disconnectMode ? 'Click to select for disconnection' : edgeMode ? 'Click to inspect/edit this wire' : 'Power out'">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- EDGE EDITOR                                                     -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="edge-editor" v-if="activeEdge">
+            <div class="edge-editor-head">
+                <span>⚙ Wire: <code>{{ activeEdge.key }}</code></span>
+                <button @click="activeEdge = null">✕</button>
+            </div>
+            <div class="edge-editor-body">
+                <label class="edge-field">
+                    <span>Enabled</span>
+                    <input type="checkbox"
+                           :checked="activeEdge.edge.enabled"
+                           @change="updateEdge(activeEdge.key, { enabled: $event.target.checked })" />
+                </label>
+                <label class="edge-field">
+                    <span>Wire type</span>
+                    <select :value="activeEdge.edge.wireType"
+                            @change="updateEdge(activeEdge.key, { wireType: $event.target.value })">
+                        <option v-for="wt in EdgeWireTypes" :key="wt.key" :value="wt.key">
+                            {{ wt.label }} ({{ wt.ohmsPerUnit }}Ω/100px)
+                        </option>
+                    </select>
+                </label>
+                <label class="edge-field">
+                    <span>Length (px)</span>
+                    <input type="number" min="0" step="1"
+                           :value="activeEdge.edge.length"
+                           @change="updateEdge(activeEdge.key, { length: +$event.target.value })" />
+                </label>
+                <label class="edge-field">
+                    <span>Manual Ω</span>
+                    <input type="number" min="0" step="0.01" placeholder="auto"
+                           :value="activeEdge.edge.manualResistance ?? ''"
+                           @change="updateEdge(activeEdge.key, {
+                               manualResistance: $event.target.value === '' ? null : +$event.target.value
+                           })" />
+                </label>
+                <div class="edge-field edge-computed">
+                    <span>Resistance</span>
+                    <span>
+                        {{ activeEdge.edge.manualResistance !== null && activeEdge.edge.manualResistance !== undefined
+                            ? activeEdge.edge.manualResistance.toFixed(4)
+                            : (activeEdge.edge.length / 100 * (EdgeWireTypes.find(w => w.key === activeEdge.edge.wireType) || EdgeWireTypes[0]).ohmsPerUnit).toFixed(4)
+                        }}Ω
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+</div>
+
+<!-- ── Vendor ───────────────────────────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+
+<!-- ── Power-2 core (order matters) ─────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/core/node-base.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/node-registry.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/edge-store.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/graph.js') }}"></script>
+
+<!-- ── Node definitions (each self-registers with NodeRegistry) ──────────── -->
+<script src="{{ url_for('static', filename='js/power2/nodes/gen.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/breaker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/bulb.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/load.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/meter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/converter.js') }}"></script>
+
+<!-- ── Custom / extended nodes — add new ones here ───────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/nodes/heater.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/console-node.js') }}"></script>
+
+<!-- ── App bootstrap (must be last) ─────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/index.js') }}"></script>
+</body>
+</html>
