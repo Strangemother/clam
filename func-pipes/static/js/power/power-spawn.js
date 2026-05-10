@@ -23,17 +23,19 @@ const SpawnMethods = {
         const preset = COMPONENT_CATALOG.find(c => c.key === key)
         if (!preset) return
         const id = _uid + 1
-        if (preset.type === 'gen')     this._makeAndSpawn(makeGenPanel,     id, preset)
-        if (preset.type === 'breaker') this._makeAndSpawn(makeBreakerPanel, id, preset)
-        if (preset.type === 'bulb')    this._makeAndSpawn(makeBulbPanel,    id, preset)
-        if (preset.type === 'load')    this._makeAndSpawn(makeLoadPanel,    id, preset)
+        if (preset.type === 'gen')       this._makeAndSpawn(makeGenPanel,       id, preset)
+        if (preset.type === 'breaker')    this._makeAndSpawn(makeBreakerPanel,   id, preset)
+        if (preset.type === 'bulb')       this._makeAndSpawn(makeBulbPanel,      id, preset)
+        if (preset.type === 'load')       this._makeAndSpawn(makeLoadPanel,      id, preset)
+        if (preset.type === 'converter')  this._makeAndSpawn(makeConverterPanel, id, preset)
     },
 
-    addGen()     { const id = _uid + 1; this._makeAndSpawn(makeGenPanel, id) },
-    addBreaker() { const id = _uid + 1; this._makeAndSpawn(makeBreakerPanel, id) },
-    addBulb()    { const id = _uid + 1; this._makeAndSpawn(makeBulbPanel, id) },
-    addLoad()    { const id = _uid + 1; this._makeAndSpawn(makeLoadPanel, id) },
-    addMeter()   { this._spawn(makePanel(makeMeterPanel(_uid + 1))) },
+    addGen()       { const id = _uid + 1; this._makeAndSpawn(makeGenPanel, id) },
+    addBreaker()   { const id = _uid + 1; this._makeAndSpawn(makeBreakerPanel, id) },
+    addBulb()      { const id = _uid + 1; this._makeAndSpawn(makeBulbPanel, id) },
+    addLoad()      { const id = _uid + 1; this._makeAndSpawn(makeLoadPanel, id) },
+    addMeter()     { this._spawn(makePanel(makeMeterPanel(_uid + 1))) },
+    addConverter() { const id = _uid + 1; this._makeAndSpawn(makeConverterPanel, id) },
 
     removePanel(i) {
         const p = this.panels[i]
@@ -65,6 +67,12 @@ const SpawnMethods = {
         if (panel.type === 'meter') {
             panel.signal = null; panel.powerSources = {}; panel.state = 'off'
             panel.volts = 0; panel.amps = 0; panel.watts = 0
+            this._emitPower(panel, null)
+        }
+        if (panel.type === 'converter') {
+            panel.signal = null; panel.powerSources = {}; panel.state = 'off'
+            panel.inVolts = 0; panel.inAmps = 0; panel.outAmps = 0
+            panel.ratio = null; panel._baseInVolts = null
             this._emitPower(panel, null)
         }
     },

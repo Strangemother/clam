@@ -1,0 +1,122 @@
+{% raw %}
+<!-- ── BATTERY (series-bat) node ── -->
+<template v-else-if="panel.type === 'series-bat'">
+    <div class="node-body">
+
+        <!-- Charge bar -->
+        <div class="series-charge-label">
+            <span :class="['series-state-badge', 'series-' + panel.state]">
+                {{ panel.state.toUpperCase() }}
+            </span>
+            <span :class="['series-charge-pct',
+                panel.chargePercent < 15 ? 'charge-crit' :
+                panel.chargePercent < 40 ? 'charge-low'  : 'charge-ok']">
+                {{ panel.chargePercent }}%
+            </span>
+            <span class="conv-label">{{ panel.chargeWh.toFixed(2) }} / {{ panel.capacityWh }} Wh</span>
+        </div>
+        <div class="heat-bar-bg">
+            <div class="series-charge-fill"
+                 :class="panel.chargePercent < 15 ? 'charge-crit' :
+                         panel.chargePercent < 40 ? 'charge-low'  : 'charge-ok'"
+                 :style="{ width: panel.chargePercent + '%' }">
+            </div>
+        </div>
+
+        <!-- Power flow: in / net / out -->
+        <div class="series-flow">
+            <div class="series-flow-col">
+                <div class="conv-label">Charge in</div>
+                <div :class="['conv-val', panel.chargeInW === 0 ? 'zero' : 'charge-ok']">
+                    {{ panel.chargeInW }}W
+                </div>
+                <div class="conv-label">{{ panel.inVolts.toFixed(1) }}V / {{ panel.inAmps.toFixed(2) }}A</div>
+            </div>
+            <div class="series-flow-arrow">
+                <span :class="['series-net-badge',
+                    panel.state === 'dead'        ? 'charge-crit' :
+                    panel.state === 'discharging' ? 'charge-low'  : 'charge-ok']">
+                    {{ panel.chargeInW - panel.chargeOutW >= 0 ? '+' : '' }}{{ (panel.chargeInW - panel.chargeOutW).toFixed(0) }}W
+                </span>
+            </div>
+            <div class="series-flow-col">
+                <div class="conv-label">EMF out</div>
+                <div :class="['conv-val', panel.chargeOutW === 0 ? 'zero' : 'charge-low']">
+                    {{ panel.chargeOutW }}W
+                </div>
+                <div class="conv-label">+{{ panel.volts }}V / {{ panel.amps }}A max</div>
+            </div>
+        </div>
+
+        <!-- Output toggle + pass-through -->
+        <div class="series-btns">
+            <button :class="['big-toggle',
+                             panel.state === 'dead' ? 'tripped' :
+                             panel.live             ? 'live'    : 'dead']"
+                    @click="toggleSeriesBattery(panel)">
+                {{ panel.state === 'dead' ? '⚠ DEAD — charging…'
+                 : panel.live             ? '■ BOOSTING +' + panel.volts + 'V'
+                 : '○ OUTPUT OFF' }}
+            </button>
+            <button :class="['series-pass-btn', panel.state === 'pass' ? 'active' : '']"
+                    :disabled="panel.state === 'dead'"
+                    @click="toggleSeriesBatteryPass(panel)"
+                    title="Pass inbound signal through unchanged (no EMF added, no charge used)">
+                ⇥ Pass
+            </button>
+        </div>
+
+        <!-- Config fields -->
+        <div class="series-config">
+            <label class="series-field">
+                <span class="conv-label">Out V</span>
+                <input type="number" v-model.number="panel.volts"
+                       min="0.1" step="0.1" style="width:48px"
+                       @change="seriesBatteryParamsChanged(panel)" />
+            </label>
+            <label class="series-field">
+                <span class="conv-label">Out A</span>
+                <input type="number" v-model.number="panel.amps"
+                       min="0.1" step="0.5" style="width:48px"
+                       @change="seriesBatteryParamsChanged(panel)" />
+            </label>
+            <label class="series-field">
+                <span class="conv-label">Chg A</span>
+                <input type="number" v-model.number="panel.chargeAmps"
+                       min="0.1" step="0.5" style="width:48px"
+                       @change="seriesBatteryParamsChanged(panel)" />
+            </label>
+            <label class="series-field">
+                <span class="conv-label">Cap Wh</span>
+                <input type="number" v-model.number="panel.capacityWh"
+                       min="0.001" step="1" style="width:52px"
+                       @change="seriesBatteryParamsChanged(panel)" />
+            </label>
+        </div>
+
+        <!-- Ripple controls -->
+        <div class="ripple-row">
+            <label class="ripple-toggle" :class="panel.ripple.enabled ? 'active' : ''">
+                <input type="checkbox" v-model="panel.ripple.enabled" />
+                ∿ Ripple
+            </label>
+            <template v-if="panel.ripple.enabled">
+                <label class="ripple-field">
+                    <span>±V</span>
+                    <input type="number" min="0.01" step="0.1"
+                           v-model.number="panel.ripple.amount"
+                           @change="rippleParamsChanged(panel)" />
+                </label>
+                <label class="ripple-field">
+                    <span>every</span>
+                    <input type="number" min="0.05" step="0.05"
+                           v-model.number="panel.ripple.interval"
+                           @change="rippleParamsChanged(panel)" />
+                    <span>s</span>
+                </label>
+            </template>
+        </div>
+
+    </div>
+</template>
+{% endraw %}

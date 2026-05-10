@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Backbone 2.0</title>
+    <!--
+        power2.html
+        ────────────────────────────────────────────────────────────────────────
+        Class-based, registry-driven power simulation.
+        Route: /power2
+
+        To add a new node type:
+          1. Create js/power2/nodes/mynode.js (extend NodeBase or Load)
+          2. Call NodeRegistry.register(MyNode) at the bottom of that file
+          3. Add a <script> tag for it below (before index.js)
+          4. Add a toolbar button (@click="addType('mytype')")
+          5. Create templates/power2/mynode.html with the panel template
+          6. Add an include tag for 'power2/mynode.html' in the panels section below
+    -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/power.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/power2.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <!-- Quick-add buttons -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Add</span>
+                <button class="btn-gen"       @click="addGen">⚡ Gen</button>
+                <button class="btn-breaker"   @click="addBreaker">⊣ Breaker</button>
+                <button class="btn-bulb"      @click="addBulb">◉ Bulb</button>
+                <button class="btn-load"      @click="addLoad">□ Load</button>
+                <button class="btn-meter"     @click="addMeter">⊞ Meter</button>
+                <button class="btn-converter" @click="addConverter">⇅ Converter</button>
+                <button class="btn-load"      @click="addHeater"        title="Electric heater with thermal simulation">🔥 Heater</button>
+                <button class="btn-load"      @click="addConsole"       title="Console with boot sequence">🖥 Console</button>
+                <button class="btn-gen"       @click="addSeriesBattery" title="Series battery — chain to boost voltage">🔋 Series</button>
+                <button class="btn-converter" @click="addDecision"       title="Decision node — route signal to one of N outputs">⑂ Decision</button>
+                <button class="btn-converter" @click="addBusBar"          title="Bus Bar — distribute power across N channels with editable weights">⑃ Bus Bar</button>
+            </div>
+
+            <!-- Catalogue presets (driven by NodeRegistry — auto-includes all registered types) -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Preset</span>
+                <select class="catalog-select" @change="addFromCatalog($event.target.value); $event.target.value = ''">
+                    <option value="">— select component —</option>
+                    <optgroup v-for="(items, group) in catalogGroups" :key="group" :label="group">
+                        <option v-for="c in items" :key="c.key" :value="c.key">
+                            {{ c.label }}
+                        </option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <span class="toolbar-sep"></span>
+
+            <!-- Layout save / restore -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Layout</span>
+                <button class="btn-save"   @click="saveLayout"   title="Save to browser storage">💾 Save</button>
+                <button class="btn-load"   @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <button class="btn-export" @click="exportJSON"   title="Download as JSON">⬇ Export</button>
+                <button class="btn-import" @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+            </div>
+
+            <!-- Disconnect mode -->
+            <button :class="['disconnect-toggle', disconnectMode ? 'active' : '']"
+                    @click="disconnectMode = !disconnectMode; edgeMode = false; if (!disconnectMode) disconnectFirst = null"
+                    title="Step 1: click a pip. Step 2: click the pip it connects to.">
+                ✂ {{ disconnectMode
+                        ? (disconnectFirst ? 'Now click the other pip…' : 'Select a pip')
+                        : 'Disconnect' }}
+            </button>
+
+            <!-- Edge inspector mode -->
+            <button :class="['disconnect-toggle', edgeMode ? 'active' : '']"
+                    @click="edgeMode = !edgeMode; disconnectMode = false; if (!edgeMode) { edgeFirst = null }"
+                    title="Step 1: click a pip. Step 2: click the connected pip to edit that wire.">
+                ⚙ {{ edgeMode
+                        ? (edgeFirst ? 'Now click the other pip…' : 'Select a pip')
+                        : 'Edge' }}
+            </button>
+
+            <span class="toolbar-sep"></span>
+
+            <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
+                    @click="toggleGraph"
+                    :title="graphRunning ? 'Simulation active' : 'Simulation paused'">
+                {{ graphRunning ? '⏹ Pause' : '▶ Run' }}
+            </button>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- PANELS                                                          -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="panels">
+            <div class="panel"
+                 :class="['type-' + panel.type, 'state-' + panel.state]"
+                 v-for="(panel, i) in panels"
+                 :ref="'panel-' + panel.id"
+                 :key="panel.id">
+
+                <!-- ── Inbound pips ─────────────────────────────────── -->
+                <div class="pips inbound" v-if="panel.pipsInbound && panel.pipsInbound.length">
+                    <div v-for="pip in panel.pipsInbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' :
+                            edgeMode && edgeFirst && edgeFirst.pip.label === pip.label && edgeFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            edgeMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode && !edgeMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'inbound') : edgeMode ? selectEdgePip(pip, 'inbound') : null"
+                        @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'inbound', pip)"
+                        :id="`${pip.label}-inbound-${pip.index}`"
+                        :title="disconnectMode ? 'Click to select for disconnection' : 'Power in'">
+                    </div>
+                </div>
+
+                <!-- ── Panel header ───────────────────────────────────── -->
+                <div class="panel-head">
+                    <span :class="['panel-title', panel.type === 'gen' && panel.live ? 'live' : '']">
+                        {{ panel.title }}
+                    </span>
+                    <div class="panel-btns">
+                        <button @click="toggleEnabled(panel)"
+                                :title="panel.enabled === false ? 'Enable' : 'Disable'"
+                                :class="{ 'btn-disabled': panel.enabled === false }">⏻</button>
+                        <button @click="resetPanel(panel)" title="Reset">↺</button>
+                        <button @click="removePanel(i)">✕</button>
+                    </div>
+                </div>
+
+                {% endraw %}
+
+                {% include 'power2/gen.html' %}
+                {% include 'power2/breaker.html' %}
+                {% include 'power2/bulb.html' %}
+                {% include 'power2/load.html' %}
+                {% include 'power2/converter.html' %}
+                {% include 'power2/meter.html' %}
+                {% include 'power2/heater.html' %}
+                {% include 'power2/console.html' %}
+                {% include 'power2/series-battery.html' %}
+                {% include 'power2/bus-bar.html' %}
+                {% include 'power2/decision.html' %}
+
+                {% raw %}
+                <!-- ── Outbound pips ────────────────────────────────────── -->
+                <div class="pips outbound" v-if="panel.pipsOutbound && panel.pipsOutbound.length">
+                    <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+                        :class="['pip-dot',
+                            disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            disconnectMode ? 'disconnect-ready' :
+                            edgeMode && edgeFirst && edgeFirst.pip.label === pip.label && edgeFirst.pip.index === pip.index ? 'disconnect-selected' :
+                            edgeMode ? 'disconnect-ready' : '']"
+                        :draggable="!disconnectMode && !edgeMode"
+                        @click="disconnectMode ? disconnectPip(pip, 'outbound') : edgeMode ? selectEdgePip(pip, 'outbound') : null"
+                        @dragstart="!disconnectMode && !edgeMode && pipStartDrag($event, 'outbound', pip)"
+                        @dragend="pipEndDrag($event)"
+                        @dragover="pipOverDrag($event)"
+                        @drop="pipDrop($event, 'outbound', pip)"
+                        :id="`${pip.label}-outbound-${pip.index}`"
+                        :title="disconnectMode ? 'Click to select for disconnection' : edgeMode ? 'Click to inspect/edit this wire' : 'Power out'">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- EDGE EDITOR                                                     -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="edge-editor" v-if="activeEdge">
+            <div class="edge-editor-head">
+                <span>⚙ Wire: <code>{{ activeEdge.key }}</code></span>
+                <button @click="activeEdge = null">✕</button>
+            </div>
+            <div class="edge-editor-body">
+                <label class="edge-field">
+                    <span>Enabled</span>
+                    <input type="checkbox"
+                           :checked="activeEdge.edge.enabled"
+                           @change="updateEdge(activeEdge.key, { enabled: $event.target.checked })" />
+                </label>
+                <label class="edge-field">
+                    <span>Wire type</span>
+                    <select :value="activeEdge.edge.wireType"
+                            @change="updateEdge(activeEdge.key, { wireType: $event.target.value })">
+                        <option v-for="wt in EdgeWireTypes" :key="wt.key" :value="wt.key">
+                            {{ wt.label }} ({{ wt.ohmsPerUnit }}Ω/100px)
+                        </option>
+                    </select>
+                </label>
+                <label class="edge-field">
+                    <span>Length (px)</span>
+                    <input type="number" min="0" step="1"
+                           :value="activeEdge.edge.length"
+                           @change="updateEdge(activeEdge.key, { length: +$event.target.value })" />
+                </label>
+                <label class="edge-field">
+                    <span>Manual Ω</span>
+                    <input type="number" min="0" step="0.01" placeholder="auto"
+                           :value="activeEdge.edge.manualResistance ?? ''"
+                           @change="updateEdge(activeEdge.key, {
+                               manualResistance: $event.target.value === '' ? null : +$event.target.value
+                           })" />
+                </label>
+                <div class="edge-field edge-computed">
+                    <span>Resistance</span>
+                    <span>
+                        {{ activeEdge.edge.manualResistance !== null && activeEdge.edge.manualResistance !== undefined
+                            ? activeEdge.edge.manualResistance.toFixed(4)
+                            : (activeEdge.edge.length / 100 * (EdgeWireTypes.find(w => w.key === activeEdge.edge.wireType) || EdgeWireTypes[0]).ohmsPerUnit).toFixed(4)
+                        }}Ω
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+    {% include 'power2/event-monitor.html' %}
+
+</div>
+
+<!-- ── Vendor ───────────────────────────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
+
+<!-- ── Power-2 core (order matters) ─────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/core/node-base.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/node-registry.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/edge-store.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/core/graph.js') }}"></script>
+
+<!-- ── Node definitions (each self-registers with NodeRegistry) ──────────── -->
+<script src="{{ url_for('static', filename='js/power2/nodes/gen.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/breaker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/bulb.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/load.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/meter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/converter.js') }}"></script>
+
+<!-- ── Custom / extended nodes — add new ones here ───────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/nodes/heater.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/console-node.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/series-battery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/decision.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power2/nodes/bus-bar.js') }}"></script>
+
+<!-- ── App bootstrap (must be last) ─────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/index.js') }}"></script>
+
+<!-- ── Event monitor (separate Vue app, after main app boots) ───────────── -->
+<script src="{{ url_for('static', filename='js/power2/event-monitor.js') }}"></script>
+</body>
+</html>

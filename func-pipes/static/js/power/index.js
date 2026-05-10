@@ -66,6 +66,8 @@ createApp({
         ...GenMethods,
         ...SignalMethods,
         ...NodeMethods,
+        ...ConverterMethods,
+        ...RippleMethods,
         ...TickMethods,
         ...WiringMethods,
         ...PersistMethods,

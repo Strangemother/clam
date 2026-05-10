@@ -55,10 +55,11 @@ const PersistMethods = {
 
         // 2. Spawn panels with their original IDs so pip/connection labels match
         const factoryMap = {
-            gen:     makeGenPanel,
-            breaker: makeBreakerPanel,
-            bulb:    makeBulbPanel,
-            load:    makeLoadPanel,
+            gen:       makeGenPanel,
+            breaker:   makeBreakerPanel,
+            bulb:      makeBulbPanel,
+            load:      makeLoadPanel,
+            converter: makeConverterPanel,
         }
         const maxId = Math.max(0, ...layout.nodes.map(n => n.id))
 

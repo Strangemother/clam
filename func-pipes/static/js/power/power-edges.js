@@ -31,10 +31,10 @@ const EdgeStore = (() => {
 
     // ── wire type catalog ────────────────────────────────────────────────────
     const WIRE_TYPES = [
-        { key: 'copper',    label: 'Copper',     ohmsPerUnit: 0.005 },
-        { key: 'aluminium', label: 'Aluminium',  ohmsPerUnit: 0.010 },
-        { key: 'steel',     label: 'Steel',      ohmsPerUnit: 0.080 },
-        { key: 'lossy',     label: 'Lossy Cable', ohmsPerUnit: 0.300 },
+        { key: 'copper',    label: 'Copper',      ohmsPerUnit: 0.005, color: '#00e87c' },
+        { key: 'aluminium', label: 'Aluminium',   ohmsPerUnit: 0.010, color: '#aadd00' },
+        { key: 'steel',     label: 'Steel',       ohmsPerUnit: 0.080, color: '#ff9900' },
+        { key: 'lossy',     label: 'Lossy Cable', ohmsPerUnit: 0.300, color: '#ff3333' },
     ]
 
     // 1 unit = 100 px
@@ -132,10 +132,20 @@ const EdgeStore = (() => {
         Object.assign(_store, data)
     }
 
+    // Return the canvas line color for an edge based on its wireType.
+    // Falls back to copper color when the edge has no entry yet.
+    function colorForEdge(key) {
+        const edge = _store[key]
+        if (edge?.enabled === false) return '#ff333366'
+        const typeKey = edge?.wireType ?? 'copper'
+        const wt = WIRE_TYPES.find(w => w.key === typeKey) || WIRE_TYPES[0]
+        return wt.color
+    }
+
     return {
         WIRE_TYPES,
         get, getOrCreate, update, remove, register,
-        computeResistance, applyEdge, calcPipDistance,
+        computeResistance, applyEdge, calcPipDistance, colorForEdge,
         toJSON, fromJSON,
         get store() { return _store },
     }

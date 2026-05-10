@@ -43,11 +43,12 @@ const PowerSave = (() => {
     // Runtime state (live, state, blown, chargeWs …) is intentionally excluded;
     // the simulation restarts clean from the saved configuration.
     const CONFIG_FIELDS = {
-        gen:     ['label', 'volts', 'amps', 'live'],
-        breaker: ['label', 'ratingAmps'],
-        bulb:    ['label', 'watts', 'maxVolts'],
-        load:    ['label', 'watts', 'minVolts', 'maxVolts', 'capacitance'],
-        meter:   ['label'],
+        gen:       ['label', 'volts', 'amps', 'live', 'ripple'],
+        breaker:   ['label', 'ratingAmps'],
+        bulb:      ['label', 'watts', 'maxVolts'],
+        load:      ['label', 'watts', 'minVolts', 'maxVolts', 'capacitance', 'ripple'],
+        meter:     ['label'],
+        converter: ['label', 'outVolts', 'step', 'efficiency', 'ripple'],
     }
 
     // ── internal helpers ─────────────────────────────────────────────────────

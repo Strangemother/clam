@@ -1,0 +1,71 @@
+{% raw %}<!-- ── DECISION node ── -->
+<template v-else-if="panel._isDecision">
+    <div class="node-body">
+
+        <!-- State badge + inbound signal -->
+        <div class="decision-header">
+            <span :class="['decision-badge', 'decision-' + panel.state]">
+                {{ panel.state.toUpperCase() }}
+            </span>
+            <span class="decision-signal" v-if="panel.signal">
+                {{ panel.signal.v.toFixed(1) }}V / {{ panel.signal.a.toFixed(2) }}A
+            </span>
+            <span class="decision-signal zero" v-else>no signal</span>
+        </div>
+
+        <!-- Inbound pip indicators (shown when inputCount > 1) -->
+        <div class="decision-inputs" v-if="panel.inputCount > 1">
+            <div v-for="i in panel.inputCount" :key="'in-' + (i - 1)"
+                 :class="['decision-in',
+                          panel._pipSignals && panel._pipSignals[i - 1] ? 'active' : '',
+                          panel._lastInPip === (i - 1) ? 'last' : '']"
+                 :title="'Inbound pip ' + (i - 1)">
+                <span class="decision-in-arrow">
+                    {{ panel._pipSignals && panel._pipSignals[i - 1] ? '▶' : '—' }}
+                </span>
+                <span class="decision-in-label">In {{ i - 1 }}</span>
+            </div>
+        </div>
+
+        <!-- Output routing indicators — click to pin as default -->
+        <div class="decision-outputs">
+            <div v-for="i in panel.outputCount" :key="i - 1"
+                 :class="['decision-out',
+                          Array.isArray(panel.lastDecision)
+                              ? panel.lastDecision.includes(i - 1) ? 'active' : ''
+                              : panel.lastDecision === (i - 1)     ? 'active' : '',
+                          panel.defaultOutput === (i - 1) ? 'pinned' : '']"
+                 @click="decisionSetDefault(panel, i - 1)"
+                 title="Click to pin as default output">
+                <span class="decision-out-pin" v-if="panel.defaultOutput === (i - 1)">📌</span>
+                <span class="decision-out-label">Out {{ i - 1 }}</span>
+                <span class="decision-out-arrow">
+                    {{ Array.isArray(panel.lastDecision)
+                        ? panel.lastDecision.includes(i - 1) ? '▶' : '—'
+                        : panel.lastDecision === (i - 1)     ? '▶' : '—' }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Manual re-route button -->
+        <button class="decision-reroute-btn" @click="decisionReRoute(panel)"
+                title="Force re-evaluate decide() now">
+            ⟳ Re-route
+        </button>
+
+        <!-- Config: tick interval -->
+        <div class="decision-config">
+            <label class="decision-field">
+                <span class="conv-label">Tick every</span>
+                <input type="number" v-model.number="panel.tickInterval"
+                       min="0.05" step="0.1" style="width:52px" />
+                <span class="conv-label">s</span>
+            </label>
+            <span class="conv-label" style="margin-left:6px">
+                {{ panel.outputCount }} outputs
+            </span>
+        </div>
+
+    </div>
+</template>
+{% endraw %}
