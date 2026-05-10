@@ -140,12 +140,15 @@ class DecisionNode extends NodeBase {
             return
         }
 
+        const prev = panel.lastDecision
         panel.lastDecision = chosen
 
         if (chosen === null) {
             // Block all outputs
             panel.state = signal ? 'blocked' : 'off'
             panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
+            if (prev !== chosen)
+                DecisionNode.dispatch(panel, 'decision:blocked', { prev, signal: !!signal })
             return
         }
 
@@ -157,6 +160,12 @@ class DecisionNode extends NodeBase {
         })
 
         panel.state = signal ? 'routing' : 'off'
+
+        const prevKey = JSON.stringify(prev)
+        const nextKey = JSON.stringify(chosen)
+        if (prevKey !== nextKey)
+            DecisionNode.dispatch(panel, 'decision:routed', { from: prev, to: chosen, input: inputIndex })
+
         graph.updateAllGenDraws()
     }
 

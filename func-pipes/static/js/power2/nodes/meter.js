@@ -38,18 +38,34 @@ class Meter extends NodeBase {
 
     static apply(panel, signal, graph) {
         if (!signal || signal.v <= 0) {
+            const prev  = panel.state
             panel.state = 'off'
             panel.volts = 0
             panel.amps  = 0
             panel.watts = 0
+            if (prev !== 'off') Meter.dispatch(panel, 'state:change', { from: prev, to: 'off' })
             graph.emit(panel, null)
             return
         }
 
+        const prev  = panel.state
+        const volts = +signal.v.toFixed(1)
+        const amps  = +signal.a.toFixed(2)
+        const watts = +(signal.v * signal.a).toFixed(0)
+
         panel.state = 'on'
-        panel.volts = +signal.v.toFixed(1)
-        panel.amps  = +signal.a.toFixed(2)
-        panel.watts = +(signal.v * signal.a).toFixed(0)
+        panel.volts = volts
+        panel.amps  = amps
+        panel.watts = watts
+
+        if (prev !== 'on') Meter.dispatch(panel, 'state:change', { from: prev, to: 'on' })
+
+        if (volts !== panel._lastVolts || amps !== panel._lastAmps) {
+            panel._lastVolts = volts
+            panel._lastAmps  = amps
+            Meter.throttle(panel, 'meter:reading', { volts, amps, watts })
+        }
+
         graph.emit(panel, signal)   // transparent pass-through
     }
 
@@ -57,7 +73,10 @@ class Meter extends NodeBase {
         panel.volts        = 0
         panel.amps         = 0
         panel.watts        = 0
+        panel._lastVolts   = null
+        panel._lastAmps    = null
         panel.powerSources = {}
+        Meter.dispatch(panel, 'meter:reset', {})
         super.reset(panel, graph)
     }
 }

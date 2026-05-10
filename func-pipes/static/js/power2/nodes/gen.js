@@ -24,6 +24,7 @@ class Generator extends NodeBase {
     static type  = 'gen'
     static label = 'Generator'
     static group = 'Source'
+    static dispatchDelay = 200  // draw telemetry throttle rate
 
     static catalog = [
         { key: 'wall-outlet',  label: 'Wall Outlet',  volts: 240, amps: 13  },
@@ -68,12 +69,16 @@ class Generator extends NodeBase {
             panel.overload = false
             panel.live     = false
             panel.state    = 'off'
+            Generator.dispatch(panel, 'state:change', { from: 'tripped', to: 'off' })
             graph.emit(panel, null)
             graph.updateAllGenDraws()
             return
         }
+        const prev  = panel.state
         panel.live  = !panel.live
         panel.state = panel.live ? 'on' : 'off'
+        Generator.dispatch(panel, 'state:change', { from: prev, to: panel.state })
+        Generator.dispatch(panel, panel.live ? 'gen:start' : 'gen:stop', { volts: panel.volts, amps: panel.amps })
         graph.emit(panel, panel.live ? { v: panel.volts, a: panel.amps } : null)
         graph.updateAllGenDraws()
     }
@@ -82,17 +87,54 @@ class Generator extends NodeBase {
     static paramsChanged(panel, graph) {
         if (panel.live && panel.state !== 'tripped') {
             panel.overload = false
+            Generator.dispatch(panel, 'gen:params', { volts: panel.volts, amps: panel.amps })
             graph.emit(panel, { v: panel.volts, a: panel.amps })
             graph.updateAllGenDraws()
         }
     }
 
     static reset(panel, graph) {
+        const prev     = panel.state
         panel.live     = false
         panel.state    = 'off'
         panel.overload = false
+        Generator.dispatch(panel, 'gen:reset', { from: prev })
         graph.emit(panel, null)
         graph.updateAllGenDraws()
+    }
+
+    /**
+     * Hook called by graph.computeGenDraw() after BFS + state updates complete.
+     * Emits events only — state is already set by the graph.
+     */
+    static onDrawUpdated(panel, graph) {
+        // State-change events — dispatch immediately on transitions
+        const state = panel.state
+        if (state !== panel._lastEmittedState) {
+            if (state === 'tripped')
+                Generator.dispatch(panel, 'gen:tripped', { drawAmps: +panel.drawAmps.toFixed(2), ratedAmps: panel.amps })
+            else if (state === 'sag')
+                Generator.dispatch(panel, 'gen:sag', { drawAmps: +panel.drawAmps.toFixed(2), ratedAmps: panel.amps })
+            Generator.dispatch(panel, 'state:change', { from: panel._lastEmittedState ?? 'off', to: state })
+            panel._lastEmittedState = state
+        }
+
+        // Draw telemetry — only when draw has changed, then throttled at dispatchDelay (200ms)
+        if (panel.live) {
+            const ratio    = panel.amps > 0 ? panel.drawAmps / panel.amps : 0
+            const drawW    = +panel.drawWatts.toFixed(1)
+            const drawA    = +panel.drawAmps.toFixed(2)
+            if (drawW !== panel._lastDrawWatts || drawA !== panel._lastDrawAmps) {
+                panel._lastDrawWatts = drawW
+                panel._lastDrawAmps  = drawA
+                Generator.throttle(panel, 'gen:draw', {
+                    drawWatts: drawW,
+                    drawAmps:  drawA,
+                    ratedAmps: panel.amps,
+                    load:      +ratio.toFixed(2),
+                })
+            }
+        }
     }
 }
 

@@ -1,0 +1,23 @@
+{# power2/event-monitor.html — included by power2.html #}
+<div id="event-monitor"></div>
+
+<template id="em-template">
+    {% raw %}
+    <div class="em-wrap" :class="{ collapsed: !visible }">
+        <div class="em-head">
+            <span class="em-title">⚡ Events</span>
+            <span class="em-count">{{ events.length }}</span>
+            <button class="em-btn" @click="clear" title="Clear">✕</button>
+            <button class="em-btn" @click="visible = !visible">{{ visible ? '▾' : '▴' }}</button>
+        </div>
+        <ul class="em-list" v-show="visible">
+            <li v-for="ev in events" :key="ev.id" class="em-row">
+                <span class="em-ts">{{ ev.ts }}</span>
+                <span class="em-type">{{ ev.type }}</span>
+                <span class="em-label" v-if="ev.label">{{ ev.label }}</span>
+                <span class="em-data"  v-if="ev.data">{{ ev.data }}</span>
+            </li>
+        </ul>
+    </div>
+    {% endraw %}
+</template>

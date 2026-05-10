@@ -38,9 +38,10 @@ class PowerGraph {
         this.stickAll = stickAll
         this.dragHost = dragHost
 
-        this._uid      = 0          // monotonically increasing panel ID counter
-        this._tickId   = null       // rAF handle
-        this._lastTick = null       // timestamp of last rAF frame
+        this._uid        = 0          // monotonically increasing panel ID counter
+        this._tickId     = null       // rAF handle
+        this._lastTick   = null       // timestamp of last rAF frame
+        this._propagating = new Set() // cycle guard: panels currently mid-receive
     }
 
     // ── Conveniences ────────────────────────────────────────────────────────
@@ -66,6 +67,9 @@ class PowerGraph {
      * @param {number}      inPipIndex — which inbound pip index was connected (default 0)
      */
     receive(panel, signal, sourceId = null, inPipIndex = 0) {
+        if (this._propagating.has(panel.id)) return  // cycle guard
+        this._propagating.add(panel.id)
+        try {
         if (sourceId !== null) {
             if (signal === null) {
                 delete panel.powerSources[sourceId]
@@ -94,6 +98,9 @@ class PowerGraph {
         }
 
         Cls.apply(panel, combined, this)
+        } finally {
+            this._propagating.delete(panel.id)
+        }
     }
 
     /**
@@ -283,6 +290,10 @@ class PowerGraph {
                 gen.state = 'on'
             }
         }
+
+        // Let the node class observe the final draw state (for events etc.)
+        const Cls = NodeRegistry.get(gen.type)
+        if (typeof Cls?.onDrawUpdated === 'function') Cls.onDrawUpdated(gen, this)
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -471,6 +482,15 @@ class PowerGraph {
         }))
         if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()
 
+        // edge:connect — fired for both involved panels
+        const _label = (id) => { const p = this._findPanel(id); return p ? `${p.type}:${p.id}` : String(id) }
+        window.dispatchEvent(new CustomEvent('power2', { detail: {
+            type: 'edge:connect',
+            label: _label(sender.label),
+            data: { from: _label(sender.label), fromPip: sender.pipIndex ?? 0,
+                    to: _label(receiver.label),  toPip: receiver.pipIndex ?? 0 }
+        }}))
+
         this.nextTick(() => {
             const conn = pipesWalker?.connections?.[connKey]
             if (conn) EdgeStore2.register(connKey, conn.obj)
@@ -556,6 +576,15 @@ class PowerGraph {
                     this.receive(receiverPanel, null, String(senderDescriptor.label))
                 }
             }
+
+            // edge:disconnect — fired on the power2 bus
+            const _label = (desc) => { const p = this._findPanel(desc?.label); return p ? `${p.type}:${p.id}` : String(desc?.label) }
+            window.dispatchEvent(new CustomEvent('power2', { detail: {
+                type: 'edge:disconnect',
+                label: _label(senderDescriptor),
+                data: { from: _label(senderDescriptor), fromPip: senderDescriptor?.pipIndex ?? 0,
+                        to: _label(receiverDescriptor),  toPip: receiverDescriptor?.pipIndex ?? 0 }
+            }}))
         })
 
         if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()

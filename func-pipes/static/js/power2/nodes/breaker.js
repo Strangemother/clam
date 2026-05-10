@@ -39,28 +39,38 @@ class Breaker extends NodeBase {
     }
 
     static apply(panel, signal, graph) {
+        const prev = panel.state
         if (!signal || signal.v <= 0) {
             panel.state = 'off'
+            if (prev !== 'off') Breaker.dispatch(panel, 'state:change', { from: prev, to: 'off' })
             graph.emit(panel, null)
             return
         }
         if (panel.tripped) {
             panel.state = 'tripped'
+            if (prev !== 'tripped') {
+                Breaker.dispatch(panel, 'breaker:tripped', { amps: signal.a, ratingAmps: panel.ratingAmps })
+                Breaker.dispatch(panel, 'state:change', { from: prev, to: 'tripped' })
+            }
             graph.emit(panel, null)
             return
         }
         if (!panel.closed) {
             panel.state = 'open'
+            if (prev !== 'open') Breaker.dispatch(panel, 'state:change', { from: prev, to: 'open' })
             graph.emit(panel, null)
             return
         }
         if (signal.a > panel.ratingAmps) {
             panel.tripped = true
             panel.state   = 'tripped'
+            Breaker.dispatch(panel, 'breaker:tripped', { amps: signal.a, ratingAmps: panel.ratingAmps })
+            Breaker.dispatch(panel, 'state:change', { from: prev, to: 'tripped' })
             graph.emit(panel, null)
             return
         }
         panel.state = 'closed'
+        if (prev !== 'closed') Breaker.dispatch(panel, 'state:change', { from: prev, to: 'closed' })
         graph.emit(panel, { v: signal.v, a: signal.a })
     }
 
@@ -74,6 +84,7 @@ class Breaker extends NodeBase {
         } else {
             panel.closed = !panel.closed
         }
+        Breaker.dispatch(panel, 'breaker:toggle', { closed: panel.closed, tripped: panel.tripped })
         this.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -82,6 +93,7 @@ class Breaker extends NodeBase {
         panel.tripped      = false
         panel.closed       = true
         panel.powerSources = {}
+        Breaker.dispatch(panel, 'breaker:reset', {})
         super.reset(panel, graph)
     }
 }

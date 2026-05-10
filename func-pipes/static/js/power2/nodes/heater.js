@@ -37,6 +37,7 @@ class Heater extends Load {
     static type  = 'heater'
     static label = 'Heater'
     static group = 'Appliance'
+    static dispatchDelay = 150  // faster than default — thermal events are time-sensitive
 
     static catalog = [
         { key: 'heater-1kw', label: 'Heater 1kW',  watts: 1000, minVolts: 200 },
@@ -76,8 +77,11 @@ class Heater extends Load {
         const drawAmps = panel.currentWatts / NOMINAL_VOLTS
 
         if (signal && signal.v > panel.maxVolts) {
+            const prevState = panel.state
             panel.blown = true
             panel.state = 'blown'
+            Heater.dispatch(panel, 'heater:blown', { volts: signal.v, maxVolts: panel.maxVolts })
+            Heater.dispatch(panel, 'state:change', { from: prevState, to: 'blown' })
             graph.emit(panel, null)
             return
         }
@@ -86,6 +90,7 @@ class Heater extends Load {
         const minAmps  = panel.minWatts / NOMINAL_VOLTS
         const powered  = signal && signal.v >= panel.minVolts && signal.a >= minAmps
 
+        const prevState = panel.state
         if (powered) {
             panel._lastGoodSignal = signal
             panel.state = 'on'
@@ -95,14 +100,20 @@ class Heater extends Load {
                 panel.state = 'capacitor'
                 const held = panel._lastGoodSignal
                 if (held) graph.emit(panel, { v: held.v, a: held.a - drawAmps })
+                if (prevState !== 'capacitor')
+                    Heater.dispatch(panel, 'heater:capacitor-failover', { chargeWs: panel.chargeWs })
             } else {
                 panel.state = 'off'
                 graph.emit(panel, null)
             }
         } else {
             panel.state = 'brownout'
+            if (prevState !== 'brownout')
+                Heater.dispatch(panel, 'heater:brownout', { volts: signal?.v, amps: signal?.a, minVolts: panel.minVolts })
             graph.emit(panel, null)
         }
+        if (panel.state !== prevState)
+            Heater.dispatch(panel, 'state:change', { from: prevState, to: panel.state })
     }
 
     static tick(panel, dt, graph) {
@@ -112,8 +123,10 @@ class Heater extends Load {
         // Thermostat: trip element off at maxTemp, reset at resetTemp
         if (panel.heatSwitch && panel.temperature >= panel.maxTemp) {
             panel.heatSwitch = false
+            Heater.dispatch(panel, 'thermostat:trip', { temp: panel.temperature })
         } else if (!panel.heatSwitch && panel.temperature <= panel.resetTemp) {
             panel.heatSwitch = true
+            Heater.dispatch(panel, 'thermostat:reset', { temp: panel.temperature })
         }
 
         // Thermal update — only heat when element is on and the unit is powered
@@ -124,6 +137,12 @@ class Heater extends Load {
             panel.temperature = Math.max(0, panel.temperature - panel.coolRate * dt)
         }
 
+        const temp = +panel.temperature.toFixed(1)
+        if (temp !== panel._lastCheckedTemp) {
+            panel._lastCheckedTemp = temp
+            Heater.throttle(panel, 'heater:temperature', { temp, max: panel.maxTemp })
+        }
+
         // Dynamic draw: scale from minWatts (cold) up to rated watts (full temp)
         const heatFraction  = panel.temperature / panel.maxTemp
         const elementWatts  = panel.minWatts + (panel.watts - panel.minWatts) * heatFraction
@@ -132,6 +151,10 @@ class Heater extends Load {
         panel.heatState = panel.temperature < (panel.maxTemp * 0.2) ? 'cold'
                         : panel.temperature < (panel.maxTemp * 0.6) ? 'warming'
                         : 'hot'
+        if (panel.heatState !== panel._lastHeatState) {
+            Heater.dispatch(panel, 'heater:heat-state', { from: panel._lastHeatState, to: panel.heatState, temp: +panel.temperature.toFixed(1) })
+            panel._lastHeatState = panel.heatState
+        }
 
         // Re-apply with updated currentWatts so downstream sees the new amps
         // Only when the draw has meaningfully changed (>1 W) to avoid signal storms
@@ -140,6 +163,7 @@ class Heater extends Load {
                 panel.enabled !== false &&
                 panel.signal !== undefined &&
                 (panel.state === 'on' || panel.state === 'brownout')) {
+            Heater.dispatch(panel, 'heater:draw-change', { from: +prevWatts.toFixed(1), to: +panel.currentWatts.toFixed(1) })
             panel._lastEmittedWatts = panel.currentWatts
             Heater.apply(panel, panel.signal, graph)
         }
@@ -148,9 +172,12 @@ class Heater extends Load {
     static reset(panel, graph) {
         panel.temperature       = 0
         panel.heatState         = 'cold'
+        panel._lastHeatState    = null
+        panel._lastCheckedTemp  = null
         panel.heatSwitch        = true
         panel.currentWatts      = panel.minWatts ?? 50
         panel._lastEmittedWatts = -1
+        Heater.dispatch(panel, 'heater:reset', {})
         super.reset(panel, graph)
     }
 }

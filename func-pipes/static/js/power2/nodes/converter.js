@@ -69,11 +69,13 @@ class Converter extends NodeBase {
 
     static apply(panel, signal, graph) {
         if (!signal || signal.v <= 0 || signal.a <= 0) {
-            panel.state       = 'off'
-            panel.inVolts     = 0
-            panel.inAmps      = 0
-            panel.outAmps     = 0
-            panel.ratio       = null
+            const prev    = panel.state
+            panel.state   = 'off'
+            panel.inVolts = 0
+            panel.inAmps  = 0
+            panel.outAmps = 0
+            panel.ratio   = null
+            if (prev !== 'off') Converter.dispatch(panel, 'state:change', { from: prev, to: 'off' })
             graph.emit(panel, null)
             return
         }
@@ -93,18 +95,32 @@ class Converter extends NodeBase {
         panel.ratio   = +(vOut / signal.v).toFixed(3)
 
         if (vOut <= 0 || aOut <= 0) {
+            const prev  = panel.state
             panel.state = 'fault'
+            if (prev !== 'fault') Converter.dispatch(panel, 'converter:fault', { inVolts: panel.inVolts, inAmps: panel.inAmps })
+            if (prev !== 'fault') Converter.dispatch(panel, 'state:change', { from: prev, to: 'fault' })
             graph.emit(panel, null)
             return
         }
 
+        const prev  = panel.state
         panel.state = panel.ratio > 1.005
             ? 'step-up'
             : panel.ratio < 0.995
                 ? 'step-down'
                 : 'unity'
 
-        graph.emit(panel, { v: +vOut.toFixed(1), a: aOut })
+        if (panel.state !== prev)
+            Converter.dispatch(panel, 'state:change', { from: prev, to: panel.state })
+
+        const vOutR = +vOut.toFixed(1)
+        if (vOutR !== panel._lastOutVolts || panel.outAmps !== panel._lastOutAmps) {
+            panel._lastOutVolts = vOutR
+            panel._lastOutAmps  = panel.outAmps
+            Converter.throttle(panel, 'converter:reading', { inVolts: panel.inVolts, inAmps: panel.inAmps, outVolts: vOutR, outAmps: panel.outAmps, ratio: panel.ratio })
+        }
+
+        graph.emit(panel, { v: vOutR, a: aOut })
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -112,6 +128,7 @@ class Converter extends NodeBase {
     static dialUp(panel, graph) {
         panel.outVolts     = +(panel.outVolts + panel.step).toFixed(1)
         panel._baseInVolts = panel.signal?.v || null
+        Converter.dispatch(panel, 'converter:dial', { outVolts: panel.outVolts, direction: 'up' })
         this.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -119,6 +136,7 @@ class Converter extends NodeBase {
     static dialDown(panel, graph) {
         panel.outVolts     = Math.max(1, +(panel.outVolts - panel.step).toFixed(1))
         panel._baseInVolts = panel.signal?.v || null
+        Converter.dispatch(panel, 'converter:dial', { outVolts: panel.outVolts, direction: 'down' })
         this.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -128,6 +146,7 @@ class Converter extends NodeBase {
         panel.step       = Math.max(0.1,  +panel.step       || 10)
         panel.efficiency = Math.min(1, Math.max(0.01, +panel.efficiency || 0.95))
         panel._baseInVolts = panel.signal?.v || null
+        Converter.dispatch(panel, 'converter:params', { outVolts: panel.outVolts, efficiency: panel.efficiency })
         this.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -138,7 +157,10 @@ class Converter extends NodeBase {
         panel.outAmps      = 0
         panel.ratio        = null
         panel._baseInVolts = null
+        panel._lastOutVolts = null
+        panel._lastOutAmps  = null
         panel.powerSources = {}
+        Converter.dispatch(panel, 'converter:reset', {})
         super.reset(panel, graph)
     }
 }

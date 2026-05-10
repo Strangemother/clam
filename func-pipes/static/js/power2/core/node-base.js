@@ -136,6 +136,53 @@ class NodeBase {
     }
 
     /**
+     * Dispatch a named event to the centralised event monitor (and any other
+     * window listener). Agnostic — any node can call this.
+     *
+     * NodeBase.dispatch(panel, 'state:change', { from: 'off', to: 'on' })
+     *
+     * Debounced per (panel × type) key — newest message wins.
+     * Adjust NodeBase.dispatchDelay (ms) to tune throughput globally,
+     * or set a static dispatchDelay on any subclass to override per node type.
+     *
+     * @param {Object} panel   — panel state (provides type + label)
+     * @param {string} type    — dot-namespaced event name, e.g. 'state:change'
+     * @param {*}      [data]  — any serialisable payload
+     */
+    static dispatch(panel, type, data) {
+        if (panel.enabled === false) return
+        const key = `${panel.id}:${type}`
+        if (NodeBase._timers.has(key)) clearTimeout(NodeBase._timers.get(key))
+        NodeBase._timers.set(key, setTimeout(() => {
+            NodeBase._timers.delete(key)
+            window.dispatchEvent(new CustomEvent('power2', {
+                detail: { type, label: `${panel.type}:${panel.id}`, data }
+            }))
+        }, this.dispatchDelay ?? NodeBase.dispatchDelay))
+    }
+
+    /**
+     * Throttle — fire immediately, then suppress further calls for dispatchDelay ms.
+     * Use for continuous streaming values (temperature, voltage, etc.) where
+     * debounce would suppress all events during active change.
+     *
+     * @param {Object} panel
+     * @param {string} type
+     * @param {*}      [data]
+     */
+    static throttle(panel, type, data) {
+        if (panel.enabled === false) return
+        const key = `${panel.id}:${type}`
+        if (NodeBase._timers.has(key)) return  // still in cooldown, skip
+        window.dispatchEvent(new CustomEvent('power2', {
+            detail: { type, label: `${panel.type}:${panel.id}`, data }
+        }))
+        NodeBase._timers.set(key, setTimeout(() => {
+            NodeBase._timers.delete(key)
+        }, this.dispatchDelay ?? NodeBase.dispatchDelay))
+    }
+
+    /**
      * Called by graph.receive() when panel.enabled === false, instead of the
      * default graph.emit(panel, null) which only nulls pip 0.
      * Override in nodes that have multiple outbound pips.
@@ -144,3 +191,7 @@ class NodeBase {
         graph.emit(panel, null)
     }
 }
+
+// Debounce config — change at runtime: NodeBase.dispatchDelay = 100
+NodeBase.dispatchDelay = 100
+NodeBase._timers       = new Map()

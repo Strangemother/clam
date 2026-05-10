@@ -1,0 +1,152 @@
+     /* ── Power-2 additions ───────────────────────────────────────── */
+
+        /* Heater thermal display */
+        .heat-bar-bg    { height:8px; background:#1a1a2e; border-radius:4px; margin:6px 0 2px; overflow:hidden; }
+        .heat-bar-fill  { height:100%; border-radius:4px; transition:width 0.4s ease; background:#ff6600; }
+        .heat-bar-fill.cold    { background:#4488ff; }
+        .heat-bar-fill.warming { background:#ff9900; }
+        .heat-bar-fill.hot     { background:#ff2200; }
+        .heat-state-badge {
+            display:inline-block; padding:1px 6px; border-radius:3px;
+            font-size:10px; font-weight:bold; letter-spacing:.05em; text-transform:uppercase;
+        }
+        .heat-state-badge.cold    { background:#1e3a6e; color:#88aaff; }
+        .heat-state-badge.warming { background:#5a3000; color:#ffaa44; }
+        .heat-state-badge.hot     { background:#5a0000; color:#ff6644; }
+
+        /* Console boot progress */
+        .boot-bar-bg   { height:8px; background:#1a1a2e; border-radius:4px; margin:6px 0 2px; overflow:hidden; }
+        .boot-bar-fill { height:100%; border-radius:4px; transition:width 0.25s linear; background:#00cc88; }
+        .boot-bar-fill.shutdown { background:#ff6600; }
+        .boot-state-badge {
+            display:inline-block; padding:1px 6px; border-radius:3px;
+            font-size:10px; font-weight:bold; letter-spacing:.05em; text-transform:uppercase;
+        }
+        .boot-state-badge.booting  { background:#003322; color:#00cc88; }
+        .boot-state-badge.ready    { background:#004400; color:#44ff88; }
+        .boot-state-badge.shutdown { background:#442200; color:#ffaa44; }
+        .boot-state-badge.off      { background:#1a1a2e; color:#556; }
+
+        /* Enabled/disabled off-switch button */
+        .panel-btns .btn-disabled { opacity: 0.45; background: #3a0000; color: #ff8888; }
+
+        /* Series battery readout */
+        .series-flow        { display:flex; align-items:center; justify-content:space-between; gap:4px; margin:6px 0; }
+        .series-flow-col    { text-align:center; flex:1; }
+        .series-flow-arrow  { text-align:center; }
+        .series-net-badge   { display:inline-block; padding:2px 5px; border-radius:4px; font-size:11px; font-weight:bold; }
+        .series-state-badge { display:inline-block; padding:1px 5px; border-radius:3px; font-size:10px; font-weight:bold; letter-spacing:.05em; }
+        .series-state-badge.series-charging    { background:#1a3a00; color:#88ff44; }
+        .series-state-badge.series-discharging { background:#3a2a00; color:#ffaa44; }
+        .series-state-badge.series-full        { background:#003322; color:#44ffaa; }
+        .series-state-badge.series-dead        { background:#3a0000; color:#ff6644; }
+        .series-state-badge.series-off         { background:#1a1a2e; color:#556; }
+        .series-state-badge.series-pass        { background:#1a2a3a; color:#44aaff; }
+        /* ── Decision node ───────────────────────────────────────────── */
+        .decision-header  { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+        .decision-badge   { display:inline-block; padding:1px 5px; border-radius:3px; font-size:10px; font-weight:bold; letter-spacing:.05em; }
+        .decision-badge.decision-routing { background:#1a2a3a; color:#44aaff; }
+        .decision-badge.decision-blocked { background:#3a2a00; color:#ffaa44; }
+        .decision-badge.decision-off     { background:#1a1a2e; color:#556; }
+        .decision-badge.decision-error   { background:#3a0000; color:#ff6644; }
+        .decision-signal  { font-size:11px; color:#aaa; }
+        .decision-signal.zero { color:#556; font-style:italic; }
+        .decision-inputs  { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:4px; }
+        .decision-in      { display:flex; align-items:center; gap:3px; padding:2px 6px; border-radius:3px; background:#1a2a1a; border:1px solid #344; font-size:11px; color:#556; }
+        .decision-in.active { background:#0a200a; border-color:#44bb44; color:#88ee88; }
+        .decision-in.last   { border-style:dashed; }
+        .decision-in.active.last { border-style:solid; }
+        .decision-in-arrow  { font-size:12px; }
+        .decision-in-label  { font-size:10px; }
+        .decision-outputs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+        .decision-out     { display:flex; align-items:center; gap:3px; padding:2px 6px; border-radius:3px; background:#1a1a2e; border:1px solid #334; font-size:11px; color:#556; }
+        .decision-out.active { background:#0a1e30; border-color:#44aaff; color:#44aaff; }
+        .decision-out.pinned { border-style:dashed; border-color:#88aacc; }
+        .decision-out.active.pinned { border-style:solid; border-color:#44aaff; }
+        .decision-out { cursor:pointer; }
+        .decision-out:hover { border-color:#667; }
+        .decision-out-pin  { font-size:9px; line-height:1; }
+        .decision-out-label { font-size:10px; }
+        .decision-out-arrow { font-size:12px; }
+        .decision-reroute-btn { width:100%; padding:3px; background:#1a1a2e; border:1px solid #334; border-radius:3px; color:#889; cursor:pointer; font-size:11px; margin-bottom:4px; }
+        .decision-reroute-btn:hover { border-color:#44aaff; color:#44aaff; }
+        .decision-config  { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:4px; }
+        .decision-field   { display:flex; align-items:center; gap:4px; }
+        .series-btns      { display:flex; gap:4px; margin-top:6px; }
+        .series-btns .big-toggle { flex:1; }
+        .series-pass-btn  { padding:4px 8px; background:#1a2a3a; border:1px solid #44aaff44; border-radius:4px; color:#44aaff; cursor:pointer; font-size:11px; white-space:nowrap; }
+        .series-pass-btn.active { background:#003366; border-color:#44aaff; color:#88ccff; }
+        .series-pass-btn:disabled { opacity:.4; cursor:default; }
+        .series-charge-label  { display:flex; align-items:center; gap:6px; font-size:11px; margin-top:4px; }
+        .series-charge-pct    { font-weight:bold; }
+        .series-charge-pct.charge-ok   { color:#88ff44; }
+        .series-charge-pct.charge-low  { color:#ffaa44; }
+        .series-charge-pct.charge-crit { color:#ff4444; }
+        .series-charge-fill   { height:100%; border-radius:4px; transition:width 0.5s ease; }
+        .series-charge-fill.charge-ok   { background:#44bb44; }
+        .series-charge-fill.charge-low  { background:#cc8800; }
+        .series-charge-fill.charge-crit { background:#cc2200; }
+        .series-config  { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+        .series-field   { display:flex; align-items:center; gap:3px; font-size:11px; }
+
+        /* ── Event Monitor ───────────────────────────────────────────── */
+        #event-monitor {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            z-index: 9999;
+            width: 340px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .em-wrap {
+            background: #0c0c14ee;
+            border: 1px solid #2a2a44;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px #00000088;
+        }
+        .em-head {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #13132a;
+            border-bottom: 1px solid #2a2a44;
+            cursor: default;
+            user-select: none;
+        }
+        .em-title { flex: 1; color: #88aaff; font-weight: bold; }
+        .em-count  { color: #556; font-size: 10px; }
+        .em-btn {
+            background: none;
+            border: none;
+            color: #667;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1.4;
+        }
+        .em-btn:hover { color: #aac; }
+        .em-list {
+            list-style: none;
+            margin: 0;
+            padding: 2px 0;
+            max-height: 260px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .em-row {
+            display: flex;
+            gap: 5px;
+            padding: 1px 8px;
+            border-bottom: 1px solid #13132a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .em-row:first-child { background: #14141e; }
+        .em-ts    { color: #445; flex-shrink: 0; }
+        .em-type  { color: #44aaff; flex-shrink: 0; }
+        .em-label { color: #88bbff; flex-shrink: 0; }
+        .em-data  { color: #667; overflow: hidden; text-overflow: ellipsis; }
+        .em-wrap.collapsed .em-list { display: none; }

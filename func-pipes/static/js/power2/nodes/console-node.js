@@ -59,32 +59,39 @@ class ConsoleNode extends Load {
         // Capacitor drain / charge from Load
         super.tick(panel, dt, graph)
 
-        const powered = panel.state === 'on' || panel.state === 'capacitor'
+        const powered  = panel.state === 'on' || panel.state === 'capacitor'
+        const prevBoot = panel.bootState
 
         if (powered && panel.bootState !== 'ready') {
-            // Transition to booting or continue boot sequence
             if (panel.bootState !== 'booting') {
                 panel.bootState    = 'booting'
                 panel.bootProgress = 0
             }
             const rate = 100 / Math.max(0.1, panel.bootDuration)
             panel.bootProgress = Math.min(100, panel.bootProgress + rate * dt)
-            if (panel.bootProgress >= 100) {
-                panel.bootState = 'ready'
-            }
+            if (panel.bootProgress >= 100) panel.bootState = 'ready'
         } else if (!powered && panel.bootState !== 'off') {
-            // Begin graceful shutdown
             if (panel.bootState !== 'shutdown') {
                 panel.bootState      = 'shutdown'
                 panel._shutdownTimer = 0
             }
             panel._shutdownTimer += dt
             const pct = Math.min(100, (panel._shutdownTimer / Math.max(0.1, panel.shutdownDuration)) * 100)
-            panel.bootProgress = 100 - pct   // count down from 100
-
+            panel.bootProgress = 100 - pct
             if (panel._shutdownTimer >= panel.shutdownDuration) {
                 panel.bootState    = 'off'
                 panel.bootProgress = 0
+            }
+        }
+
+        if (panel.bootState !== prevBoot)
+            ConsoleNode.dispatch(panel, 'console:boot-state', { from: prevBoot, to: panel.bootState })
+
+        if (panel.bootState === 'booting' || panel.bootState === 'shutdown') {
+            const pct = +panel.bootProgress.toFixed(0)
+            if (pct !== panel._lastBootPct) {
+                panel._lastBootPct = pct
+                ConsoleNode.throttle(panel, 'console:boot-progress', { bootState: panel.bootState, progress: pct })
             }
         }
     }
@@ -93,6 +100,8 @@ class ConsoleNode extends Load {
         panel.bootState      = 'off'
         panel.bootProgress   = 0
         panel._shutdownTimer = 0
+        panel._lastBootPct   = null
+        ConsoleNode.dispatch(panel, 'console:reset', {})
         super.reset(panel, graph)
     }
 }

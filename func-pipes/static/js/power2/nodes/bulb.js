@@ -47,16 +47,21 @@ class Bulb extends NodeBase {
         if (panel.blown) return   // blown = open circuit until manually reset
 
         if (!signal || signal.v <= 0 || signal.a <= 0) {
+            const prev = panel.state
             panel.state      = 'off'
             panel.brightness = 0
+            if (prev !== 'off') Bulb.dispatch(panel, 'state:change', { from: prev, to: 'off' })
             graph.emit(panel, null)
             return
         }
 
         if (signal.v > panel.maxVolts) {
+            const prev = panel.state
             panel.blown      = true
             panel.state      = 'blown'
             panel.brightness = 0
+            Bulb.dispatch(panel, 'bulb:blown', { volts: signal.v, maxVolts: panel.maxVolts })
+            Bulb.dispatch(panel, 'state:change', { from: prev, to: 'blown' })
             graph.emit(panel, null)
             return
         }
@@ -65,16 +70,25 @@ class Bulb extends NodeBase {
         const voltRatio = signal.v / NOMINAL_VOLTS
         const ampRatio  = signal.a / drawAmps
 
+        const prev      = panel.state
+        const prevBrightness = panel.brightness
+
         if (signal.v < 180 || signal.a < drawAmps * 0.05) {
             panel.state      = 'off'
             panel.brightness = 0
         } else if (voltRatio < 0.9 || ampRatio < 1) {
             panel.state      = 'dim'
             panel.brightness = Math.min(1, voltRatio * Math.min(1, ampRatio)) * 0.55
+            if (prev !== 'dim') Bulb.dispatch(panel, 'bulb:brownout', { volts: signal.v, amps: signal.a })
         } else {
             panel.state      = 'on'
             panel.brightness = Math.min(1.0, voltRatio)
         }
+
+        if (panel.state !== prev)
+            Bulb.dispatch(panel, 'state:change', { from: prev, to: panel.state })
+        if (Math.abs(panel.brightness - prevBrightness) >= 0.05)
+            Bulb.dispatch(panel, 'bulb:brightness', { brightness: +panel.brightness.toFixed(2) })
 
         graph.emit(panel, null)   // sink — nothing forwarded
     }
@@ -83,6 +97,7 @@ class Bulb extends NodeBase {
         panel.blown      = false
         panel.brightness = 0
         panel.powerSources = {}
+        Bulb.dispatch(panel, 'bulb:reset', {})
         super.reset(panel, graph)
     }
 }

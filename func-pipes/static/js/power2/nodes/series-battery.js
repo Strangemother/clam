@@ -119,17 +119,23 @@ class SeriesBattery extends NodeBase {
     }
 
     static tick(panel, dt, graph) {
-        // The battery only contributes its own EMF watts — not the full throughput.
-        // chargeInW: upstream source power (charges the store when surplus exists)
-        // chargeOutW: only the battery's own EMF × current contribution
-        const chargeInW  = panel.inVolts > 0
-            ? panel.inVolts * Math.min(panel.inAmps, panel.chargeAmps)
-            : 0
+        // Charging and discharging are independent processes.
+        //
+        // Charge in: inbound source pushes current into the battery at up to
+        //   chargeAmps, stored at the battery's own voltage.
+        //   chargeInW = min(A_in, chargeAmps) × V_bat
+        //
+        // Charge out: the battery's proportional share of the downstream load.
+        //   In a series stack, each source's share ∝ its voltage fraction.
+        //   chargeOutW = drawWatts × V_bat / (V_in + V_bat)
+        //   When standalone (V_in = 0) this correctly equals drawWatts.
 
-        // How much power the battery itself is adding to the circuit
-        const aOut       = panel.inAmps > 0 ? Math.min(panel.inAmps, panel.amps) : 0
-        const chargeOutW = (panel.drawWatts > 0 && aOut > 0)
-            ? panel.volts * aOut   // battery's own EMF contribution
+        const totalV     = panel.inVolts + panel.volts
+        const chargeInW  = (panel.inVolts > 0)
+            ? Math.min(panel.inAmps, panel.chargeAmps) * panel.volts
+            : 0
+        const chargeOutW = (panel.live && totalV > 0 && panel.drawWatts > 0)
+            ? panel.drawWatts * (panel.volts / totalV)
             : 0
 
         panel.chargeInW  = +chargeInW.toFixed(1)
