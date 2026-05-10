@@ -55,6 +55,7 @@ class NodeBase {
             id,
             type:         this.type,
             label:        preset.label || this.label,
+            enabled:      true,         // off-switch: false = unit disabled, no outbound signal
             signal:       null,
             powerSources: {},
             state:        'off',
@@ -86,7 +87,7 @@ class NodeBase {
      * @returns {string[]}
      */
     static configFields() {
-        return ['label']
+        return ['label', 'enabled']
     }
 
     // ── Signal processing ───────────────────────────────────────────────────
@@ -130,6 +131,7 @@ class NodeBase {
         panel.signal       = null
         panel.powerSources = {}
         panel.state        = 'off'
+        // enabled is intentionally preserved across resets (it's a user config choice)
         graph.emit(panel, null)
     }
 }

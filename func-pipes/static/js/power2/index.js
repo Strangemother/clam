@@ -92,8 +92,9 @@ createApp({
         addLoad()      { this.graph.addType('load') },
         addMeter()     { this.graph.addType('meter') },
         addConverter() { this.graph.addType('converter') },
-        addHeater()    { this.graph.addType('heater') },
-        addConsole()   { this.graph.addType('console') },
+        addHeater()        { this.graph.addType('heater') },
+        addConsole()       { this.graph.addType('console') },
+        addSeriesBattery() { this.graph.addType('series-bat') },
 
         /** Generic add by type — used by extensions loaded at runtime. */
         addType(type, preset = {}) { this.graph.addType(type, preset) },
@@ -104,6 +105,7 @@ createApp({
         // ── Panel lifecycle ──────────────────────────────────────────────────
         removePanel(i)      { this.graph.removePanel(i) },
         resetPanel(panel)   { this.graph.resetPanel(panel) },
+        toggleEnabled(panel) { this.graph.toggleEnabled(panel) },
 
         // ── Generator ────────────────────────────────────────────────────────
         toggleGen(panel)        { Generator.toggle(panel, this.graph) },
@@ -120,6 +122,11 @@ createApp({
         converterDialUp(panel)    { Converter.dialUp(panel, this.graph) },
         converterDialDown(panel)  { Converter.dialDown(panel, this.graph) },
         converterParamsChanged(p) { Converter.paramsChanged(p, this.graph) },
+
+        // ── Series Battery ───────────────────────────────────────────────────
+        toggleSeriesBattery(panel)        { SeriesBattery.toggle(panel, this.graph) },
+        toggleSeriesBatteryPass(panel)    { SeriesBattery.togglePass(panel, this.graph) },
+        seriesBatteryParamsChanged(panel) { SeriesBattery.paramsChanged(panel, this.graph) },
 
         // ── Ripple ───────────────────────────────────────────────────────────
         toggleRipple(panel)      { this.graph.toggleRipple(panel) },

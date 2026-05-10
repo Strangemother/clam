@@ -77,7 +77,15 @@ class PowerGraph {
         panel.signal   = combined
 
         const Cls = NodeRegistry.get(panel.type)
-        if (Cls) Cls.apply(panel, combined, this)
+        if (!Cls) return
+
+        if (panel.enabled === false) {
+            panel.state = 'off'
+            this.emit(panel, null)
+            return
+        }
+
+        Cls.apply(panel, combined, this)
     }
 
     /**
@@ -177,10 +185,10 @@ class PowerGraph {
     // GENERATOR DRAW (BFS)
     // ══════════════════════════════════════════════════════════════════════════
 
-    /** Recompute draw watts/amps for every generator. */
+    /** Recompute draw watts/amps for every generator and rechargeable battery. */
     updateAllGenDraws() {
         this.panels.forEach(p => {
-            if (p.type === 'gen') this.computeGenDraw(p)
+            if (p.type === 'gen' || p.type === 'series-bat') this.computeGenDraw(p)
         })
     }
 
@@ -209,7 +217,7 @@ class PowerGraph {
             // Any Load (or Load subclass) that declares consumesWatts = true
             const Cls = NodeRegistry.get(p.type)
             if (Cls?.consumesWatts && (p.state === 'on' || p.state === 'capacitor')) {
-                totalW += p.watts / shareCount
+                totalW += (p.currentWatts ?? p.watts) / shareCount
             }
 
             ;(p.pipsOutbound || []).forEach(pip => {
@@ -268,6 +276,9 @@ class PowerGraph {
                 const Cls = NodeRegistry.get(p.type)
                 if (Cls) Cls.tick(p, dt, this)
             })
+
+            // Recompute generator draw each frame (loads may have dynamic currentWatts)
+            this.updateAllGenDraws()
         }
         this._tickId = requestAnimationFrame(tick)
     }
@@ -301,6 +312,11 @@ class PowerGraph {
 
             if (p.type === 'converter' && p.state !== 'off' && p.signal) {
                 const Cls = NodeRegistry.get('converter')
+                if (Cls) Cls.apply(p, p.signal, this)
+            }
+
+            if (p.type === 'series-bat' && p.state === 'boosting' && p.signal) {
+                const Cls = NodeRegistry.get('series-bat')
                 if (Cls) Cls.apply(p, p.signal, this)
             }
         })
@@ -376,6 +392,13 @@ class PowerGraph {
     resetPanel(panel) {
         const Cls = NodeRegistry.get(panel.type)
         if (Cls) Cls.reset(panel, this)
+    }
+
+    /** Toggle the enabled/disabled off-switch on a panel and re-propagate. */
+    toggleEnabled(panel) {
+        panel.enabled = panel.enabled === false ? true : false
+        this.receive(panel, panel.signal)
+        this.updateAllGenDraws()
     }
 
     // ── Internal factory ─────────────────────────────────────────────────────

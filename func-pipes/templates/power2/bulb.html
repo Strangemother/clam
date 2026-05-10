@@ -1,0 +1,31 @@
+{% raw %}
+<!-- ── BULB node ── -->
+<template v-else-if="panel.type === 'bulb'">
+    <div class="node-body">
+        <div class="bulb-shell">
+            <div class="bulb-globe"
+                :class="panel.state === 'blown' ? 'blown' : panel.state !== 'off' ? panel.state : ''"
+                :style="panel.state === 'on' || panel.state === 'dim' ? {
+                    background: `radial-gradient(circle,
+                        rgba(255,255,180,${panel.brightness}) 0%,
+                        rgba(255,200,0,${panel.brightness * 0.7}) 50%,
+                        rgba(120,80,0,${panel.brightness * 0.3}) 100%)`,
+                    boxShadow: `0 0 ${panel.brightness * 24}px rgba(255,220,0,${panel.brightness * 0.6}),
+                                0 0 ${panel.brightness * 48}px rgba(255,180,0,${panel.brightness * 0.2})`
+                } : {}">
+            </div>
+            <span :class="['bulb-label', panel.state === 'blown' ? 'blown-label' : '']">
+                {{ panel.watts }}W — {{ panel.state.toUpperCase() }}
+            </span>
+        </div>
+        <div class="field-row">
+            <label>Max V</label>
+            <input type="number" v-model.number="panel.maxVolts" min="1" step="1" :disabled="panel.blown" />
+            <span class="unit">V</span>
+        </div>
+        <div class="blown-notice" v-if="panel.blown">
+            ⚡ BLOWN — press ↺ to replace
+        </div>
+    </div>
+</template>
+{% endraw %}

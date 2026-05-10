@@ -1,0 +1,68 @@
+{% raw %}
+<!-- ── CONSOLE node ── -->
+<!--
+    Custom node demonstrating class inheritance (extends Load).
+    Adds a boot-progress simulation: booting → ready → shutdown.
+    Capacitor keeps it alive briefly after power loss (clean shutdown window).
+-->
+<template v-else-if="panel.type === 'console'">
+    <div class="node-body">
+        <div class="field-row">
+            <label>Draw</label>
+            <input type="number" v-model.number="panel.watts" min="0" step="5"
+                   @change="loadParamsChanged(panel)" />
+            <span class="unit">W</span>
+        </div>
+        <div class="field-row">
+            <label>Min V</label>
+            <input type="number" v-model.number="panel.minVolts" min="0" step="1"
+                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+            <span class="unit">V</span>
+        </div>
+
+        <div class="status-row" style="margin-top:4px">
+            <span class="status-label">Power</span>
+            <span :class="['status-value', 'sv-' + panel.state]">
+                {{ panel.state.toUpperCase() }}
+            </span>
+        </div>
+
+        <!-- Boot state display -->
+        <div class="status-row" style="margin-top:4px">
+            <span class="status-label">OS</span>
+            <span :class="['boot-state-badge', panel.bootState]">
+                {{ panel.bootState === 'booting'  ? '⬆ Booting'
+                 : panel.bootState === 'ready'    ? '✓ Ready'
+                 : panel.bootState === 'shutdown' ? '⬇ Shutdown'
+                 : '— Off' }}
+            </span>
+        </div>
+        <div class="boot-bar-bg" v-if="panel.bootState !== 'off'">
+            <div :class="['boot-bar-fill', panel.bootState === 'shutdown' ? 'shutdown' : '']"
+                 :style="{ width: panel.bootProgress + '%' }">
+            </div>
+        </div>
+
+        <!-- Capacitor buffer (clean shutdown window) -->
+        <div class="cap-row" v-if="panel.capacitance > 0">
+            <div class="cap-header">
+                <span class="cap-label">Buffer {{ panel.capacitance }}Ws</span>
+                <span class="cap-pct">{{ chargePercent(panel).toFixed(0) }}%</span>
+            </div>
+            <div class="cap-bar-bg">
+                <div class="cap-bar-fill" :style="{ width: chargePercent(panel) + '%' }"></div>
+            </div>
+        </div>
+
+        <!-- Boot timing controls -->
+        <div class="field-row" style="margin-top:6px">
+            <label>Boot s</label>
+            <input type="number" v-model.number="panel.bootDuration" min="0.5" step="0.5" style="width:46px" />
+        </div>
+        <div class="field-row">
+            <label>Shutdown s</label>
+            <input type="number" v-model.number="panel.shutdownDuration" min="0.2" step="0.2" style="width:46px" />
+        </div>
+    </div>
+</template>
+{% endraw %}
