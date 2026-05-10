@@ -50,43 +50,52 @@ class DecisionNode extends NodeBase {
     static outputCount = 2              // default: 2 outputs; override in subclass
 
     static catalog = [
-        { key: 'decision-2', label: 'Decision (2 out)', outputCount: 2 },
-        { key: 'decision-3', label: 'Decision (3 out)', outputCount: 3 },
-        { key: 'decision-4', label: 'Decision (4 out)', outputCount: 4 },
+        { key: 'decision-2',   label: 'Decision (2 in → 2 out)', inputCount: 2, outputCount: 2 },
+        { key: 'decision-2-3', label: 'Decision (2 in → 3 out)', inputCount: 2, outputCount: 3 },
+        { key: 'decision-4',   label: 'Decision (4 in → 4 out)', inputCount: 4, outputCount: 4 },
     ]
 
     // ── State factory ─────────────────────────────────────────────────────────
 
     static defaults(id, preset = {}) {
-        const count = preset.outputCount ?? this.outputCount
-        const base  = super.defaults(id, preset)
+        const inCount  = preset.inputCount  ?? this.outputCount   // default same as outputs
+        const outCount = preset.outputCount ?? this.outputCount
+        const base     = super.defaults(id, preset)
         return {
             ...base,
             // Configuration
-            outputCount:    count,
-            tickInterval:   preset.tickInterval ?? 1.0,   // seconds between tick re-evals
+            inputCount:     inCount,
+            outputCount:    outCount,
+            tickInterval:   preset.tickInterval ?? 1.0,
             // Runtime state
-            lastDecision:   null,          // last chosen output (index or array)
-            defaultOutput:  0,             // user-pinned default; used by base decide()
-            decideCallback: null,          // panel-level override function
+            lastDecision:   null,
+            defaultOutput:  0,
+            decideCallback: null,
             _tickAccum:     0,
-            // Regenerate pipsOutbound with the correct count (overrides super's single pip)
-            pipsOutbound: Array.from({ length: count }, (_, i) => ({ label: id, index: i })),
+            _lastInPip:     0,
+            _pipSignals:    {},           // pipIndex → last signal received on that pip
+            _isDecision:    true,
+            // Override pips with correct counts
+            pipsInbound:  Array.from({ length: inCount  }, (_, i) => ({ label: id, index: i })),
+            pipsOutbound: Array.from({ length: outCount }, (_, i) => ({ label: id, index: i })),
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'outputCount', 'tickInterval', 'defaultOutput']
+        return [...super.configFields(), 'inputCount', 'outputCount', 'tickInterval', 'defaultOutput']
     }
 
     // ── Core hooks ────────────────────────────────────────────────────────────
 
     /**
-     * Called whenever the upstream signal changes.
-     * Routes immediately so power flows without waiting for the next tick.
+     * Called whenever an upstream signal changes on any inbound pip.
+     * `panel._lastInPip` is set by graph.receive() before this is called.
      */
     static apply(panel, signal, graph) {
-        this._route(panel, signal, graph)
+        const inPip = panel._lastInPip ?? 0
+        // Track per-pip signal so decide() can inspect all inputs
+        panel._pipSignals[inPip] = signal
+        this._route(panel, signal, graph, inPip)
     }
 
     /**
@@ -95,18 +104,21 @@ class DecisionNode extends NodeBase {
      * signal value — e.g. "switch to output 1 after 10 seconds of inactivity".
      */
     static tick(panel, dt, graph) {
+        if (panel.enabled === false) return
         panel._tickAccum += dt
         if (panel._tickAccum >= panel.tickInterval) {
             panel._tickAccum = 0
-            this._route(panel, panel.signal, graph)
+            // Re-route using the most recently active inbound pip
+            this._route(panel, panel.signal, graph, panel._lastInPip ?? 0)
         }
     }
 
     static reset(panel, graph) {
         panel.lastDecision = null
         panel._tickAccum   = 0
+        panel._pipSignals  = {}
+        panel._lastInPip   = 0
         super.reset(panel, graph)
-        // Null all outputs on reset
         panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
     }
 
@@ -117,10 +129,10 @@ class DecisionNode extends NodeBase {
      * to all others.
      * @private
      */
-    static _route(panel, signal, graph) {
+    static _route(panel, signal, graph, inputIndex = 0) {
         let chosen
         try {
-            chosen = this.decide(panel, signal, graph)
+            chosen = this.decide(panel, signal, inputIndex, graph)
         } catch (err) {
             console.error(`[DecisionNode:${panel.id}] decide() threw:`, err)
             panel.state = 'error'
@@ -145,6 +157,7 @@ class DecisionNode extends NodeBase {
         })
 
         panel.state = signal ? 'routing' : 'off'
+        graph.updateAllGenDraws()
     }
 
     // ── Override this in subclasses ───────────────────────────────────────────
@@ -153,35 +166,66 @@ class DecisionNode extends NodeBase {
      * Return the output index (or array of indices) to route the signal to.
      * Return `null` to block all outputs.
      *
-     * @param  {Object}      panel   — reactive panel state (read your config here)
-     * @param  {Object|null} signal  — { v, a } or null
-     * @param  {PowerGraph}  graph   — graph engine (rarely needed)
+     * @param  {Object}      panel       — reactive panel state
+     * @param  {Object|null} signal      — { v, a } or null — signal on the triggering pip
+     * @param  {number}      inputIndex  — which inbound pip triggered this call
+     * @param  {PowerGraph}  graph       — graph engine (rarely needed)
      * @returns {number | number[] | null}
+     *
+     * Access all inbound pip signals via panel._pipSignals:
+     *   panel._pipSignals[0]  — last signal seen on inbound pip 0
+     *   panel._pipSignals[1]  — last signal seen on inbound pip 1
      */
-    static decide(panel, signal, graph) {
-        // Runtime callback takes priority (panel.decideCallback set from outside)
+    static decide(panel, signal, inputIndex, graph) {
         if (typeof panel.decideCallback === 'function') {
-            return panel.decideCallback(signal, panel, graph) ?? 0
+            return panel.decideCallback(signal, inputIndex, panel, graph) ?? 0
         }
-        // Fall back to the user-pinned default (set via UI or panel.defaultOutput)
         return panel.defaultOutput ?? 0
+    }
+
+    /**
+     * Null every outbound pip when the node is disabled, not just pip 0.
+     */
+    static onDisabled(panel, graph) {
+        panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
     /** Force a manual re-route from the UI. */
     static reRoute(panel, graph) {
-        this._route(panel, panel.signal, graph)
+        panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
+        this._route(panel, panel.signal, graph, panel._lastInPip ?? 0)
     }
 
-    /**
-     * Pin a default output index from the UI.
-     * Subclass decide() can read panel.defaultOutput and choose to honour it.
-     */
+    /** Pin a default output index from the UI. */
     static setDefault(panel, index, graph) {
         panel.defaultOutput = index
-        this._route(panel, panel.signal, graph)
+        this._route(panel, panel.signal, graph, panel._lastInPip ?? 0)
     }
 }
 
 NodeRegistry.register(DecisionNode)
+
+class MyCustomDecision extends DecisionNode {
+
+    static type        = 'my-decision'
+    static label       = 'My Decision'
+    static outputCount = 3
+
+    static catalog = [
+        { key: 'my-decision', label: 'My Decision (3 out)', outputCount: 3, inputCount: 2 },
+    ]
+
+    /**
+     * Randomly routes to one of the available outputs each time a signal arrives
+     * or the tick interval fires. panel._pipSignals[n] holds per-input history.
+     */
+    static decide(panel, signal, inputIndex, graph) {
+        if (!signal) return null
+        // Return a random output for demo purposes
+        return Math.floor(Math.random() * panel.outputCount)
+    }
+}
+
+NodeRegistry.register(MyCustomDecision)

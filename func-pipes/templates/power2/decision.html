@@ -1,5 +1,5 @@
 {% raw %}<!-- ── DECISION node ── -->
-<template v-else-if="panel.type === 'decision'">
+<template v-else-if="panel._isDecision">
     <div class="node-body">
 
         <!-- State badge + inbound signal -->
@@ -11,6 +11,20 @@
                 {{ panel.signal.v.toFixed(1) }}V / {{ panel.signal.a.toFixed(2) }}A
             </span>
             <span class="decision-signal zero" v-else>no signal</span>
+        </div>
+
+        <!-- Inbound pip indicators (shown when inputCount > 1) -->
+        <div class="decision-inputs" v-if="panel.inputCount > 1">
+            <div v-for="i in panel.inputCount" :key="'in-' + (i - 1)"
+                 :class="['decision-in',
+                          panel._pipSignals && panel._pipSignals[i - 1] ? 'active' : '',
+                          panel._lastInPip === (i - 1) ? 'last' : '']"
+                 :title="'Inbound pip ' + (i - 1)">
+                <span class="decision-in-arrow">
+                    {{ panel._pipSignals && panel._pipSignals[i - 1] ? '▶' : '—' }}
+                </span>
+                <span class="decision-in-label">In {{ i - 1 }}</span>
+            </div>
         </div>
 
         <!-- Output routing indicators — click to pin as default -->

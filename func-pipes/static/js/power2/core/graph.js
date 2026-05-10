@@ -60,11 +60,12 @@ class PowerGraph {
      * Deliver a signal from sourceId to panel, re-combine all sources, then
      * dispatch to the node class's apply() method.
      *
-     * @param {Object}      panel    — reactive Vue panel state
-     * @param {Object|null} signal   — { v, a } or null
-     * @param {string|null} sourceId — panel id of the upstream sender
+     * @param {Object}      panel      — reactive Vue panel state
+     * @param {Object|null} signal     — { v, a } or null
+     * @param {string|null} sourceId   — panel id of the upstream sender
+     * @param {number}      inPipIndex — which inbound pip index was connected (default 0)
      */
-    receive(panel, signal, sourceId = null) {
+    receive(panel, signal, sourceId = null, inPipIndex = 0) {
         if (sourceId !== null) {
             if (signal === null) {
                 delete panel.powerSources[sourceId]
@@ -72,6 +73,9 @@ class PowerGraph {
                 panel.powerSources[sourceId] = signal
             }
         }
+
+        // Let multi-input nodes (e.g. DecisionNode) know which pip just fired
+        panel._lastInPip = inPipIndex
 
         const combined = this.combineSources(panel.powerSources)
         panel.signal   = combined
@@ -81,7 +85,11 @@ class PowerGraph {
 
         if (panel.enabled === false) {
             panel.state = 'off'
-            this.emit(panel, null)
+            if (typeof Cls.onDisabled === 'function') {
+                Cls.onDisabled(panel, this)
+            } else {
+                this.emit(panel, null)
+            }
             return
         }
 
@@ -109,11 +117,11 @@ class PowerGraph {
     emit(panel, signal) {
         if (typeof pipesWalker === 'undefined') return
         const sourceId = String(panel.id)
-        this._getOutboundConns(panel, 0).forEach(({ inLabel, connKey }) => {
+        this._getOutboundConns(panel, 0).forEach(({ inLabel, inPip, connKey }) => {
             const target = this._findPanel(inLabel)
             if (target) {
                 const transformed = EdgeStore2.applyEdge(signal, connKey)
-                this.receive(target, transformed, sourceId)
+                this.receive(target, transformed, sourceId, inPip ?? 0)
             }
         })
     }
@@ -130,11 +138,11 @@ class PowerGraph {
     emitTo(panel, pipIndex, signal) {
         if (typeof pipesWalker === 'undefined') return
         const sourceId = `${panel.id}:${pipIndex}`
-        this._getOutboundConns(panel, pipIndex).forEach(({ inLabel, connKey }) => {
+        this._getOutboundConns(panel, pipIndex).forEach(({ inLabel, inPip, connKey }) => {
             const target = this._findPanel(inLabel)
             if (target) {
                 const transformed = EdgeStore2.applyEdge(signal, connKey)
-                this.receive(target, transformed, sourceId)
+                this.receive(target, transformed, sourceId, inPip ?? 0)
             }
         })
     }

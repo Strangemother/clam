@@ -134,4 +134,13 @@ class NodeBase {
         // enabled is intentionally preserved across resets (it's a user config choice)
         graph.emit(panel, null)
     }
+
+    /**
+     * Called by graph.receive() when panel.enabled === false, instead of the
+     * default graph.emit(panel, null) which only nulls pip 0.
+     * Override in nodes that have multiple outbound pips.
+     */
+    static onDisabled(panel, graph) {
+        graph.emit(panel, null)
+    }
 }
