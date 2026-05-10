@@ -91,6 +91,8 @@ class SeriesBattery extends NodeBase {
             return
         }
 
+        const prev = panel.state
+
         if (!panel.live) {
             // Pass-through: forward inbound signal unchanged, no charge used
             if (signal && signal.v > 0) {
@@ -100,12 +102,16 @@ class SeriesBattery extends NodeBase {
                 panel.state = 'off'
                 graph.emit(panel, null)
             }
+            if (panel.state !== prev)
+                SeriesBattery.dispatch(panel, 'state:change', { from: prev, to: panel.state })
             return
         }
 
         if (panel.chargeWh <= 0) {
             panel.state    = 'dead'
             panel.chargeWh = 0
+            SeriesBattery.dispatch(panel, 'battery:dead', { chargePercent: 0 })
+            SeriesBattery.dispatch(panel, 'state:change', { from: prev, to: 'dead' })
             graph.emit(panel, null)
             graph.updateAllGenDraws()
             return
@@ -148,10 +154,14 @@ class SeriesBattery extends NodeBase {
         )
         panel.chargePercent = +(panel.chargeWh / panel.capacityWh * 100).toFixed(1)
 
+        const prevState = panel.state
+
         if (panel.state === 'dead') {
             if (panel.chargeWh >= panel.capacityWh * 0.01 && chargeInW > 0) {
                 panel.state = 'charging'
                 panel.live  = true
+                SeriesBattery.dispatch(panel, 'battery:revived', { chargePercent: panel.chargePercent })
+                SeriesBattery.dispatch(panel, 'state:change', { from: 'dead', to: 'charging' })
                 SeriesBattery.apply(panel, panel.signal, graph)
                 graph.updateAllGenDraws()
             }
@@ -161,6 +171,8 @@ class SeriesBattery extends NodeBase {
         if (panel.chargeWh <= 0) {
             panel.state = 'dead'
             panel.live  = false
+            SeriesBattery.dispatch(panel, 'battery:dead', { chargePercent: 0 })
+            SeriesBattery.dispatch(panel, 'state:change', { from: prevState, to: 'dead' })
             graph.emit(panel, null)
             graph.updateAllGenDraws()
             return
@@ -175,6 +187,21 @@ class SeriesBattery extends NodeBase {
         } else {
             panel.state = 'discharging'
         }
+
+        if (panel.state !== prevState)
+            SeriesBattery.dispatch(panel, 'state:change', { from: prevState, to: panel.state })
+
+        // Charge telemetry — throttled, dispatched only when value changes
+        const pct = panel.chargePercent
+        if (pct !== panel._lastChargePct) {
+            panel._lastChargePct = pct
+            SeriesBattery.throttle(panel, 'battery:charge', {
+                chargePercent: pct,
+                chargeWh:      +panel.chargeWh.toFixed(3),
+                chargeInW:     panel.chargeInW,
+                chargeOutW:    panel.chargeOutW,
+            })
+        }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -182,6 +209,7 @@ class SeriesBattery extends NodeBase {
     static toggle(panel, graph) {
         if (panel.state === 'dead') return   // must reset first
         panel.live = !panel.live
+        SeriesBattery.dispatch(panel, 'battery:toggle', { live: panel.live })
         SeriesBattery.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -195,6 +223,7 @@ class SeriesBattery extends NodeBase {
         } else {
             panel.live = false
         }
+        SeriesBattery.dispatch(panel, 'battery:pass-toggle', { live: panel.live })
         SeriesBattery.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -215,6 +244,8 @@ class SeriesBattery extends NodeBase {
         panel.chargeOutW    = 0
         panel.inVolts       = 0
         panel.inAmps        = 0
+        panel._lastChargePct = null
+        SeriesBattery.dispatch(panel, 'battery:reset', { chargePercent: 100 })
         super.reset(panel, graph)
     }
 }

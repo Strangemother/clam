@@ -67,10 +67,13 @@ class Load extends NodeBase {
         if (panel.blown) return   // open circuit until manually reset
 
         const drawAmps = panel.watts / NOMINAL_VOLTS
+        const prev     = panel.state
 
         if (signal && signal.v > panel.maxVolts) {
             panel.blown = true
             panel.state = 'blown'
+            Load.dispatch(panel, 'load:blown', { volts: signal.v, maxVolts: panel.maxVolts })
+            Load.dispatch(panel, 'state:change', { from: prev, to: 'blown' })
             graph.emit(panel, null)
             return
         }
@@ -86,14 +89,21 @@ class Load extends NodeBase {
                 panel.state = 'capacitor'
                 const held = panel._lastGoodSignal
                 if (held) graph.emit(panel, { v: held.v, a: held.a - drawAmps })
+                if (prev !== 'capacitor')
+                    Load.dispatch(panel, 'load:capacitor-failover', { chargeWs: panel.chargeWs })
             } else {
                 panel.state = 'off'
                 graph.emit(panel, null)
             }
         } else {
             panel.state = 'brownout'
+            if (prev !== 'brownout')
+                Load.dispatch(panel, 'load:brownout', { volts: signal.v, amps: signal.a, minVolts: panel.minVolts })
             graph.emit(panel, null)
         }
+
+        if (panel.state !== prev)
+            Load.dispatch(panel, 'state:change', { from: prev, to: panel.state })
     }
 
     static tick(panel, dt, graph) {
@@ -106,6 +116,7 @@ class Load extends NodeBase {
             if (panel.chargeWs <= 0) {
                 panel.chargeWs = 0
                 panel.state    = 'off'
+                Load.dispatch(panel, 'state:change', { from: 'capacitor', to: 'off' })
                 graph.emit(panel, null)
             }
         }
@@ -132,6 +143,7 @@ class Load extends NodeBase {
         panel.chargeWs       = 0
         panel._lastGoodSignal = null
         panel.powerSources   = {}
+        Load.dispatch(panel, 'load:reset', {})
         super.reset(panel, graph)
     }
 }

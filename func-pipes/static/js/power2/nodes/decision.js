@@ -118,6 +118,7 @@ class DecisionNode extends NodeBase {
         panel._tickAccum   = 0
         panel._pipSignals  = {}
         panel._lastInPip   = 0
+        DecisionNode.dispatch(panel, 'decision:reset', {})
         super.reset(panel, graph)
         panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
     }
@@ -136,6 +137,7 @@ class DecisionNode extends NodeBase {
         } catch (err) {
             console.error(`[DecisionNode:${panel.id}] decide() threw:`, err)
             panel.state = 'error'
+            DecisionNode.dispatch(panel, 'decision:error', { error: err.message })
             panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
             return
         }

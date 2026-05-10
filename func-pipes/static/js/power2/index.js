@@ -75,6 +75,7 @@ createApp({
 
     mounted() {
         this.graph.startTick()
+        window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel')
     },
 
     beforeUnmount() {

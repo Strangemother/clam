@@ -17,24 +17,33 @@ const MAX_EVENTS = 1000
 createApp({
     data() {
         return {
-            events:   [],
-            visible:  true,
-            _counter: 0,
+            events:          [],
+            visible:         true,
+            _counter:        0,
+            eventsPerSecond: 0,
+            _epsAccum:       0,
+            _epsInterval:    null,
         }
     },
 
     mounted() {
         this._handler = e => this.push(e.detail)
         window.addEventListener('power2', this._handler)
+        this._epsInterval = setInterval(() => {
+            this.eventsPerSecond = this._epsAccum
+            this._epsAccum = 0
+        }, 1000)
         this.push({ type: 'monitor:ready', label: 'event-monitor', data: { max: MAX_EVENTS } })
     },
 
     beforeUnmount() {
         window.removeEventListener('power2', this._handler)
+        clearInterval(this._epsInterval)
     },
 
     methods: {
         push(detail = {}) {
+            this._epsAccum++
             this.events.unshift({
                 id:    ++this._counter,
                 ts:    new Date().toISOString().slice(11, 23),
