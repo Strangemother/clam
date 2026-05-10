@@ -15,6 +15,8 @@ const TickMethods = {
 
             if (!this.graphRunning) return
 
+            this._tickRipple(dt)
+
             this.panels.forEach(p => {
                 if (p.type !== 'load' || p.capacitance <= 0) return
 

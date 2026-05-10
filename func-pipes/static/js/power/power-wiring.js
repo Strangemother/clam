@@ -33,7 +33,7 @@ const WiringMethods = {
     connect(sender, receiver) {
         const connKey = `${sender.label}-${sender.pipIndex ?? 0}-${receiver.label}-${receiver.pipIndex ?? 0}`
         document.dispatchEvent(new CustomEvent('connectnodes', {
-            detail: { sender, receiver, line: { color: '#00ff88', width: 2 } }
+            detail: { sender, receiver, line: { color: EdgeStore.colorForEdge(connKey), width: 2 } }
         }))
         if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()
         // Register edge properties and measure pip-to-pip distance after DOM settles.
@@ -54,7 +54,7 @@ const WiringMethods = {
             if (conn) {
                 const edge = EdgeStore.get(key)
                 conn.obj.line = conn.obj.line || {}
-                conn.obj.line.color = edge?.enabled === false ? '#ff333366' : '#00ff88'
+                conn.obj.line.color = EdgeStore.colorForEdge(key)
                 conn.obj.line.width = edge?.enabled === false ? 1 : 2
                 clItems.layers.forEach(layer => {
                     if (layer.lines?.[key]) {

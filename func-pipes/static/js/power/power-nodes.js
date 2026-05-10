@@ -48,8 +48,7 @@ const NodeMethods = {
             panel.blown      = true
             panel.state      = 'blown'
             panel.brightness = 0
-            // Emit the unclamped signal downstream (excess cascades).
-            this._emitPower(panel, signal)
+            this._emitPower(panel, null)   // blown = open circuit
             return
         }
 
@@ -81,8 +80,7 @@ const NodeMethods = {
         if (signal && signal.v > panel.maxVolts) {
             panel.blown = true
             panel.state = 'blown'
-            // Emit the full signal downstream — excess propagates.
-            this._emitPower(panel, signal)
+            this._emitPower(panel, null)   // blown = open circuit
             return
         }
 

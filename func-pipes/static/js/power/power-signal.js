@@ -50,10 +50,17 @@ const SignalMethods = {
         const combined = this._combineSources(panel.powerSources)
         panel.signal   = combined
 
-        if (panel.type === 'breaker') this._applyBreaker(panel, combined)
-        if (panel.type === 'bulb')    this._applyBulb(panel, combined)
-        if (panel.type === 'load')    this._applyLoad(panel, combined)
-        if (panel.type === 'meter')   this._applyMeter(panel, combined)
+        let _func = {
+            'breaker': this._applyBreaker,
+            'bulb': this._applyBulb,
+            'load': this._applyLoad,
+            'meter': this._applyMeter,
+            'converter': this._applyConverter,
+        }
+
+        let applyFunc = (_func[panel.type] || (() => {})).bind(this);
+
+        applyFunc(panel, combined);
     },
 
     /*

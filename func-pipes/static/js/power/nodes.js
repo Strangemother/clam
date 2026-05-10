@@ -9,9 +9,10 @@
   ──────────
     gen     — generator / power source. No inbound pip.
     breaker — circuit breaker or relay. Manual open/close toggle.
-    bulb    — resistive lamp. Visual brightness. No outbound pip (sink).
-    load    — generic configurable load. Optional capacitance buffer.
-    meter   — instrument; reads V/A/W and passes signal through unchanged.
+    bulb      — resistive lamp. Visual brightness. No outbound pip (sink).
+    load      — generic configurable load. Optional capacitance buffer.
+    meter     — instrument; reads V/A/W and passes signal through unchanged.
+    converter — step-up / step-down transformer. Adjustable output voltage.
 
   Pip layout
   ──────────
@@ -49,6 +50,12 @@ const COMPONENT_CATALOG = [
     { key: 'heater',       group: 'Load',     type: 'load',    label: 'Heater',        watts: 1000, minVolts: 200 },
     { key: 'console',      group: 'Load',     type: 'load',    label: 'Console',       watts: 50,   minVolts: 180, capacitance: 20 },
     { key: 'ups',          group: 'Load',     type: 'load',    label: 'UPS Buffer',    watts: 5,    minVolts: 190, capacitance: 600 },
+    // Converters
+    { key: 'conv-480v',   group: 'Converter', type: 'converter', label: 'Step-up  240→480V', outVolts: 480 },
+    { key: 'conv-24v',    group: 'Converter', type: 'converter', label: 'Step-down 240→24V',  outVolts: 24  },
+    { key: 'conv-12v',    group: 'Converter', type: 'converter', label: 'Step-down 240→12V',  outVolts: 12  },
+    { key: 'conv-5v',     group: 'Converter', type: 'converter', label: 'Step-down 240→5V',   outVolts: 5   },
+    { key: 'psu-atx',     group: 'Converter', type: 'converter', label: 'ATX PSU (12V)',       outVolts: 12, efficiency: 0.88 },
 ]
 
 // ── factories ────────────────────────────────────────────────────────────────
@@ -64,6 +71,9 @@ function makeGenPanel(id, p = {}) {
         overload:  false,    // true when draw exceeded rating at last compute
         drawWatts: 0,
         drawAmps:  0,
+        ripple:        { enabled: false, amount: 2.0, interval: 0.8 },
+        _rippleAccum:  0,
+        _rippleOffset: 0,
         pipsInbound:  [],
         pipsOutbound: [{ label: id, index: 0 }],
     }
@@ -112,6 +122,9 @@ function makeLoadPanel(id, p = {}) {
         signal:          null,        powerSources:    {},        _lastGoodSignal: null,
         state:           'off',   // 'off' | 'on' | 'brownout' | 'capacitor' | 'blown'
         blown:           false,
+        ripple:        { enabled: false, amount: 0.5, interval: 0.3 },
+        _rippleAccum:  0,
+        _rippleOffset: 0,
         pipsInbound:  [{ label: id, index: 0 }],
         pipsOutbound: [{ label: id, index: 0 }],
     }
@@ -126,6 +139,29 @@ function makeMeterPanel(id) {
         amps:   0,
         watts:  0,
         state:  'off',    // 'off' | 'on'
+        pipsInbound:  [{ label: id, index: 0 }],
+        pipsOutbound: [{ label: id, index: 0 }],
+    }
+}
+
+function makeConverterPanel(id, p = {}) {
+    return {
+        type:         'converter',
+        label:        p.label      || 'Converter',
+        outVolts:     p.outVolts   || 120,
+        step:         p.step       || 10,
+        efficiency:   p.efficiency || 0.95,
+        inVolts:      0,
+        inAmps:       0,
+        outAmps:      0,
+        ratio:        null,
+        _baseInVolts: null,   // snapshotted nominal input — defines the turns ratio
+        signal:       null,
+        powerSources: {},
+        state:        'off',   // 'off' | 'step-up' | 'step-down' | 'unity' | 'fault'
+        ripple:        { enabled: false, amount: 1.0, interval: 1.2 },
+        _rippleAccum:  0,
+        _rippleOffset: 0,
         pipsInbound:  [{ label: id, index: 0 }],
         pipsOutbound: [{ label: id, index: 0 }],
     }
