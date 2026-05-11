@@ -258,12 +258,14 @@ class PowerGraph:
 
         self._propagating.add(panel['id'])
         try:
-            # Store signal from this source
+            # Store signal from this source — always use str keys so JSON-loaded
+            # powerSources (str keys) and runtime-set entries remain consistent.
             if source_id is not None:
+                src_key = str(source_id)
                 if signal is None:
-                    panel['powerSources'].pop(source_id, None)
+                    panel['powerSources'].pop(src_key, None)
                 else:
-                    panel['powerSources'][source_id] = signal
+                    panel['powerSources'][src_key] = signal
 
             # Let multi-input nodes know which pip fired
             panel['_last_in_pip'] = in_pip_index

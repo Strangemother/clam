@@ -1,5 +1,9 @@
 {% raw %}
-<main class="panels-area">
+<main class="panels-area" :class="{ 'connect-mode': connectMode }">
+  <div v-if="connectMode" class="connect-banner">
+    <template v-if="connectStep === 'pick-from'">Click the <strong>source</strong> node &nbsp;(Esc to cancel)</template>
+    <template v-else>Click the <strong>destination</strong> node &nbsp;(Esc to cancel)</template>
+  </div>
   <div class="panels-grid">
 
     <span v-if="sortedPanels.length === 0" class="empty-note">Not connected.</span>
@@ -8,7 +12,10 @@
       v-for="p in sortedPanels"
       :key="p.id"
       class="panel-card"
-      :class="{ selected: selectedPanel && selectedPanel.id === p.id }"
+      :class="{
+        selected:     selectedPanel && selectedPanel.id === p.id,
+        'conn-from':  connFrom && connFrom.id === p.id,
+      }"
       :data-id="p.id"
       :data-state="p.state || 'off'"
       @click="selectPanel(p)"

@@ -22,12 +22,44 @@ createApp({
       logEntries: [],
       connections: [],    // [{from_id, to_id, …}] — topology
       detailOpen:  false,
+
+      // connection mode
+      connectMode: false,   // true while user is picking nodes
+      connFrom:    null,    // first-picked panel
+
+      saveLayoutName: '',
+
+      // spawn node
+      nodeCatalog: (typeof NODE_CATALOG !== 'undefined') ? NODE_CATALOG : {},
+      spawnGroup:  null,
+      spawnItem:   null,
+      spawnLabel:  '',
+      logCollapsed: false,
+
+      // log stats — updated every second
+      logMsgPerSec:   0,
+      logKbPerSec:    0,
+      logTotalBytes:  0,
+
+      // rolling counters (reset each second)
+      _statMsgs:  0,
+      _statBytes: 0,
     };
   },
 
   computed: {
     sortedPanels() {
       return Object.values(this.panels).sort((a, b) => a.id - b.id);
+    },
+    spawnGroups() {
+      return Object.keys(this.nodeCatalog);
+    },
+    connectStep() {
+      if (!this.connectMode) return null;
+      return this.connFrom ? 'pick-to' : 'pick-from';
+    },
+    spawnGroupItems() {
+      return this.spawnGroup ? (this.nodeCatalog[this.spawnGroup] || []) : [];
     },
     detailFields() {
       if (!this.selectedPanel) return [];
@@ -42,8 +74,23 @@ createApp({
   mounted() {
     this._canvas = new ConnectionCanvas();
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') this.closeDetail();
+      if (e.key === 'Escape') {
+        this.closeDetail();
+        this.connectMode = false;
+        this.connFrom    = null;
+      }
     });
+    // Seed spawn selectors from the first available group
+    if (this.spawnGroups.length) {
+      this.spawnGroup = this.spawnGroups[0];
+      this.spawnItem  = this.spawnGroupItems[0] || null;
+    }
+    setInterval(() => {
+      this.logMsgPerSec  = this._statMsgs;
+      this.logKbPerSec   = +(this._statBytes / 1024).toFixed(2);
+      this._statMsgs  = 0;
+      this._statBytes = 0;
+    }, 1000);
   },
 
   watch: {
@@ -51,6 +98,10 @@ createApp({
       if (!p) { this._canvas.clear(); return; }
       // Refresh connections on every selection so all edges are guaranteed current
       Vue.nextTick(() => this._fetchAndDraw(p.id));
+    },
+    spawnGroup() {
+      // Reset item selection when group changes
+      this.spawnItem = this.spawnGroupItems[0] || null;
     },
   },
 
@@ -177,7 +228,33 @@ createApp({
     },
 
     selectPanel(panel) {
+      if (this.connectMode) {
+        this._connectPick(panel);
+        return;
+      }
       this.selectedPanel = (this.selectedPanel?.id === panel.id) ? null : panel;
+    },
+
+    // ── Connect mode ───────────────────────────────────────────────────
+    toggleConnectMode() {
+      this.connectMode = !this.connectMode;
+      this.connFrom    = null;
+    },
+
+    _connectPick(panel) {
+      if (!this.connFrom) {
+        this.connFrom = panel;
+        this.addLog('info', `connect: from #${panel.id} ${panel.label || panel.type} — now click the destination node`);
+        return;
+      }
+      if (panel.id === this.connFrom.id) {
+        this.addLog('err', 'connect: cannot connect a node to itself');
+        return;
+      }
+      this.sendCmd({ op: 'connect', from_id: this.connFrom.id, to_id: panel.id });
+      this.addLog('info', `connect: #${this.connFrom.id} → #${panel.id}`);
+      this.connFrom    = null;
+      this.connectMode = false;
     },
 
     closeDetail() {
@@ -221,6 +298,18 @@ createApp({
       setTimeout(() => this.sendCmd({ op: 'read', id: this.selectedPanel.id }), 120);
     },
 
+    // ── Spawn Node ─────────────────────────────────────────────────────
+    spawnNode() {
+      if (!this.spawnItem) return;
+      const cmd = {
+        op:        'spawn',
+        node_type: this.spawnItem.type,
+        preset:    { ...this.spawnItem },
+      };
+      if (this.spawnLabel.trim()) cmd.label = this.spawnLabel.trim();
+      this.sendCmd(cmd);
+    },
+
     // ── Command builder ────────────────────────────────────────────────
     sendBuilder() {
       const id  = parseInt(this.opId, 10);
@@ -236,7 +325,40 @@ createApp({
         setTimeout(() => this.sendCmd({ op: 'read', id }), 120);
       }
     },
+    // ── Save Layout ────────────────────────────────────────────────────────
+    async saveLayout() {
+      const name = this.saveLayoutName.trim();
+      if (!name) { this.addLog('err', 'enter a layout name before saving'); return; }
 
+      // Convert panels dict → nodes array in the layout format
+      const nodes = Object.values(this.panels).map(p => {
+        const { id, type, label, ...rest } = p;
+        return { id, type, title: label || '', config: { label, ...rest } };
+      });
+
+      // Convert connections to layout format
+      const connections = this.connections.map(c => ({
+        sender:   { label: c.from_id, direction: 'outbound', pipIndex: c.from_pip ?? 0 },
+        receiver: { label: c.to_id,   direction: 'inbound',  pipIndex: c.to_pip  ?? 0 },
+      }));
+
+      try {
+        const res = await fetch('/api/layout/save', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ name, nodes, connections, edges: {} }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          this.addLog('info', `layout saved → ${json.saved}`);
+          this.saveLayoutName = '';
+        } else {
+          this.addLog('err', `save failed: ${json.error}`);
+        }
+      } catch (e) {
+        this.addLog('err', `save error: ${e.message}`);
+      }
+    },
     // ── Raw JSON ───────────────────────────────────────────────────────
     sendRaw() {
       let cmd;
@@ -248,9 +370,14 @@ createApp({
     // ── Log ────────────────────────────────────────────────────────────
     addLog(type, text) {
       const ts = new Date().toISOString().slice(11, 23);
+      const bytes = new TextEncoder().encode(text).length;
+      this._statMsgs  += 1;
+      this._statBytes += bytes;
+      this.logTotalBytes += bytes;
       this.logEntries.unshift({ type, text: `${ts}  ${text}` });
       if (this.logEntries.length > 200) this.logEntries.length = 200;
     },
-    clearLog() { this.logEntries = []; },
+    clearLog() { this.logEntries = []; this.logTotalBytes = 0; },
+    toggleLogCollapse() { this.logCollapsed = !this.logCollapsed; },
   },
 }).mount('#app');

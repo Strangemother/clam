@@ -1,0 +1,164 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Fusion Reactor Alpha",
+      "config": {
+        "label": "Fusion Reactor Alpha",
+        "enabled": true,
+        "signal": null,
+        "powerSources": {},
+        "state": "on",
+        "ripple": {
+          "enabled": true,
+          "amount": 3,
+          "interval": 1.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.94
+        },
+        "_ripple_accum": 0,
+        "_ripple_offset": 0,
+        "_spike_timer": 0,
+        "pipsInbound": [],
+        "pipsOutbound": [
+          {
+            "label": 1,
+            "index": 0
+          }
+        ],
+        "volts": 480,
+        "amps": 20,
+        "live": true,
+        "overload": false,
+        "drawWatts": 0,
+        "drawAmps": 0,
+        "_last_emitted_state": null
+      }
+    },
+    {
+      "id": 2,
+      "type": "heater",
+      "title": "Heater 3kW",
+      "config": {
+        "label": "Heater 3kW",
+        "enabled": true,
+        "signal": {
+          "v": 240,
+          "a": 30
+        },
+        "powerSources": {
+          "3": {
+            "v": 240,
+            "a": 30
+          }
+        },
+        "state": "on",
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 200,
+          "duration": 0.5
+        },
+        "_ripple_accum": 0,
+        "_ripple_offset": 0,
+        "_spike_timer": 0,
+        "pipsInbound": [
+          {
+            "label": 2,
+            "index": 0
+          }
+        ],
+        "pipsOutbound": [],
+        "watts": 3000,
+        "minVolts": 100,
+        "brownoutVolts": 180,
+        "maxVolts": 280,
+        "capacitanceWs": 0,
+        "chargeWs": 0,
+        "noise": 10,
+        "noiseInterval": 0.4,
+        "blown": false,
+        "current_watts": 150,
+        "_last_signal": {
+          "v": 240,
+          "a": 30
+        },
+        "_noise_accum": 0,
+        "_noise_phase": 18276.215262259506,
+        "temperature": 63.6,
+        "heatState": "hot",
+        "heatSwitch": false,
+        "heatRate": 5,
+        "coolRate": 0.8,
+        "maxTemp": 80,
+        "resetTemp": 60,
+        "minWatts": 150,
+        "currentWatts": 150,
+        "_last_emitted_watts": 150,
+        "_last_in_pip": 0
+      }
+    },
+    {
+      "id": 3,
+      "type": "gen",
+      "title": "Generator",
+      "config": {
+        "label": "Generator",
+        "enabled": true,
+        "signal": null,
+        "powerSources": {},
+        "state": "on",
+        "ripple": {
+          "enabled": false,
+          "amount": 2,
+          "interval": 0.8
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.94
+        },
+        "_ripple_accum": 0,
+        "_ripple_offset": 0,
+        "_spike_timer": 0,
+        "pipsInbound": [],
+        "pipsOutbound": [
+          {
+            "label": 3,
+            "index": 0
+          }
+        ],
+        "volts": 240,
+        "amps": 30,
+        "live": true,
+        "overload": false,
+        "drawWatts": 150,
+        "drawAmps": 0.62,
+        "_last_emitted_state": null
+      }
+    }
+  ],
+  "connections": [
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 2,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    }
+  ],
+  "edges": {}
+}

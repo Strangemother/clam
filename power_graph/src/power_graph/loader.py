@@ -78,6 +78,13 @@ def load_layout(graph, layout: Dict) -> None:
 
         id_map[json_id] = panel
 
+    # Clear stale runtime state so first propagation rewrites them cleanly.
+    # powerSources may have been persisted from a previous live session;
+    # those values are meaningless until generators re-emit on startup.
+    for panel in graph.panels:
+        panel['powerSources'] = {}
+        panel['signal'] = None
+
     # Ensure _next_id is beyond all used ids so future spawns don't collide
     if id_map:
         graph._next_id = max(id_map) + 1

@@ -24,7 +24,7 @@ from power_graph import GraphRunner
 from power_graph.ws_server import GraphWSServer
 
 DEFAULT_LAYOUT = (
-    pathlib.Path(__file__).parent.parent / 'func-pipes' / 'layouts' / 'spaceship.json'
+    pathlib.Path(__file__).parent.parent / 'func-pipes' / 'layouts' / 'empty.json'
 )
 
 parser = argparse.ArgumentParser(description='Power Graph dev server')

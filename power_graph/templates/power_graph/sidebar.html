@@ -37,11 +37,36 @@
     <button @click="sendRaw">Send Raw</button>
   </div>
 
-  <div class="pane-title">
-    Event Log
-    <button style="margin-left:auto;padding:2px 8px;font-size:10px" @click="clearLog">Clear</button>
+  <div class="pane-title">Spawn Node</div>
+  <div class="spawn-form">
+    <div class="row">
+      <div>
+        <label>Group</label>
+        <select v-model="spawnGroup">
+          <option v-for="g in spawnGroups" :key="g" :value="g">{{ g }}</option>
+        </select>
+      </div>
+      <div>
+        <label>Type</label>
+        <select v-model="spawnItem">
+          <option v-for="e in spawnGroupItems" :key="e.key" :value="e">{{ e.label }}</option>
+        </select>
+      </div>
+    </div>
+    <label>Label <span style="color:var(--muted);text-transform:none">(optional)</span></label>
+    <input v-model="spawnLabel" type="text" placeholder="Leave blank to use default">
+    <button class="btn-accent" @click="spawnNode" :disabled="!spawnItem">Spawn</button>
   </div>
-  <div class="log">
+
+  <div class="pane-title log-header">
+    Event Log
+    <span class="log-stat" title="Messages per second">{{ logMsgPerSec }}<em>msg/s</em></span>
+    <span class="log-stat" title="Kilobytes per second">{{ logKbPerSec }}<em>KB/s</em></span>
+    <span class="log-stat" title="Total bytes received">{{ (logTotalBytes / 1024).toFixed(1) }}<em>KB</em></span>
+    <button class="log-btn" @click="clearLog" title="Clear log">Clear</button>
+    <button class="log-btn" @click="toggleLogCollapse" title="Collapse / expand log">{{ logCollapsed ? '▶' : '▼' }}</button>
+  </div>
+  <div v-show="!logCollapsed" class="log">
     <div v-for="(entry, i) in logEntries" :key="i" :class="['log-entry', entry.type]">{{ entry.text }}</div>
   </div>
 

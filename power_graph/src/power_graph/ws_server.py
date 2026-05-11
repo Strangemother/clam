@@ -70,12 +70,13 @@ class GraphWSServer:
             push_interval: Push state to all clients every N ticks (>0).
                            At fps=20 and push_interval=4 → 5 Hz push.
         """
-        self._runner        = runner
-        self._host          = host
-        self._port          = port
-        self._push_interval = push_interval
-        self._clients: Set  = set()
-        self._tick_count    = 0
+        self._runner          = runner
+        self._host            = host
+        self._port            = port
+        self._push_interval   = push_interval
+        self._clients: Set    = set()
+        self._tick_count      = 0
+        self._panel_snapshots = {}   # panel id → last-broadcast JSON string
 
         if push_interval > 0:
             runner.subscribe(self._on_tick)
@@ -156,7 +157,20 @@ class GraphWSServer:
     async def _broadcast_state(self, panels) -> None:
         if not self._clients:
             return
-        message = json.dumps({'type': 'tick', 'panels': [dict(p) for p in panels]})
+
+        changed = []
+        for p in panels:
+            pid = p['id']
+            panel_copy = dict(p)
+            panel_json = json.dumps(panel_copy)
+            if self._panel_snapshots.get(pid) != panel_json:
+                changed.append(panel_copy)
+                self._panel_snapshots[pid] = panel_json
+
+        if not changed:
+            return
+
+        message = json.dumps({'type': 'tick', 'panels': changed})
         dead = set()
         for ws in self._clients:
             try:

@@ -85,6 +85,25 @@ button:active { opacity: .7; }
 .btn-accent   { border-color: var(--accent); color: var(--accent); }
 .ml-auto      { margin-left: auto; }
 
+/* ── Save Layout form (in header) ─────────────────────────────────── */
+.save-layout-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.save-layout-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  width: 160px;
+}
+.save-layout-input:focus { outline: none; border-color: var(--accent); }
+
 /* ── Sidebar ───────────────────────────────────────────────────────── */
 aside {
   grid-area: sidebar;
@@ -131,6 +150,35 @@ aside {
 .cmd-form .row { display: flex; gap: 6px; }
 .cmd-form .row > * { flex: 1; }
 
+/* Spawn form — reuses cmd-form layout */
+.spawn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spawn-form label { font-size: 10px; color: var(--muted); }
+
+.spawn-form select,
+.spawn-form input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.spawn-form .row { display: flex; gap: 6px; }
+.spawn-form .row > * { flex: 1; }
+
+.spawn-form button:disabled { opacity: .35; cursor: not-allowed; }
+.spawn-form button:disabled:hover { border-color: var(--border); color: var(--text); }
+
 /* Raw JSON */
 .raw-area {
   display: flex;
@@ -154,6 +202,26 @@ aside {
 }
 .raw-cmd:focus { outline: 1px solid var(--accent); }
 
+/* Event log header */
+.log-header { gap: 6px; }
+
+.log-stat {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.log-stat em {
+  font-style: normal;
+  color: var(--border);
+  margin-left: 2px;
+}
+
+.log-btn {
+  padding: 1px 6px;
+  font-size: 10px;
+}
+.log-header .log-btn:first-of-type { margin-left: auto; }
+
 /* Event log */
 .log {
   flex: 1;
@@ -175,6 +243,33 @@ aside {
 .log-entry.in   { border-color: #3b82f6; }
 .log-entry.err  { border-color: var(--danger); color: var(--danger); }
 .log-entry.info { border-color: var(--warn);   color: var(--warn); }
+
+/* Connect mode */
+.btn-connect-mode        { border-color: var(--warn); color: var(--warn); }
+.btn-connect-mode.active { background: var(--warn); color: var(--bg); border-color: var(--warn); }
+
+.connect-banner {
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  color: var(--warn);
+  font-size: 12px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+/* Source node highlight during connect */
+.panel-card.conn-from {
+  border-color: var(--warn);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 30%, transparent);
+}
+
+/* Hoverable cards pulse while picking destination */
+.connect-mode .panel-card:not(.conn-from):hover {
+  border-color: #3b82f6;
+  cursor: crosshair;
+}
 
 /* ── Panels grid ───────────────────────────────────────────────────── */
 .panels-area {
