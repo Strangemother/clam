@@ -23,7 +23,7 @@ batteries increase total line voltage.
 """
 
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal
+from power_graph.node_base import NodeBase, Signal, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 

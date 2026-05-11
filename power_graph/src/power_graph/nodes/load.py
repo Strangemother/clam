@@ -23,7 +23,7 @@ Noise model
 import math
 import random
 from typing import Dict, List, Optional
-from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile
+from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 

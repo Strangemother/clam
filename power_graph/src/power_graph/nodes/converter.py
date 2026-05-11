@@ -18,7 +18,7 @@ re-propagate through the graph.
 """
 
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal
+from power_graph.node_base import NodeBase, Signal, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 

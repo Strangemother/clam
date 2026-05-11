@@ -482,21 +482,38 @@ class PowerGraph:
             panel['_ripple_accum'] = 0
             panel['_ripple_offset'] = _ripple_random(ripple.get('amount', 1.0))
 
-            # Generator ripple
+            node_cls = NodeRegistry.get(panel['type'])
+
+            # Generator: voltage ripple — AC hum / governor flutter
             if panel['type'] == 'gen' and panel.get('live') and panel.get('state') != 'tripped':
                 v_out = max(1, panel.get('volts', 240) + panel['_ripple_offset'])
                 self.emit(panel, {'v': v_out, 'a': panel.get('amps', 13)})
 
-            # Load ripple
-            if panel['type'] == 'load' and panel.get('state') == 'on' and panel.get('signal'):
-                draw_amps = panel.get('watts', 0) / NOMINAL_VOLTS
+            # Any consumes_watts node (load, heater, console…): current ripple
+            elif (node_cls and getattr(node_cls, 'consumes_watts', False)
+                    and panel.get('state') == 'on' and panel.get('_last_signal')):
+                sig = panel['_last_signal']
+                draw_amps  = panel.get('current_watts', panel.get('watts', 0)) / NOMINAL_VOLTS
                 amp_jitter = _ripple_random(ripple.get('amount', 1.0) / NOMINAL_VOLTS)
-                a_out = max(0, panel['signal'].get('a', 0) - draw_amps + amp_jitter)
-                self.emit(panel, {'v': panel['signal'].get('v', 240), 'a': a_out})
+                a_out = max(0.0, sig.get('a', 0) - draw_amps + amp_jitter)
+                self.emit(panel, {'v': sig.get('v', 240), 'a': a_out})
 
-            # Converter and battery ripple can call apply() to regenerate
-            if panel['type'] in ('converter', 'series-battery') and panel.get('signal'):
-                node_cls = NodeRegistry.get(panel['type'])
+            # Bulb: subtle brightness flicker via voltage jitter on its inbound signal
+            elif panel['type'] == 'bulb' and panel.get('state') in ('on', 'dim') and panel.get('signal'):
+                sig   = panel['signal']
+                v_out = max(1.0, sig.get('v', 240) + panel['_ripple_offset'])
+                if node_cls:
+                    node_cls.apply(panel, {'v': v_out, 'a': sig.get('a', 0)}, self)
+
+            # Bus-bar: redistribute with a small voltage offset
+            elif panel['type'] in ('bus-bar', 'power-rail') and panel.get('state') == 'distributing' and panel.get('signal'):
+                sig   = panel['signal']
+                v_out = max(1.0, sig.get('v', 240) + panel['_ripple_offset'])
+                if node_cls:
+                    node_cls.apply(panel, {'v': v_out, 'a': sig.get('a', 0)}, self)
+
+            # Converter and battery: re-apply to regenerate jittered output
+            elif panel['type'] in ('converter', 'series-battery') and panel.get('signal'):
                 if node_cls:
                     node_cls.apply(panel, panel['signal'], self)
 
