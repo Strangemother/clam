@@ -67,6 +67,15 @@ class Converter extends NodeBase {
         return [...super.configFields(), 'outVolts', 'step', 'efficiency', 'ripple']
     }
 
+    /**
+     * Transform the inbound signal. On the first live signal the turns ratio is
+     * locked (snapshotting the base input voltage). Subsequent frames track any
+     * ripple that passes through. Emits the converted { v, a } downstream and
+     * throttles 'converter:reading' events when values change.
+     * @param {Object}     panel
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         if (!signal || signal.v <= 0 || signal.a <= 0) {
             const prev    = panel.state
@@ -141,6 +150,12 @@ class Converter extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Clamp and validate outVolts / step / efficiency after external edits (e.g.
+     * config panel), re-lock the turns ratio, and re-emit downstream.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static paramsChanged(panel, graph) {
         panel.outVolts   = Math.max(1,    +panel.outVolts   || 1)
         panel.step       = Math.max(0.1,  +panel.step       || 10)
@@ -151,6 +166,12 @@ class Converter extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Clear all measured values and the locked turns-ratio snapshot, then
+     * delegate to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.inVolts      = 0
         panel.inAmps       = 0

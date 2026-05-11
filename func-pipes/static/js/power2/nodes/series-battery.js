@@ -86,6 +86,15 @@ class SeriesBattery extends NodeBase {
         return [...super.configFields(), 'volts', 'amps', 'chargeAmps', 'capacityWh', 'live', 'ripple', 'spike']
     }
 
+    /**
+     * Process an inbound (charging) signal. When live, adds the battery's own
+     * rated EMF on top of the inbound voltage and forwards downstream. When
+     * not live, forwards the inbound signal unchanged (pass-through mode).
+     * Emits null if the battery is dead or has no charge.
+     * @param {Object}     panel
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         // Store inbound signal for charge calculation in tick
         panel.inVolts = signal ? signal.v : 0
@@ -130,6 +139,16 @@ class SeriesBattery extends NodeBase {
         graph.emit(panel, { v: (vIn + panel.volts + vOff) * m, a: aOut * m })
     }
 
+    /**
+     * Per-frame energy accounting. Decays any inrush spike, then independently
+     * computes charge-in (from inbound source) and charge-out (proportional
+     * share of downstream load) and updates chargeWh. Transitions between
+     * charging / discharging / full / dead states and revives the battery once
+     * enough charge has accumulated after a dead event.
+     * @param {Object}     panel
+     * @param {number}     dt    — elapsed seconds since last tick
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         // Decay inrush spike and re-apply to settle downstream on expiry too.
         const wasNonZero = (panel._spikeTimer ?? 0) > 0
@@ -219,6 +238,12 @@ class SeriesBattery extends NodeBase {
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
+    /**
+     * Toggle battery output on or off. No-op if the battery is dead —
+     * call reset() first to restore it. Starts an inrush spike when enabling.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static toggle(panel, graph) {
         if (panel.state === 'dead') return   // must reset first
         panel.live = !panel.live
@@ -228,7 +253,13 @@ class SeriesBattery extends NodeBase {
         graph.updateAllGenDraws()
     }
 
-    // Switch to pass-through mode (live=false keeps signal flowing unchanged)
+    /**
+     * Toggle between boost mode (live=true, adds own EMF) and pass-through
+     * mode (live=false, forwards inbound signal with no voltage addition).
+     * No-op if the battery is dead.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static togglePass(panel, graph) {
         if (panel.state === 'dead') return
         if (!panel.live) {
@@ -242,6 +273,12 @@ class SeriesBattery extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Validate and re-apply after external config changes (e.g. capacityWh or
+     * chargeAmps edited via the config panel). Clamps chargeWh to capacity.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static paramsChanged(panel, graph) {
         if (panel.chargeWh > panel.capacityWh) panel.chargeWh = panel.capacityWh
         panel.chargePercent = +(panel.chargeWh / panel.capacityWh * 100).toFixed(1)
@@ -249,6 +286,12 @@ class SeriesBattery extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Full reset — restores the battery to 100% charge, re-enables output,
+     * clears all telemetry accumulators, and delegates to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.live          = true
         panel.chargeWh      = panel.capacityWh

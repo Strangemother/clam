@@ -4,6 +4,29 @@
   Thin entry point. Creates the Graph engine then wires it to a Vue app whose
   methods are one-line delegations to node classes or the graph engine.
 
+  ┌────────────────────────────────────┐  ┌────────────────────────────────────┐
+  │  Vue app (this file)              │  │  PowerGraph (graph.js)            │
+  │────────────────────────────────────│  │────────────────────────────────────│
+  │  • Reactive display state          │  │  • Signal propagation              │
+  │  • Template bindings               │  │  • Animation frame tick           │
+  │  • One-line method delegations     │  │  • BFS generator draw             │
+  │  • Toolbar / inspector state       │  │  • Panel spawn / remove / reset   │
+  │  • catalogGroups computed prop     │  │  • Save / load / export / import  │
+  └────────────────────────────────────┘  └────────────────────────────────────┘
+              │ delegates all logic via this.graph.*
+              └────────────────────────────────────┘
+
+  Rule: all simulation logic belongs in PowerGraph or a node class.
+  The Vue app has no direct knowledge of how signals propagate or how nodes
+  behave — it only calls graph/node methods and binds the results for display.
+
+  Adding a new node type:
+    1. Create a file in js/power2/nodes/ extending NodeBase (or Load/etc.).
+    2. Call NodeRegistry.register(YourClass) at the bottom.
+    3. Add a <script> tag for it before index.js in power2.html.
+    4. Add a toolbar button (addType / addFromCatalog) and a Vue template block.
+    Done — no changes to the engine or this file required.
+
   Load order in power2.html:
     vendor/vue.global.prod.js
     vendor/dragsolo.js
@@ -25,14 +48,6 @@
     js/power2/nodes/console-node.js   ← registers ConsoleNode (custom)
 
     js/power2/index.js                ← this file (must be last)
-
-  Adding a new node
-  ─────────────────
-  1. Create a file in js/power2/nodes/ extending NodeBase (or Load/etc.).
-  2. Call NodeRegistry.register(YourClass) at the bottom.
-  3. Add a <script> tag for it before index.js in power2.html.
-  4. Add a toolbar button (addType('yourtype')) and a template block.
-  Done — no changes to the engine required.
 */
 
 const { createApp, nextTick } = Vue

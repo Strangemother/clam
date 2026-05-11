@@ -15,8 +15,30 @@
     manualResistance: number|null — overrides computed resistance when set
   }
 
-  Signal transformation: V_out = V_in − (I × R).  A passes through unchanged.
-  If V_out ≤ 0, null is returned.
+  Signal transformation
+  ─────────────────────
+  R (Ω) = (length / PX_PER_UNIT) × ohmsPerUnit
+  V_out = V_in − (I × R)           ← resistive voltage drop
+  A_out = A_in                     ← amps pass through unchanged
+
+  If V_out ≤ 0 the function returns null (wire too resistive for the load).
+
+  Worked example
+  ──────────────
+  Wire: copper (0.005 Ω/unit), 300 px long, carrying 10 A at 240 V
+
+    R      = (300 / 100) × 0.005  = 0.015 Ω
+    V_drop = 10 A × 0.015 Ω      = 0.15 V
+    V_out  = 240 − 0.15           = 239.85 V
+    A_out  = 10 A  (unchanged)
+
+  With lossy cable (0.300 Ω/unit) over the same 300 px at 10 A:
+
+    R      = 3 × 0.300            = 0.900 Ω
+    V_drop = 10 × 0.900           = 9.0 V
+    V_out  = 240 − 9.0            = 231.0 V
+
+  PX_PER_UNIT = 100, so every 100 pixels of wire length equals one resistance unit.
 */
 
 const EdgeStore2 = (() => {

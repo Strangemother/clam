@@ -140,6 +140,15 @@ class Load extends NodeBase {
             Load.dispatch(panel, 'state:change', { from: prev, to: panel.state })
     }
 
+    /**
+     * Per-frame update. Handles three independent concerns:
+     *   1. Noise — applies a sine-wave draw oscillation when enabled.
+     *   2. Spike decay — re-applies signal while the inrush spike is active.
+     *   3. Capacitor — charges the buffer when on; drains it when off.
+     * @param {Object}     panel
+     * @param {number}     dt    — elapsed seconds since last tick
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         // ── Noise: periodic sine-wave draw oscillation ───────────────────────
         if (panel.noise?.enabled && (panel.state === 'on' || panel.state === 'capacitor')) {
@@ -184,6 +193,13 @@ class Load extends NodeBase {
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
+    /**
+     * Re-evaluate signal processing after external parameter changes. Routes
+     * through the NodeRegistry so subclasses (Heater, ConsoleNode, etc.) use
+     * their own `apply()` rather than Load's.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static paramsChanged(panel, graph) {
         if (panel.signal !== undefined) {
             // Dispatch through registry so subclasses (Heater, Console…) use their own apply.
@@ -193,6 +209,12 @@ class Load extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Returns the current capacitor charge as a 0–100 percentage.
+     * Returns 0 if no capacitor is fitted (capacitance = 0).
+     * @param  {Object} panel
+     * @returns {number}
+     */
     static chargePercent(panel) {
         if (panel.capacitance <= 0) return 0
         return Math.min(100, (panel.chargeWs / panel.capacitance) * 100)

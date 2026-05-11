@@ -85,6 +85,15 @@ class ConsoleNode extends Load {
         super.apply(panel, signal, graph)
     }
 
+    /**
+     * Per-frame update. Delegates capacitor logic to Load.tick() then drives
+     * the boot state machine (off → booting → ready) and the shutdown countdown
+     * (ready → shutdown → off). Also modulates _effectiveWatts to model
+     * realistic power draw at each boot stage, and emits boot-progress events.
+     * @param {Object}     panel
+     * @param {number}     dt    — elapsed seconds since last tick
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         // Capacitor drain / charge from Load (uses _effectiveWatts via apply swap)
         super.tick(panel, dt, graph)
@@ -150,6 +159,12 @@ class ConsoleNode extends Load {
         }
     }
 
+    /**
+     * Reset the console — puts it back in 'off' boot state, zeroes all progress
+     * and dynamic-draw accumulators, then delegates to Load.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.bootState       = 'off'
         panel.bootProgress    = 0

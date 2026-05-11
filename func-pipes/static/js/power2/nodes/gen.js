@@ -113,6 +113,12 @@ class Generator extends NodeBase {
         }
     }
 
+    /**
+     * Full reset — turns the generator off, clears overload and draw telemetry,
+     * then delegates upstream to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         const prev     = panel.state
         panel.live     = false

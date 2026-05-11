@@ -118,9 +118,19 @@ class NodeBase {
     // ── Serialisation ───────────────────────────────────────────────────────
 
     /**
-     * List of panel field names to persist in save/load.
-     * Runtime state (live, blown, chargeWs …) is excluded deliberately.
-     * Sub-classes extend: return [...super.configFields(), 'myField']
+     * List of panel field names to include in save / load serialisation.
+     *
+     * Contract
+     * ────────
+     * • Only list fields that are configuration — things the user deliberately
+     *   sets and expects to survive a page reload (label, watts, ratingAmps …).
+     * • Do NOT include runtime state: live signal values, transient counters,
+     *   computed caches, or any field prefixed with _ (e.g. _spikeTimer).
+     *   These are re-derived when the graph starts or when a signal arrives.
+     * • Sub-classes extend the list:  return [...super.configFields(), 'myField']
+     * • Fields omitted here are silently dropped on save and will be at their
+     *   defaults() value after a reload — this is intentional for runtime state.
+     *
      * @returns {string[]}
      */
     static configFields() {

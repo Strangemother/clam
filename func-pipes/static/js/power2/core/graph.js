@@ -57,6 +57,32 @@ class PowerGraph {
     // SIGNAL PROPAGATION
     // ══════════════════════════════════════════════════════════════════════════
 
+    // ── Signal flow ─────────────────────────────────────────────────────────
+    //
+    //   upstream node
+    //       │  emit(panel, signal)  or  emitTo(panel, pipIndex, signal)
+    //       ▼
+    //   EdgeStore2.applyEdge(signal, connKey)   ← resistance drop / enabled check
+    //       │
+    //       ▼
+    //   receive(targetPanel, transformed, sourceId, inPipIndex)
+    //       │  stores signal in panel.powerSources[sourceId]
+    //       │  combineSources() → single combined { v, a } (or null)
+    //       │  panel.signal = combined
+    //       ▼
+    //   NodeClass.apply(panel, combinedSignal, graph)
+    //       │  each node decides what to emit on its outbound pip(s)
+    //       ▼
+    //   emit() / emitTo()  ─────────────────────┐
+    //                                            └─► back to top for each
+    //                                                connected downstream panel
+    //
+    //   Cycles are broken by _propagating (Set of in-flight panel IDs).
+    //   A panel mid-receive will not process a second signal until the first
+    //   call returns, preventing infinite loops in ring topologies.
+    //
+    // ────────────────────────────────────────────────────────────────────────
+
     /**
      * Deliver a signal from sourceId to panel, re-combine all sources, then
      * dispatch to the node class's apply() method.
@@ -105,7 +131,15 @@ class PowerGraph {
 
     /**
      * Fold multiple upstream source signals into one combined { v, a }.
-     * v = max voltage (dominant rail); a = sum of available amps.
+     *
+     * Folding rules:
+     *   v = max voltage across all live sources  (dominant-rail model — the
+     *       highest voltage source sets the bus; lower sources don't buck it)
+     *   a = sum of available amps from all live sources  (parallel supply)
+     *
+     * This means two 240 V / 13 A generators feeding the same node produce
+     * a combined signal of { v: 240, a: 26 } — not 480 V.
+     *
      * Returns null when no live sources remain.
      */
     combineSources(sources) {
@@ -245,6 +279,10 @@ class PowerGraph {
             const p = this._findPanel(nodeId)
             if (!p) continue
 
+            // shareCount: a load fed by N generators is only attributed 1/N of its
+            // draw to each generator's BFS walk.  This prevents double-counting when
+            // two generators share a downstream load — each correctly sees only its
+            // proportional share of the total demand.
             const shareCount = Math.max(1, Object.keys(p.powerSources || {}).length)
 
             if (p.type === 'bulb' && (p.state === 'on' || p.state === 'dim')) {

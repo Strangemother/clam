@@ -38,6 +38,13 @@ class Breaker extends NodeBase {
         return [...super.configFields(), 'ratingAmps']
     }
 
+    /**
+     * Process an inbound signal. Blocks flow when tripped or open, passes through
+     * when closed and within the amp rating. Trips automatically on overcurrent.
+     * @param {Object}     panel  — reactive panel state
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         const prev = panel.state
         if (!signal || signal.v <= 0) {
@@ -89,6 +96,12 @@ class Breaker extends NodeBase {
         graph.updateAllGenDraws()
     }
 
+    /**
+     * Full reset — clears the trip flag, closes the breaker, and clears power
+     * source tracking before delegating to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.tripped      = false
         panel.closed       = true
