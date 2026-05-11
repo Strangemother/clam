@@ -825,6 +825,11 @@ class PowerGraph {
         if (typeof dispatchRequestDrawEvent !== 'undefined') dispatchRequestDrawEvent()
     }
 
+    resetGraph() {
+        this._clearAll()
+        console.info('[Graph] reset — canvas cleared')
+    }
+
     _clearAll() {
         this.panels.forEach(p => { if (p.type === 'gen' && p.live) this.emit(p, null) })
         this.panels.splice(0)

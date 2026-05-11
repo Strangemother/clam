@@ -18,6 +18,7 @@ createApp({
     data() {
         return {
             events:          [],
+            filters:         {},
             visible:         true,
             _counter:        0,
             eventsPerSecond: 0,
@@ -50,10 +51,12 @@ createApp({
             this._epsAccum++
             const serialised = JSON.stringify(detail)
             this._kbAccum += new Blob([serialised]).size
+            const type = detail.type || 'event'
+            if (!(type in this.filters)) this.filters[type] = true
             this.events.unshift({
                 id:    ++this._counter,
                 ts:    new Date().toISOString().slice(11, 23),
-                type:  detail.type  || 'event',
+                type,
                 label: detail.label || '',
                 data:  detail.data != null ? JSON.stringify(detail.data) : '',
             })
@@ -61,6 +64,8 @@ createApp({
         },
 
         clear() { this.events = [] },
+        filterTypes() { return Object.keys(this.filters) },
+        visibleEvents() { return this.events.filter(ev => this.filters[ev.type] !== false) },
     },
 
     template: '#em-template',

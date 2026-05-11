@@ -164,6 +164,7 @@ createApp({
         // ── Save / load / export / import ────────────────────────────────────
         saveLayout()       { this.graph.saveLayout(this.layoutName, this.backendSave) },
         loadLayout(json)   { this.graph.loadLayout(json, this.layoutName, this.backendSave) },
+        resetGraph()       { this.graph.resetGraph() },
         exportJSON()       { this.graph.exportJSON() },
         importJSON()       { this.graph.importJSON() },
     },

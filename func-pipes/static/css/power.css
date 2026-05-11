@@ -90,6 +90,8 @@ button:active { background: #050807; }
 .btn-export:hover  { background: #120a30; }
 .btn-import  { color: #ffcc88; border-color: #3a2000; }
 .btn-import:hover  { background: #281800; }
+.btn-reset   { color: #ff8888; border-color: #3a1010; }
+.btn-reset:hover   { background: #2a0808; }
 
 .layout-name-input {
     background: #0a0f0a; color: #ccc; border: 1px solid #2a3a2a;

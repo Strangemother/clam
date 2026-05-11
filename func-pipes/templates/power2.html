@@ -80,6 +80,7 @@
                 <button class="btn-load"   @click="loadLayout()" title="Load layout">📂 Load</button>
                 <button class="btn-export" @click="exportJSON"   title="Download as JSON">⬇ Export</button>
                 <button class="btn-import" @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+                <button class="btn-reset"  @click="resetGraph"   title="Clear all nodes and connections">⊘ Reset</button>
                 <label class="backend-toggle" title="Save/load via server instead of localStorage">
                     <input type="checkbox" v-model="backendSave"> Server
                 </label>

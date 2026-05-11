@@ -12,8 +12,13 @@
             <button class="em-btn" @click="clear" title="Clear">✕</button>
             <button class="em-btn" @click="visible = !visible">{{ visible ? '▾' : '▴' }}</button>
         </div>
+        <div class="em-filters" v-show="visible && filterTypes().length">
+            <label v-for="t in filterTypes()" :key="t" class="em-filter-chip">
+                <input type="checkbox" v-model="filters[t]"> {{ t }}
+            </label>
+        </div>
         <ul class="em-list" v-show="visible">
-            <li v-for="ev in events" :key="ev.id" class="em-row">
+            <li v-for="ev in visibleEvents()" :key="ev.id" class="em-row">
                 <span class="em-ts">{{ ev.ts }}</span>
                 <span class="em-type">{{ ev.type }}</span>
                 <span class="em-label" v-if="ev.label">{{ ev.label }}</span>
