@@ -73,16 +73,16 @@ class ConsoleNode extends Load {
     }
 
     /**
-     * Swap in the dynamic draw, delegate to Load.apply(), then restore rated watts.
+     * Set currentWatts to the effective draw before delegating to Load.apply().
      * During the inrush spike the full rated watts (× multiplier) is used instead of
      * _effectiveWatts so the upstream sees a realistic startup burst.
+     * Load.apply() reads panel.currentWatts, so no watts-swapping needed.
      */
     static apply(panel, signal, graph) {
         const rated  = panel.watts
         const m      = NodeBase.spikeMultiplier(panel)
-        panel.watts  = m > 1.0 ? rated * m : (panel._effectiveWatts ?? 0)
+        panel.currentWatts = m > 1.0 ? rated * m : (panel._effectiveWatts ?? 0)
         super.apply(panel, signal, graph)
-        panel.watts  = rated
     }
 
     static tick(panel, dt, graph) {

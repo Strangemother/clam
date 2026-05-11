@@ -65,17 +65,11 @@ class Generator extends NodeBase {
     // Generators produce rather than receive — apply() is a no-op.
     static apply(panel, signal, graph) { /* source — does not process inbound */ }
 
-    // Decay the inrush spike each frame and re-emit the boosted output signal.
+    // Decay the inrush spike each frame and re-emit the settled or spiked output signal.
     static tick(panel, dt, graph) {
-        if (!NodeBase.tickSpike(panel, dt)) return
-        if (!panel.live || panel.state === 'tripped' || panel.state === 'off') return
-        const m = NodeBase.spikeMultiplier(panel)
-        graph.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })
-    }
-
-    // Decay the inrush spike each frame and re-emit the (spiked) output signal.
-    static tick(panel, dt, graph) {
-        if (!NodeBase.tickSpike(panel, dt)) return
+        const wasNonZero = (panel._spikeTimer ?? 0) > 0
+        const active     = NodeBase.tickSpike(panel, dt)
+        if (!active && !wasNonZero) return
         if (!panel.live || panel.state === 'tripped' || panel.state === 'off') return
         const m = NodeBase.spikeMultiplier(panel)
         graph.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })

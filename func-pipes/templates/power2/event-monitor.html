@@ -8,6 +8,7 @@
             <span class="em-title">⚡ Events</span>
             <span class="em-count">{{ events.length }}</span>
             <span class="em-eps">{{ eventsPerSecond }}/s</span>
+            <span class="em-kbs">{{ kbPerSecond }} KB/s</span>
             <button class="em-btn" @click="clear" title="Clear">✕</button>
             <button class="em-btn" @click="visible = !visible">{{ visible ? '▾' : '▴' }}</button>
         </div>

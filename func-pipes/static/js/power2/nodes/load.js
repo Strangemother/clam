@@ -10,12 +10,14 @@
   Extended state
   ──────────────
   watts           number  — rated wattage
+  currentWatts    number  — live effective draw (modulated by noise + spike)
   minVolts        number  — below this the load will not operate (brownout)
   maxVolts        number  — above this the load blows (overvoltage)
   capacitance     number  — watt-second buffer (0 = no capacitor)
   chargeWs        number  — current stored charge in watt-seconds
   blown           bool    — destroyed by overvoltage; requires manual reset
   _lastGoodSignal Object  — last { v, a } when fully powered (for cap rundown)
+  noise           Object  — { enabled, period, amount } periodic draw oscillation
 
   States: 'off' | 'on' | 'brownout' | 'capacitor' | 'blown'
 */
@@ -34,11 +36,26 @@ class Load extends NodeBase {
     static consumesWatts = true
 
     static catalog = [
-        { key: 'fan',       label: 'Fan',         watts: 25,   minVolts: 200 },
-        { key: 'pump',      label: 'Pump',         watts: 180,  minVolts: 210 },
-        { key: 'motor-sm',  label: 'Motor (sm)',   watts: 370,  minVolts: 215 },
-        { key: 'motor-lg',  label: 'Motor (lg)',   watts: 1500, minVolts: 220 },
-        { key: 'ups',       label: 'UPS Buffer',   watts: 5,    minVolts: 190, capacitance: 600 },
+        { key: 'fan',       label: 'Fan',         watts: 25,   minVolts: 200,
+          spike:  { enabled: true,  percent: 40, duration: 0.6 },
+          ripple: { enabled: true,  amount: 1.2, interval: 0.08 },
+          noise:  { enabled: true,  period: 0.5, amount: 0.20 } },
+        { key: 'pump',      label: 'Pump',         watts: 180,  minVolts: 210,
+          spike:  { enabled: true,  percent: 45, duration: 0.8 },
+          ripple: { enabled: true,  amount: 2.0, interval: 0.12 },
+          noise:  { enabled: true,  period: 1.0, amount: 0.15 } },
+        { key: 'motor-sm',  label: 'Motor (sm)',   watts: 370,  minVolts: 215,
+          spike:  { enabled: true,  percent: 50, duration: 0.9 },
+          ripple: { enabled: true,  amount: 2.5, interval: 0.15 },
+          noise:  { enabled: true,  period: 1.5, amount: 0.12 } },
+        { key: 'motor-lg',  label: 'Motor (lg)',   watts: 1500, minVolts: 220,
+          spike:  { enabled: true,  percent: 60, duration: 1.2 },
+          ripple: { enabled: true,  amount: 4.0, interval: 0.18 },
+          noise:  { enabled: true,  period: 2.5, amount: 0.08 } },
+        { key: 'ups',       label: 'UPS Buffer',   watts: 5,    minVolts: 190, capacitance: 600,
+          spike:  { enabled: true,  percent: 5,  duration: 0.2 },
+          ripple: { enabled: false, amount: 0.1, interval: 1.0 },
+          noise:  { enabled: false, period: 5.0, amount: 0.02 } },
     ]
 
     static _defaultRipple() {
@@ -49,30 +66,41 @@ class Load extends NodeBase {
         return { enabled: true, percent: 20, duration: 0.95 }
     }
 
+    static _defaultNoise() {
+        return { enabled: false, period: 2.0, amount: 0.1 }
+    }
+
     static defaults(id, preset = {}) {
+        const watts = preset.watts ?? 100
         return {
             ...super.defaults(id, preset),
-            watts:           preset.watts       ?? 100,
+            watts,
+            currentWatts:    watts,
             minVolts:        preset.minVolts    ?? 200,
             maxVolts:        preset.maxVolts    ?? (preset.minVolts ? preset.minVolts * 1.25 : 300),
             capacitance:     preset.capacitance ?? 0,
             chargeWs:        0,
             blown:           false,
             _lastGoodSignal: null,
+            _noiseAccum:     0,
+            _noisePhase:     Math.random() * Math.PI * 2,
+            _lastNoiseWatts: null,
             ripple:          preset.ripple ? { ...preset.ripple } : { ...this._defaultRipple() },
             spike:           preset.spike  ? { ...preset.spike  } : { ...this._defaultSpike()  },
+            noise:           preset.noise  ? { ...preset.noise  } : { ...this._defaultNoise()  },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'watts', 'minVolts', 'maxVolts', 'capacitance', 'ripple', 'spike']
+        return [...super.configFields(), 'watts', 'minVolts', 'maxVolts', 'capacitance', 'ripple', 'spike', 'noise']
     }
 
     static apply(panel, signal, graph) {
         if (panel.blown) return   // open circuit until manually reset
 
         const prev     = panel.state
-        const drawAmps = (panel.watts / NOMINAL_VOLTS) * NodeBase.spikeMultiplier(panel)
+        // currentWatts holds the live effective draw (noise-modulated, or rated for plain loads)
+        const drawAmps = ((panel.currentWatts ?? panel.watts) / NOMINAL_VOLTS) * NodeBase.spikeMultiplier(panel)
 
         if (signal && signal.v > panel.maxVolts) {
             panel.blown = true
@@ -113,8 +141,26 @@ class Load extends NodeBase {
     }
 
     static tick(panel, dt, graph) {
-        // Decay the inrush spike each frame; re-apply to update downstream draw.
-        if (NodeBase.tickSpike(panel, dt)) {
+        // ── Noise: periodic sine-wave draw oscillation ───────────────────────
+        if (panel.noise?.enabled && (panel.state === 'on' || panel.state === 'capacitor')) {
+            panel._noiseAccum += dt
+            const period = Math.max(0.1, panel.noise.period ?? 2.0)
+            const amount = panel.noise.amount ?? 0.1
+            const sine   = Math.sin(2 * Math.PI * (panel._noiseAccum / period) + (panel._noisePhase ?? 0))
+            panel.currentWatts = panel.watts * (1 + amount * sine)
+
+            const prev = panel._lastNoiseWatts ?? -1
+            if (Math.abs(panel.currentWatts - prev) > 1) {
+                panel._lastNoiseWatts = panel.currentWatts
+                const Cls = NodeRegistry.get(panel.type)
+                if (Cls && panel.signal) Cls.apply(panel, panel.signal, graph)
+            }
+        }
+
+        // ── Spike decay: re-apply on each spiking frame, and on settle ───────
+        const wasNonZero  = (panel._spikeTimer ?? 0) > 0
+        const stillActive = NodeBase.tickSpike(panel, dt)
+        if (stillActive || (wasNonZero && !stillActive)) {
             if ((panel.state === 'on' || panel.state === 'capacitor') && panel.signal) {
                 const Cls = NodeRegistry.get(panel.type)
                 if (Cls) Cls.apply(panel, panel.signal, graph)
@@ -153,10 +199,13 @@ class Load extends NodeBase {
     }
 
     static reset(panel, graph) {
-        panel.blown          = false
-        panel.chargeWs       = 0
+        panel.blown           = false
+        panel.chargeWs        = 0
+        panel.currentWatts    = panel.watts
+        panel._noiseAccum     = 0
+        panel._lastNoiseWatts = null
         panel._lastGoodSignal = null
-        panel.powerSources   = {}
+        panel.powerSources    = {}
         Load.dispatch(panel, 'load:reset', {})
         super.reset(panel, graph)
     }

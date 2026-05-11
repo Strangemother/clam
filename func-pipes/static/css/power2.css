@@ -139,6 +139,7 @@
         .em-title { flex: 1; color: #88aaff; font-weight: bold; }
         .em-count  { color: #556; font-size: 10px; }
         .em-eps    { color: #4a8; font-size: 10px; min-width: 3.5em; text-align: right; }
+        .em-kbs    { color: #48c; font-size: 10px; min-width: 4.5em; text-align: right; }
         .em-btn {
             background: none;
             border: none;

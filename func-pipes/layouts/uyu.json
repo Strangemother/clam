@@ -1,0 +1,489 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Generator",
+      "config": {
+        "label": "Generator",
+        "enabled": true,
+        "volts": 240,
+        "amps": 13,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 2,
+          "interval": 0.8
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.94
+        }
+      },
+      "pos": {
+        "left": "3.65625px",
+        "top": "301.219px"
+      }
+    },
+    {
+      "id": 2,
+      "type": "bulb",
+      "title": "Bulb",
+      "config": {
+        "label": "Bulb",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 288,
+        "maxAmps": 15,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.73
+        }
+      },
+      "pos": {
+        "left": "560.172px",
+        "top": "102.047px"
+      }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Meter",
+      "config": {
+        "label": "Meter",
+        "enabled": true
+      },
+      "pos": {
+        "left": "293.172px",
+        "top": "229.094px"
+      }
+    },
+    {
+      "id": 4,
+      "type": "heater",
+      "title": "Heater",
+      "config": {
+        "label": "Heater",
+        "enabled": true,
+        "watts": 1000,
+        "minVolts": 200,
+        "maxVolts": 300,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 0.5,
+          "interval": 0.3
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 3.8
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        },
+        "heatRate": 8,
+        "coolRate": 3,
+        "maxTemp": 100,
+        "resetTemp": 70,
+        "minWatts": 50
+      },
+      "pos": {
+        "left": "802.797px",
+        "top": "225.188px"
+      }
+    },
+    {
+      "id": 5,
+      "type": "meter",
+      "title": "Meter",
+      "config": {
+        "label": "Meter",
+        "enabled": true
+      },
+      "pos": {
+        "left": "1108.88px",
+        "top": "351.984px"
+      }
+    },
+    {
+      "id": 6,
+      "type": "load",
+      "title": "Fan",
+      "config": {
+        "label": "Fan",
+        "enabled": true,
+        "watts": 25,
+        "minVolts": 200,
+        "maxVolts": 250,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 50,
+          "interval": 0.3
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.95
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": {
+        "left": "580.938px",
+        "top": "402.297px"
+      }
+    },
+    {
+      "id": 7,
+      "type": "meter",
+      "title": "Meter",
+      "config": {
+        "label": "Meter",
+        "enabled": true
+      },
+      "pos": {
+        "left": "1002.25px",
+        "top": "680.719px"
+      }
+    },
+    {
+      "id": 8,
+      "type": "console",
+      "title": "Console (LG)",
+      "config": {
+        "label": "Console (LG)",
+        "enabled": true,
+        "watts": 80,
+        "minVolts": 180,
+        "maxVolts": 225,
+        "capacitance": 20,
+        "ripple": {
+          "enabled": false,
+          "amount": 0.5,
+          "interval": 0.3
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 4,
+          "duration": 2
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        },
+        "bootDuration": 5,
+        "shutdownDuration": 2
+      },
+      "pos": {
+        "left": "1495.38px",
+        "top": "503.078px"
+      }
+    },
+    {
+      "id": 9,
+      "type": "converter",
+      "title": "Step-down 240\u219224V",
+      "config": {
+        "label": "Step-down 240\u219224V",
+        "enabled": true,
+        "outVolts": 214,
+        "step": 10,
+        "efficiency": 0.95,
+        "ripple": {
+          "enabled": true,
+          "amount": 1,
+          "interval": 1.2
+        }
+      },
+      "pos": {
+        "left": "1350.75px",
+        "top": "159.031px"
+      }
+    },
+    {
+      "id": 10,
+      "type": "load",
+      "title": "Motor (lg)",
+      "config": {
+        "label": "Motor (lg)",
+        "enabled": true,
+        "watts": 1500,
+        "minVolts": 220,
+        "maxVolts": 275,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 40,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 60,
+          "duration": 1.2
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": {
+        "left": "337px",
+        "top": "582px"
+      }
+    },
+    {
+      "id": 11,
+      "type": "meter",
+      "title": "Meter",
+      "config": {
+        "label": "Meter",
+        "enabled": true
+      },
+      "pos": {
+        "left": "675px",
+        "top": "717px"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "sender": {
+        "label": 1,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 3,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 2,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 1,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 4,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 4,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 5,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 1,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 7,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 9,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 8,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 5,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 9,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 1,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 10,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    },
+    {
+      "sender": {
+        "label": 10,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 11,
+        "direction": "inbound",
+        "pipIndex": 0
+      },
+      "line": {
+        "color": "#00e87c",
+        "width": 2
+      }
+    }
+  ],
+  "edges": {
+    "1-0-3-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 152,
+      "manualResistance": null
+    },
+    "3-0-2-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 133,
+      "manualResistance": null
+    },
+    "1-0-4-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 430,
+      "manualResistance": null
+    },
+    "4-0-5-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 147,
+      "manualResistance": null
+    },
+    "6-0-1-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 316,
+      "manualResistance": null
+    },
+    "6-0-7-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 147,
+      "manualResistance": null
+    },
+    "5-0-8-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 106,
+      "manualResistance": null
+    },
+    "9-0-8-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 294,
+      "manualResistance": null
+    },
+    "5-0-9-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 355,
+      "manualResistance": null
+    },
+    "1-0-10-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 240,
+      "manualResistance": null
+    },
+    "10-0-11-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 144,
+      "manualResistance": null
+    }
+  }
+}

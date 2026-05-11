@@ -44,10 +44,14 @@ class Heater extends Load {
     }
 
     static catalog = [
-        { key: 'heater-1kw', label: 'Heater 1kW',  watts: 1000, minVolts: 200 },
-        { key: 'heater-2kw', label: 'Heater 2kW',  watts: 2000, minVolts: 205 },
-        { key: 'heater-3kw', label: 'Heater 3kW',  watts: 3000, minVolts: 210 },
-        { key: 'heater-oil', label: 'Oil Heater',   watts: 1500, minVolts: 200 },
+        { key: 'heater-1kw', label: 'Heater 1kW',  watts: 1000, minVolts: 200,
+          spike: { enabled: true, percent: 30, duration: 0.8 } },
+        { key: 'heater-2kw', label: 'Heater 2kW',  watts: 2000, minVolts: 205,
+          spike: { enabled: true, percent: 35, duration: 0.9 } },
+        { key: 'heater-3kw', label: 'Heater 3kW',  watts: 3000, minVolts: 210,
+          spike: { enabled: true, percent: 40, duration: 1.0 } },
+        { key: 'heater-oil', label: 'Oil Heater',   watts: 1500, minVolts: 200,
+          spike: { enabled: true, percent: 15, duration: 0.5 } },
     ]
 
     static defaults(id, preset = {}) {

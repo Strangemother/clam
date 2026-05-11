@@ -22,6 +22,8 @@ createApp({
             _counter:        0,
             eventsPerSecond: 0,
             _epsAccum:       0,
+            kbPerSecond:     0,
+            _kbAccum:        0,
             _epsInterval:    null,
         }
     },
@@ -32,6 +34,8 @@ createApp({
         this._epsInterval = setInterval(() => {
             this.eventsPerSecond = this._epsAccum
             this._epsAccum = 0
+            this.kbPerSecond = (this._kbAccum / 1024).toFixed(2)
+            this._kbAccum = 0
         }, 1000)
         this.push({ type: 'monitor:ready', label: 'event-monitor', data: { max: MAX_EVENTS } })
     },
@@ -44,6 +48,8 @@ createApp({
     methods: {
         push(detail = {}) {
             this._epsAccum++
+            const serialised = JSON.stringify(detail)
+            this._kbAccum += new Blob([serialised]).size
             this.events.unshift({
                 id:    ++this._counter,
                 ts:    new Date().toISOString().slice(11, 23),

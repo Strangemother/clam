@@ -48,6 +48,8 @@ createApp({
         return {
             graphRunning:    true,
             panels:          [],
+            layoutName:      '',
+            backendSave:     true,
             // Toolbar / inspector state
             disconnectMode:  false,
             disconnectFirst: null,
@@ -160,8 +162,8 @@ createApp({
         selectEdgePip(pip)         { this.graph.selectEdgePip(pip) },
 
         // ── Save / load / export / import ────────────────────────────────────
-        saveLayout()       { this.graph.saveLayout() },
-        loadLayout(json)   { this.graph.loadLayout(json) },
+        saveLayout()       { this.graph.saveLayout(this.layoutName, this.backendSave) },
+        loadLayout(json)   { this.graph.loadLayout(json, this.layoutName, this.backendSave) },
         exportJSON()       { this.graph.exportJSON() },
         importJSON()       { this.graph.importJSON() },
     },

@@ -131,11 +131,12 @@ class SeriesBattery extends NodeBase {
     }
 
     static tick(panel, dt, graph) {
-        // Decay inrush spike and re-apply if still spiking
-        if (NodeBase.tickSpike(panel, dt)) {
-            if (panel.live && panel.state !== 'dead' && panel.signal !== undefined)
-                SeriesBattery.apply(panel, panel.signal, graph)
-        }
+        // Decay inrush spike and re-apply to settle downstream on expiry too.
+        const wasNonZero = (panel._spikeTimer ?? 0) > 0
+        const active     = NodeBase.tickSpike(panel, dt)
+        if ((active || (wasNonZero && !active)) &&
+                panel.live && panel.state !== 'dead' && panel.signal !== undefined)
+            SeriesBattery.apply(panel, panel.signal, graph)
 
         // Charging and discharging are independent processes.
         //

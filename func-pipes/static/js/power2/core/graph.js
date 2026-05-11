@@ -445,9 +445,12 @@ class PowerGraph {
                 if (typeof Cls?.onDisabled === 'function') Cls.onDisabled(panel, this)
                 else this.emit(panel, null)
             } else if (panel.live && panel.state !== 'tripped') {
-                this.emit(panel, { v: panel.volts, a: panel.amps })
+                NodeBase.startSpike(panel)
+                const m = NodeBase.spikeMultiplier(panel)
+                this.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })
             }
         } else {
+            if (panel.enabled !== false) NodeBase.startSpike(panel)
             this.receive(panel, panel.signal)
         }
         this.updateAllGenDraws()
@@ -651,19 +654,41 @@ class PowerGraph {
 
     static STORAGE_KEY = 'power2-backbone-layout'
 
-    saveLayout() {
+    saveLayout(name = '', backend = false) {
         const json = this._toJSON()
-        try { localStorage.setItem(PowerGraph.STORAGE_KEY, json) } catch (e) {
-            console.warn('[Graph] localStorage write failed', e)
+        if (backend && name) {
+            fetch(`/power2/layouts/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: json,
+            }).then(r => r.json())
+              .then(() => console.info('[Graph] layout saved to server:', name))
+              .catch(e => console.warn('[Graph] server save failed', e))
+        } else {
+            try { localStorage.setItem(PowerGraph.STORAGE_KEY, json) } catch (e) {
+                console.warn('[Graph] localStorage write failed', e)
+            }
+            console.info('[Graph] layout saved (%d nodes)', this.panels.length)
         }
-        console.info('[Graph] layout saved (%d nodes)', this.panels.length)
         return json
     }
 
-    loadLayout(json = null) {
-        const layout = json ? this._parseJSON(json) : this._loadFromStorage()
-        if (!layout) { console.warn('[Graph] nothing to load'); return }
-        this._restoreLayout(layout)
+    loadLayout(json = null, name = '', backend = false) {
+        if (json) {
+            const layout = this._parseJSON(json)
+            if (layout) this._restoreLayout(layout)
+            return
+        }
+        if (backend && name) {
+            fetch(`/power2/layouts/${encodeURIComponent(name)}`)
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.json() })
+                .then(layout => this._restoreLayout(layout))
+                .catch(e => console.warn('[Graph] server load failed', e))
+        } else {
+            const layout = this._loadFromStorage()
+            if (!layout) { console.warn('[Graph] nothing to load'); return }
+            this._restoreLayout(layout)
+        }
     }
 
     exportJSON() {
