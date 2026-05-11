@@ -66,10 +66,24 @@
             <!-- Layout save / restore -->
             <div class="toolbar-group">
                 <span class="toolbar-label">Layout</span>
-                <button class="btn-save"   @click="saveLayout"   title="Save to browser storage">💾 Save</button>
-                <button class="btn-load"   @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <input class="layout-name-input"
+                       v-model="layoutName"
+                       list="layout-files"
+                       placeholder="filename…"
+                       title="Layout name (without .json)">
+                <datalist id="layout-files">
+                    {% for f in layout_files %}
+                    <option value="{{ f }}">
+                    {% endfor %}
+                </datalist>
+                <button class="btn-save"   @click="saveLayout"   title="Save layout">💾 Save</button>
+                <button class="btn-load"   @click="loadLayout()" title="Load layout">📂 Load</button>
                 <button class="btn-export" @click="exportJSON"   title="Download as JSON">⬇ Export</button>
                 <button class="btn-import" @click="importJSON"   title="Load from JSON file">⬆ Import</button>
+                <button class="btn-reset"  @click="resetGraph"   title="Clear all nodes and connections">⊘ Reset</button>
+                <label class="backend-toggle" title="Save/load via server instead of localStorage">
+                    <input type="checkbox" v-model="backendSave"> Server
+                </label>
             </div>
 
             <!-- Disconnect mode -->
@@ -244,6 +258,7 @@
 <script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
 <script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pipes/pipes-init.js') }}"></script>
 
 <!-- ── Power-2 core (order matters) ─────────────────────────────────────── -->

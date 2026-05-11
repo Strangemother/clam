@@ -56,6 +56,10 @@ class SeriesBattery extends NodeBase {
         return { enabled: false, amount: 0.5, interval: 0.5 }
     }
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 10, duration: 0.3 }
+    }
+
     static defaults(id, preset = {}) {
         const cap = preset.capacityWh ?? 10
         return {
@@ -74,11 +78,12 @@ class SeriesBattery extends NodeBase {
             inAmps:        0,
             live:          true,
             ripple:        preset.ripple ? { ...preset.ripple } : { ...this._defaultRipple() },
+            spike:         preset.spike  ? { ...preset.spike  } : { ...this._defaultSpike()  },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'volts', 'amps', 'chargeAmps', 'capacityWh', 'live', 'ripple']
+        return [...super.configFields(), 'volts', 'amps', 'chargeAmps', 'capacityWh', 'live', 'ripple', 'spike']
     }
 
     static apply(panel, signal, graph) {
@@ -91,6 +96,8 @@ class SeriesBattery extends NodeBase {
             return
         }
 
+        const prev = panel.state
+
         if (!panel.live) {
             // Pass-through: forward inbound signal unchanged, no charge used
             if (signal && signal.v > 0) {
@@ -100,12 +107,16 @@ class SeriesBattery extends NodeBase {
                 panel.state = 'off'
                 graph.emit(panel, null)
             }
+            if (panel.state !== prev)
+                SeriesBattery.dispatch(panel, 'state:change', { from: prev, to: panel.state })
             return
         }
 
         if (panel.chargeWh <= 0) {
             panel.state    = 'dead'
             panel.chargeWh = 0
+            SeriesBattery.dispatch(panel, 'battery:dead', { chargePercent: 0 })
+            SeriesBattery.dispatch(panel, 'state:change', { from: prev, to: 'dead' })
             graph.emit(panel, null)
             graph.updateAllGenDraws()
             return
@@ -115,10 +126,18 @@ class SeriesBattery extends NodeBase {
         const vIn  = signal ? signal.v : 0
         const aOut = signal ? Math.min(signal.a, panel.amps) : panel.amps
         const vOff = panel._rippleOffset ?? 0
-        graph.emit(panel, { v: vIn + panel.volts + vOff, a: aOut })
+        const m    = NodeBase.spikeMultiplier(panel)
+        graph.emit(panel, { v: (vIn + panel.volts + vOff) * m, a: aOut * m })
     }
 
     static tick(panel, dt, graph) {
+        // Decay inrush spike and re-apply to settle downstream on expiry too.
+        const wasNonZero = (panel._spikeTimer ?? 0) > 0
+        const active     = NodeBase.tickSpike(panel, dt)
+        if ((active || (wasNonZero && !active)) &&
+                panel.live && panel.state !== 'dead' && panel.signal !== undefined)
+            SeriesBattery.apply(panel, panel.signal, graph)
+
         // Charging and discharging are independent processes.
         //
         // Charge in: inbound source pushes current into the battery at up to
@@ -148,10 +167,14 @@ class SeriesBattery extends NodeBase {
         )
         panel.chargePercent = +(panel.chargeWh / panel.capacityWh * 100).toFixed(1)
 
+        const prevState = panel.state
+
         if (panel.state === 'dead') {
             if (panel.chargeWh >= panel.capacityWh * 0.01 && chargeInW > 0) {
                 panel.state = 'charging'
                 panel.live  = true
+                SeriesBattery.dispatch(panel, 'battery:revived', { chargePercent: panel.chargePercent })
+                SeriesBattery.dispatch(panel, 'state:change', { from: 'dead', to: 'charging' })
                 SeriesBattery.apply(panel, panel.signal, graph)
                 graph.updateAllGenDraws()
             }
@@ -161,6 +184,8 @@ class SeriesBattery extends NodeBase {
         if (panel.chargeWh <= 0) {
             panel.state = 'dead'
             panel.live  = false
+            SeriesBattery.dispatch(panel, 'battery:dead', { chargePercent: 0 })
+            SeriesBattery.dispatch(panel, 'state:change', { from: prevState, to: 'dead' })
             graph.emit(panel, null)
             graph.updateAllGenDraws()
             return
@@ -175,6 +200,21 @@ class SeriesBattery extends NodeBase {
         } else {
             panel.state = 'discharging'
         }
+
+        if (panel.state !== prevState)
+            SeriesBattery.dispatch(panel, 'state:change', { from: prevState, to: panel.state })
+
+        // Charge telemetry — throttled, dispatched only when value changes
+        const pct = panel.chargePercent
+        if (pct !== panel._lastChargePct) {
+            panel._lastChargePct = pct
+            SeriesBattery.throttle(panel, 'battery:charge', {
+                chargePercent: pct,
+                chargeWh:      +panel.chargeWh.toFixed(3),
+                chargeInW:     panel.chargeInW,
+                chargeOutW:    panel.chargeOutW,
+            })
+        }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
@@ -182,6 +222,8 @@ class SeriesBattery extends NodeBase {
     static toggle(panel, graph) {
         if (panel.state === 'dead') return   // must reset first
         panel.live = !panel.live
+        if (panel.live) NodeBase.startSpike(panel)
+        SeriesBattery.dispatch(panel, 'battery:toggle', { live: panel.live })
         SeriesBattery.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -195,6 +237,7 @@ class SeriesBattery extends NodeBase {
         } else {
             panel.live = false
         }
+        SeriesBattery.dispatch(panel, 'battery:pass-toggle', { live: panel.live })
         SeriesBattery.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
     }
@@ -215,6 +258,8 @@ class SeriesBattery extends NodeBase {
         panel.chargeOutW    = 0
         panel.inVolts       = 0
         panel.inAmps        = 0
+        panel._lastChargePct = null
+        SeriesBattery.dispatch(panel, 'battery:reset', { chargePercent: 100 })
         super.reset(panel, graph)
     }
 }

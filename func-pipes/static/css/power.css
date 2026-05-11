@@ -90,6 +90,17 @@ button:active { background: #050807; }
 .btn-export:hover  { background: #120a30; }
 .btn-import  { color: #ffcc88; border-color: #3a2000; }
 .btn-import:hover  { background: #281800; }
+.btn-reset   { color: #ff8888; border-color: #3a1010; }
+.btn-reset:hover   { background: #2a0808; }
+
+.layout-name-input {
+    background: #0a0f0a; color: #ccc; border: 1px solid #2a3a2a;
+    padding: 2px 6px; border-radius: 3px; font-size: 11px; width: 9em;
+}
+.backend-toggle {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: #8a8; cursor: pointer; user-select: none;
+}
 
 .catalog-select {
     background: #0a0f0a;

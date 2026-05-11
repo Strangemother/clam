@@ -21,6 +21,10 @@ class Bulb extends NodeBase {
     static label = 'Bulb'
     static group = 'Light'
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 25, duration: 0.73 }
+    }
+
     static catalog = [
         { key: 'led-5w',    label: 'LED  5W',    watts: 5   },
         { key: 'bulb-40w',  label: 'Bulb  40W',  watts: 40  },
@@ -37,13 +41,15 @@ class Bulb extends NodeBase {
             maxAmps:    preset.maxAmps  ?? +((watts / NOMINAL_VOLTS) * 2).toFixed(3),
             brightness: 0,
             blown:      false,
+            spike:      preset.spike ? { ...preset.spike } : { ...this._defaultSpike() },
+            _spikeWatts: 0,
             // Bulbs are sinks — no outbound pip
             pipsOutbound: [],
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'watts', 'maxVolts', 'maxAmps']
+        return [...super.configFields(), 'watts', 'maxVolts', 'maxAmps', 'spike']
     }
 
     static apply(panel, signal, graph) {
@@ -97,6 +103,7 @@ class Bulb extends NodeBase {
         } else {
             panel.state      = 'on'
             panel.brightness = Math.min(1.0, voltRatio)
+            if (prev !== 'on') NodeBase.startSpike(panel)
         }
 
         if (panel.state !== prev)
@@ -105,6 +112,16 @@ class Bulb extends NodeBase {
             Bulb.dispatch(panel, 'bulb:brightness', { brightness: +panel.brightness.toFixed(2) })
 
         graph.emit(panel, null)   // sink — nothing forwarded
+    }
+
+    static tick(panel, dt, graph) {
+        const wasSpiking = NodeBase.tickSpike(panel, dt)
+        // Track inflated watt draw so computeGenDraw picks it up during the spike.
+        panel._spikeWatts = (panel.state === 'on' || panel.state === 'dim')
+            ? panel.watts * NodeBase.spikeMultiplier(panel)
+            : 0
+        if (wasSpiking && panel.state !== 'off' && panel.state !== 'blown' && panel.signal)
+            Bulb.apply(panel, panel.signal, graph)
     }
 
     static reset(panel, graph) {

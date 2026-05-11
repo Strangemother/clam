@@ -17,28 +17,46 @@ const MAX_EVENTS = 1000
 createApp({
     data() {
         return {
-            events:   [],
-            visible:  true,
-            _counter: 0,
+            events:          [],
+            filters:         {},
+            visible:         true,
+            _counter:        0,
+            eventsPerSecond: 0,
+            _epsAccum:       0,
+            kbPerSecond:     0,
+            _kbAccum:        0,
+            _epsInterval:    null,
         }
     },
 
     mounted() {
         this._handler = e => this.push(e.detail)
         window.addEventListener('power2', this._handler)
+        this._epsInterval = setInterval(() => {
+            this.eventsPerSecond = this._epsAccum
+            this._epsAccum = 0
+            this.kbPerSecond = (this._kbAccum / 1024).toFixed(2)
+            this._kbAccum = 0
+        }, 1000)
         this.push({ type: 'monitor:ready', label: 'event-monitor', data: { max: MAX_EVENTS } })
     },
 
     beforeUnmount() {
         window.removeEventListener('power2', this._handler)
+        clearInterval(this._epsInterval)
     },
 
     methods: {
         push(detail = {}) {
+            this._epsAccum++
+            const serialised = JSON.stringify(detail)
+            this._kbAccum += new Blob([serialised]).size
+            const type = detail.type || 'event'
+            if (!(type in this.filters)) this.filters[type] = true
             this.events.unshift({
                 id:    ++this._counter,
                 ts:    new Date().toISOString().slice(11, 23),
-                type:  detail.type  || 'event',
+                type,
                 label: detail.label || '',
                 data:  detail.data != null ? JSON.stringify(detail.data) : '',
             })
@@ -46,6 +64,8 @@ createApp({
         },
 
         clear() { this.events = [] },
+        filterTypes() { return Object.keys(this.filters) },
+        visibleEvents() { return this.events.filter(ev => this.filters[ev.type] !== false) },
     },
 
     template: '#em-template',

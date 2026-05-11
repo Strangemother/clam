@@ -100,8 +100,11 @@ class BusBar extends DecisionNode {
      * Null input → all channels silenced.
      */
     static apply(panel, signal, graph) {
+        const prev = panel.state
+
         if (!signal) {
             panel.state = 'off'
+            if (prev !== 'off') BusBar.dispatch(panel, 'state:change', { from: prev, to: 'off' })
             panel.pipsOutbound.forEach((_, i) => graph.emitTo(panel, i, null))
             return
         }
@@ -110,6 +113,7 @@ class BusBar extends DecisionNode {
         panel._normWeights = BusBar._normalise(panel.weights)
 
         panel.state = 'routing'
+        if (prev !== 'routing') BusBar.dispatch(panel, 'state:change', { from: prev, to: 'routing' })
 
         panel.pipsOutbound.forEach((_, i) => {
             const frac = panel._normWeights[i] ?? 0
@@ -180,6 +184,12 @@ class BusBar extends DecisionNode {
         panel._normWeights  = BusBar._normalise(panel.weights)
         this.apply(panel, panel.signal, graph)
         BusBar.dispatch(panel, 'busbar:equalised', { weights: panel.weights })
+    }
+
+    static reset(panel, graph) {
+        panel._normWeights = BusBar._normalise(panel.weights)
+        BusBar.dispatch(panel, 'busbar:reset', { outputCount: panel.outputCount })
+        super.reset(panel, graph)
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

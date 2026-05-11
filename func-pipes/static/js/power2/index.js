@@ -48,6 +48,8 @@ createApp({
         return {
             graphRunning:    true,
             panels:          [],
+            layoutName:      '',
+            backendSave:     true,
             // Toolbar / inspector state
             disconnectMode:  false,
             disconnectFirst: null,
@@ -75,6 +77,7 @@ createApp({
 
     mounted() {
         this.graph.startTick()
+        window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel')
     },
 
     beforeUnmount() {
@@ -159,8 +162,9 @@ createApp({
         selectEdgePip(pip)         { this.graph.selectEdgePip(pip) },
 
         // ── Save / load / export / import ────────────────────────────────────
-        saveLayout()       { this.graph.saveLayout() },
-        loadLayout(json)   { this.graph.loadLayout(json) },
+        saveLayout()       { this.graph.saveLayout(this.layoutName, this.backendSave) },
+        loadLayout(json)   { this.graph.loadLayout(json, this.layoutName, this.backendSave) },
+        resetGraph()       { this.graph.resetGraph() },
         exportJSON()       { this.graph.exportJSON() },
         importJSON()       { this.graph.importJSON() },
     },

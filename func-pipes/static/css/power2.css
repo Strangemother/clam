@@ -138,6 +138,8 @@
         }
         .em-title { flex: 1; color: #88aaff; font-weight: bold; }
         .em-count  { color: #556; font-size: 10px; }
+        .em-eps    { color: #4a8; font-size: 10px; min-width: 3.5em; text-align: right; }
+        .em-kbs    { color: #48c; font-size: 10px; min-width: 4.5em; text-align: right; }
         .em-btn {
             background: none;
             border: none;
@@ -170,3 +172,14 @@
         .em-label { color: #88bbff; flex-shrink: 0; }
         .em-data  { color: #667; overflow: hidden; text-overflow: ellipsis; }
         .em-wrap.collapsed .em-list { display: none; }
+        .em-filters {
+            display: flex; flex-wrap: wrap; gap: 4px;
+            padding: 4px 8px; border-bottom: 1px solid #1a1a3a;
+            background: #0b0b18;
+        }
+        .em-filter-chip {
+            display: flex; align-items: center; gap: 3px;
+            font-size: 10px; color: #88aacc; cursor: pointer;
+            white-space: nowrap;
+        }
+        .em-filter-chip input { cursor: pointer; accent-color: #44aaff; }
