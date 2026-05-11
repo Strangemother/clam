@@ -248,7 +248,7 @@ class PowerGraph {
             const shareCount = Math.max(1, Object.keys(p.powerSources || {}).length)
 
             if (p.type === 'bulb' && (p.state === 'on' || p.state === 'dim')) {
-                totalW += p.watts / shareCount
+                totalW += (p._spikeWatts || p.watts) / shareCount
             }
             // Any Load (or Load subclass) that declares consumesWatts = true
             const Cls = NodeRegistry.get(p.type)

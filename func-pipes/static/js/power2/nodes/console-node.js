@@ -37,6 +37,10 @@ class ConsoleNode extends Load {
     static label = 'Console'
     static group = 'Equipment'
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 4, duration: 2.0 }
+    }
+
     static catalog = [
         { key: 'console-sm',  label: 'Console (SM)',  watts: 30,  minVolts: 180, capacitance: 10 },
         { key: 'console-lg',  label: 'Console (LG)',  watts: 80,  minVolts: 180, capacitance: 20 },
@@ -60,22 +64,25 @@ class ConsoleNode extends Load {
             // Dynamic power draw
             _effectiveWatts:  0,
             _loadAccum:       0,
+            spike:            preset.spike ? { ...preset.spike } : { ...this._defaultSpike() },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'bootDuration', 'shutdownDuration']
+        return [...super.configFields(), 'bootDuration', 'shutdownDuration', 'spike']
     }
 
     /**
      * Swap in the dynamic draw, delegate to Load.apply(), then restore rated watts.
-     * This means the upstream current budget always reflects actual console load.
+     * During the inrush spike the full rated watts (× multiplier) is used instead of
+     * _effectiveWatts so the upstream sees a realistic startup burst.
      */
     static apply(panel, signal, graph) {
-        const rated      = panel.watts
-        panel.watts      = panel._effectiveWatts ?? 0
+        const rated  = panel.watts
+        const m      = NodeBase.spikeMultiplier(panel)
+        panel.watts  = m > 1.0 ? rated * m : (panel._effectiveWatts ?? 0)
         super.apply(panel, signal, graph)
-        panel.watts      = rated
+        panel.watts  = rated
     }
 
     static tick(panel, dt, graph) {
@@ -89,6 +96,7 @@ class ConsoleNode extends Load {
             if (panel.bootState !== 'booting') {
                 panel.bootState    = 'booting'
                 panel.bootProgress = 0
+                NodeBase.startSpike(panel)   // inrush burst at the moment boot begins
             }
             const rate = 100 / Math.max(0.1, panel.bootDuration)
             panel.bootProgress = Math.min(100, panel.bootProgress + rate * dt)

@@ -60,8 +60,10 @@ class NodeBase {
             powerSources: {},
             state:        'off',
             ripple:       { ...this._defaultRipple() },
+            spike:        { ...this._defaultSpike() },
             _rippleAccum:  0,
             _rippleOffset: 0,
+            _spikeTimer:   0,
             pipsInbound:   this._defaultPipsInbound(id),
             pipsOutbound:  this._defaultPipsOutbound(id),
         }
@@ -77,6 +79,41 @@ class NodeBase {
 
     /** Override to suppress outbound pips (e.g. Bulb is a sink). */
     static _defaultPipsOutbound(id) { return [{ label: id, index: 0 }] }
+
+    // ── Spike (inrush current) helpers ─────────────────────────────────────
+
+    /** Override in subclasses to set startup inrush spike defaults for this type. */
+    static _defaultSpike() {
+        return { enabled: false, percent: 0, duration: 0.5 }
+    }
+
+    /** Begin an inrush spike at the moment a node turns on. No-op if disabled. */
+    static startSpike(panel) {
+        if (!panel.spike?.enabled || !panel.spike.percent) return
+        panel._spikeTimer = panel.spike.duration ?? 0.5
+    }
+
+    /**
+     * Decay the spike timer by dt. Returns true if the spike is still active.
+     * Call once per tick() frame.
+     */
+    static tickSpike(panel, dt) {
+        if (!panel._spikeTimer || panel._spikeTimer <= 0) return false
+        panel._spikeTimer = Math.max(0, panel._spikeTimer - dt)
+        return panel._spikeTimer > 0
+    }
+
+    /**
+     * Current inrush multiplier — linearly decays from (1 + percent/100) → 1.0.
+     * Returns 1.0 when no spike is active.
+     */
+    static spikeMultiplier(panel) {
+        if (!panel._spikeTimer || panel._spikeTimer <= 0) return 1.0
+        const dur  = panel.spike?.duration ?? 0.5
+        const pct  = panel.spike?.percent  ?? 0
+        const frac = dur > 0 ? panel._spikeTimer / dur : 0
+        return 1.0 + (pct / 100) * frac
+    }
 
     // ── Serialisation ───────────────────────────────────────────────────────
 

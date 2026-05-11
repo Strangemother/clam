@@ -45,6 +45,10 @@ class Load extends NodeBase {
         return { enabled: false, amount: 0.5, interval: 0.3 }
     }
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 20, duration: 0.95 }
+    }
+
     static defaults(id, preset = {}) {
         return {
             ...super.defaults(id, preset),
@@ -56,18 +60,19 @@ class Load extends NodeBase {
             blown:           false,
             _lastGoodSignal: null,
             ripple:          preset.ripple ? { ...preset.ripple } : { ...this._defaultRipple() },
+            spike:           preset.spike  ? { ...preset.spike  } : { ...this._defaultSpike()  },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'watts', 'minVolts', 'maxVolts', 'capacitance', 'ripple']
+        return [...super.configFields(), 'watts', 'minVolts', 'maxVolts', 'capacitance', 'ripple', 'spike']
     }
 
     static apply(panel, signal, graph) {
         if (panel.blown) return   // open circuit until manually reset
 
-        const drawAmps = panel.watts / NOMINAL_VOLTS
         const prev     = panel.state
+        const drawAmps = (panel.watts / NOMINAL_VOLTS) * NodeBase.spikeMultiplier(panel)
 
         if (signal && signal.v > panel.maxVolts) {
             panel.blown = true
@@ -81,6 +86,7 @@ class Load extends NodeBase {
         const powered = signal && signal.v >= panel.minVolts && signal.a >= drawAmps
 
         if (powered) {
+            if (prev !== 'on' && prev !== 'capacitor') NodeBase.startSpike(panel)
             panel._lastGoodSignal = signal
             panel.state = 'on'
             graph.emit(panel, { v: signal.v, a: signal.a - drawAmps })
@@ -107,6 +113,14 @@ class Load extends NodeBase {
     }
 
     static tick(panel, dt, graph) {
+        // Decay the inrush spike each frame; re-apply to update downstream draw.
+        if (NodeBase.tickSpike(panel, dt)) {
+            if ((panel.state === 'on' || panel.state === 'capacitor') && panel.signal) {
+                const Cls = NodeRegistry.get(panel.type)
+                if (Cls) Cls.apply(panel, panel.signal, graph)
+            }
+        }
+
         if (panel.capacitance <= 0) return
 
         if (panel.state === 'on') {

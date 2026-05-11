@@ -39,6 +39,10 @@ class Heater extends Load {
     static group = 'Appliance'
     static dispatchDelay = 150  // faster than default — thermal events are time-sensitive
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 30, duration: 3.8 }
+    }
+
     static catalog = [
         { key: 'heater-1kw', label: 'Heater 1kW',  watts: 1000, minVolts: 200 },
         { key: 'heater-2kw', label: 'Heater 2kW',  watts: 2000, minVolts: 205 },
@@ -63,18 +67,17 @@ class Heater extends Load {
             maxTemp:      preset.maxTemp   ?? 100, // trip temperature
             resetTemp:    preset.resetTemp ?? 70,  // re-enable temperature
             minWatts:     preset.minWatts  ?? 50,  // standby draw (W)
+            spike:        preset.spike ? { ...preset.spike } : { ...this._defaultSpike() },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'heatRate', 'coolRate', 'maxTemp', 'resetTemp', 'minWatts']
+        return [...super.configFields(), 'heatRate', 'coolRate', 'maxTemp', 'resetTemp', 'minWatts', 'spike']
     }
 
     // Override apply to use currentWatts (dynamic) instead of the fixed watts rating.
     static apply(panel, signal, graph) {
         if (panel.blown) return
-
-        const drawAmps = panel.currentWatts / NOMINAL_VOLTS
 
         if (signal && signal.v > panel.maxVolts) {
             const prevState = panel.state
@@ -91,6 +94,9 @@ class Heater extends Load {
         const powered  = signal && signal.v >= panel.minVolts && signal.a >= minAmps
 
         const prevState = panel.state
+        if (powered && prevState !== 'on' && prevState !== 'capacitor') NodeBase.startSpike(panel)
+        const drawAmps = (panel.currentWatts / NOMINAL_VOLTS) * NodeBase.spikeMultiplier(panel)
+
         if (powered) {
             panel._lastGoodSignal = signal
             panel.state = 'on'

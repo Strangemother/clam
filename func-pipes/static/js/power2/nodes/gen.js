@@ -26,6 +26,10 @@ class Generator extends NodeBase {
     static group = 'Source'
     static dispatchDelay = 200  // draw telemetry throttle rate
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 15, duration: 0.94 }
+    }
+
     static catalog = [
         { key: 'wall-outlet',  label: 'Wall Outlet',  volts: 240, amps: 13  },
         { key: 'gen-30a',      label: 'Generator',    volts: 240, amps: 30  },
@@ -55,11 +59,27 @@ class Generator extends NodeBase {
     }
 
     static configFields() {
-        return [...super.configFields(), 'volts', 'amps', 'live', 'ripple']
+        return [...super.configFields(), 'volts', 'amps', 'live', 'ripple', 'spike']
     }
 
     // Generators produce rather than receive — apply() is a no-op.
     static apply(panel, signal, graph) { /* source — does not process inbound */ }
+
+    // Decay the inrush spike each frame and re-emit the boosted output signal.
+    static tick(panel, dt, graph) {
+        if (!NodeBase.tickSpike(panel, dt)) return
+        if (!panel.live || panel.state === 'tripped' || panel.state === 'off') return
+        const m = NodeBase.spikeMultiplier(panel)
+        graph.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })
+    }
+
+    // Decay the inrush spike each frame and re-emit the (spiked) output signal.
+    static tick(panel, dt, graph) {
+        if (!NodeBase.tickSpike(panel, dt)) return
+        if (!panel.live || panel.state === 'tripped' || panel.state === 'off') return
+        const m = NodeBase.spikeMultiplier(panel)
+        graph.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })
+    }
 
     // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -79,7 +99,13 @@ class Generator extends NodeBase {
         panel.state = panel.live ? 'on' : 'off'
         Generator.dispatch(panel, 'state:change', { from: prev, to: panel.state })
         Generator.dispatch(panel, panel.live ? 'gen:start' : 'gen:stop', { volts: panel.volts, amps: panel.amps })
-        graph.emit(panel, panel.live ? { v: panel.volts, a: panel.amps } : null)
+        if (panel.live) {
+            NodeBase.startSpike(panel)
+            const m = NodeBase.spikeMultiplier(panel)
+            graph.emit(panel, { v: +(panel.volts * m).toFixed(2), a: +(panel.amps * m).toFixed(3) })
+        } else {
+            graph.emit(panel, null)
+        }
         graph.updateAllGenDraws()
     }
 

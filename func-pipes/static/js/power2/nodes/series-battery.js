@@ -56,6 +56,10 @@ class SeriesBattery extends NodeBase {
         return { enabled: false, amount: 0.5, interval: 0.5 }
     }
 
+    static _defaultSpike() {
+        return { enabled: true, percent: 10, duration: 0.3 }
+    }
+
     static defaults(id, preset = {}) {
         const cap = preset.capacityWh ?? 10
         return {
@@ -74,11 +78,12 @@ class SeriesBattery extends NodeBase {
             inAmps:        0,
             live:          true,
             ripple:        preset.ripple ? { ...preset.ripple } : { ...this._defaultRipple() },
+            spike:         preset.spike  ? { ...preset.spike  } : { ...this._defaultSpike()  },
         }
     }
 
     static configFields() {
-        return [...super.configFields(), 'volts', 'amps', 'chargeAmps', 'capacityWh', 'live', 'ripple']
+        return [...super.configFields(), 'volts', 'amps', 'chargeAmps', 'capacityWh', 'live', 'ripple', 'spike']
     }
 
     static apply(panel, signal, graph) {
@@ -121,10 +126,17 @@ class SeriesBattery extends NodeBase {
         const vIn  = signal ? signal.v : 0
         const aOut = signal ? Math.min(signal.a, panel.amps) : panel.amps
         const vOff = panel._rippleOffset ?? 0
-        graph.emit(panel, { v: vIn + panel.volts + vOff, a: aOut })
+        const m    = NodeBase.spikeMultiplier(panel)
+        graph.emit(panel, { v: (vIn + panel.volts + vOff) * m, a: aOut * m })
     }
 
     static tick(panel, dt, graph) {
+        // Decay inrush spike and re-apply if still spiking
+        if (NodeBase.tickSpike(panel, dt)) {
+            if (panel.live && panel.state !== 'dead' && panel.signal !== undefined)
+                SeriesBattery.apply(panel, panel.signal, graph)
+        }
+
         // Charging and discharging are independent processes.
         //
         // Charge in: inbound source pushes current into the battery at up to
@@ -209,6 +221,7 @@ class SeriesBattery extends NodeBase {
     static toggle(panel, graph) {
         if (panel.state === 'dead') return   // must reset first
         panel.live = !panel.live
+        if (panel.live) NodeBase.startSpike(panel)
         SeriesBattery.dispatch(panel, 'battery:toggle', { live: panel.live })
         SeriesBattery.apply(panel, panel.signal, graph)
         graph.updateAllGenDraws()
