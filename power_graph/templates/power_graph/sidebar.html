@@ -1,0 +1,49 @@
+{% raw %}
+<aside>
+
+  <div class="pane-title">Command Builder</div>
+
+  <div class="cmd-form">
+    <div class="row">
+      <div>
+        <label>op</label>
+        <select v-model="op">
+          <option>toggle</option>
+          <option>set</option>
+          <option>reset</option>
+          <option>read</option>
+          <option>repropagate</option>
+        </select>
+      </div>
+      <div>
+        <label>id</label>
+        <input v-model="opId" type="number" min="1" placeholder="panel id">
+      </div>
+    </div>
+
+    <template v-if="op === 'set'">
+      <label>key</label>
+      <input v-model="opKey" type="text" placeholder="e.g. enabled">
+      <label>value (JSON)</label>
+      <input v-model="opValue" type="text" placeholder='false / 42 / "on"'>
+    </template>
+
+    <button class="btn-accent" @click="sendBuilder">Send</button>
+  </div>
+
+  <div class="raw-area">
+    <div class="pane-title" style="padding:0 0 6px; border:none">Raw JSON</div>
+    <textarea class="raw-cmd" v-model="rawCmd" spellcheck="false"></textarea>
+    <button @click="sendRaw">Send Raw</button>
+  </div>
+
+  <div class="pane-title">
+    Event Log
+    <button style="margin-left:auto;padding:2px 8px;font-size:10px" @click="clearLog">Clear</button>
+  </div>
+  <div class="log">
+    <div v-for="(entry, i) in logEntries" :key="i" :class="['log-entry', entry.type]">{{ entry.text }}</div>
+  </div>
+
+</aside>
+{% endraw %}

@@ -20,7 +20,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio"]
+dev    = ["pytest", "pytest-asyncio"]
+server = ["websockets>=12"]
+all    = ["websockets>=12"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

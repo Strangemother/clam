@@ -87,6 +87,8 @@ class Generator(NodeBase):
         still_active = cls.tick_spike(panel, dt)
         if not still_active and not was_nonzero:
             return
+        if not panel.get('enabled', True):
+            return
         if not panel.get('live') or panel.get('state') in ('tripped', 'off'):
             return
         m = cls.spike_multiplier(panel)

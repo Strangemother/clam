@@ -1,0 +1,9 @@
+{% raw %}
+<header>
+  <h1>⚡ Power Graph</h1>
+  <span :class="['conn-status', status]">{{ status }}</span>
+  <input class="conn-url" v-model="wsUrl" spellcheck="false">
+  <button class="btn-accent" @click="connect">Connect</button>
+  <button class="ml-auto" @click="sendCmd({op:'read_all'})">Read All</button>
+</header>
+{% endraw %}

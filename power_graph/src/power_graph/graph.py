@@ -360,11 +360,19 @@ class PowerGraph:
 
     def repropagate_all(self):
         """
-        Re-broadcast from every live generator after topology change.
+        Re-broadcast from every generator and enabled source after topology change.
+
+        Dead/disabled generators emit None so downstream powerSources entries are
+        cleared — otherwise stale amps continue to appear at loads.
         """
         for panel in self.panels:
-            if panel['type'] == 'gen' and panel.get('live'):
-                self.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})
+            if panel['type'] in ('gen', 'series-battery'):
+                if panel.get('live') and panel.get('enabled', True) is not False:
+                    self.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})
+                else:
+                    self.emit(panel, None)
+            elif panel.get('enabled') is False:
+                self.emit(panel, None)
 
     # ────────────────────────────────────────────────────────────────────────
     # GENERATOR DRAW (BFS)
@@ -373,7 +381,7 @@ class PowerGraph:
     def update_all_gen_draws(self):
         """Recompute draw watts for every generator and battery."""
         for p in self.panels:
-            if p['type'] in ('gen', 'series-bat'):
+            if p['type'] in ('gen', 'series-battery'):
                 self.compute_gen_draw(p)
 
     def compute_gen_draw(self, gen: Dict):
@@ -474,7 +482,7 @@ class PowerGraph:
                 self.emit(panel, {'v': panel['signal'].get('v', 240), 'a': a_out})
 
             # Converter and battery ripple can call apply() to regenerate
-            if panel['type'] in ('converter', 'series-bat') and panel.get('signal'):
+            if panel['type'] in ('converter', 'series-battery') and panel.get('signal'):
                 node_cls = NodeRegistry.get(panel['type'])
                 if node_cls:
                     node_cls.apply(panel, panel['signal'], self)

@@ -1,0 +1,35 @@
+{% raw %}
+<main class="panels-area">
+  <div class="panels-grid">
+
+    <span v-if="sortedPanels.length === 0" class="empty-note">Not connected.</span>
+
+    <div
+      v-for="p in sortedPanels"
+      :key="p.id"
+      class="panel-card"
+      :class="{ selected: selectedPanel && selectedPanel.id === p.id }"
+      :data-id="p.id"
+      :data-state="p.state || 'off'"
+      @click="selectPanel(p)"
+    >
+      <div class="card-head">
+        <span class="panel-id">#{{ p.id }}</span>
+        <span class="panel-type">{{ p.type }}</span>
+        <div class="card-actions" @click.stop>
+          <button class="card-open" title="Open detail" @click="openDetail(p)">⋯</button>
+          <input type="checkbox" class="card-enable"
+            :checked="p.enabled !== false"
+            :title="p.enabled !== false ? 'Disable' : 'Enable'"
+            @change="cardEnable(p, $event.target.checked)">
+          <button class="card-reset" title="Reset" @click="cardReset(p)">↺</button>
+        </div>
+      </div>
+      <div class="panel-label">{{ p.label || '(unlabelled)' }}</div>
+      <div :class="['panel-state', p.state || 'off']">{{ p.state || 'off' }}</div>
+      <div class="panel-watts">{{ panelWatts(p) }}</div>
+    </div>
+
+  </div>
+</main>
+{% endraw %}

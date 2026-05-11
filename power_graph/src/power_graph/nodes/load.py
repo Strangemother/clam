@@ -173,11 +173,19 @@ class Load(NodeBase):
         cls.tick_spike(panel, dt)
 
         # ── Noise oscillation ─────────────────────────────────────────────────
-        noise = panel.get('noise', 0)
+        noise_cfg = panel.get('noise', 0)
+        if isinstance(noise_cfg, dict):
+            noise_enabled  = noise_cfg.get('enabled', False)
+            noise          = noise_cfg.get('amount', 0) if noise_enabled else 0
+            noise_interval = noise_cfg.get('period', 1.0)
+        else:
+            noise          = noise_cfg
+            noise_interval = panel.get('noiseInterval', 1.0)
+
         if noise and panel['state'] == 'on':
             panel['_noise_phase'] = (
                 panel.get('_noise_phase', 0.0) +
-                dt * 2 * math.pi / max(0.01, panel.get('noiseInterval', 1.0))
+                dt * 2 * math.pi / max(0.01, noise_interval)
             )
             offset = math.sin(panel['_noise_phase']) * noise / 100
             panel['current_watts'] = panel.get('watts', 1000) * (1.0 + offset) * cls.spike_multiplier(panel)
