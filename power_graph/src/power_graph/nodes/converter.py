@@ -33,6 +33,11 @@ class Converter(NodeBase):
     group = 'Power'
     dispatch_delay = 150
 
+    @classmethod
+    def _default_ripple(cls):
+        # Switching-supply output ripple — intrinsic to PWM-based designs
+        return RippleProfile(enabled=True, amount=1.0, interval=0.4)
+
     catalog = [
         {'key': 'conv-480v', 'label': 'Step-Up 480V',  'outVolts': 480, 'efficiency': 0.92},
         {'key': 'conv-240v', 'label': 'Unity 240V',    'outVolts': 240, 'efficiency': 0.98},

@@ -446,12 +446,23 @@ class PowerGraph:
                 gen['state'] = 'sag'
                 self.emit(gen, {'v': sag_volts, 'a': gen.get('amps', 13)})
             else:
+                # Proportional micro-sag: voltage drops slightly under load,
+                # rippling load noise through the circuit to all downstream nodes.
+                prev_draw = gen.get('_prev_draw_watts', -1.0)
+                draw_changed = abs(gen['drawWatts'] - prev_draw) > 5.0
+                if draw_changed and gen.get('enabled', True) is not False:
+                    load_ratio = min(1.0, ratio)
+                    v_out = round(gen.get('volts', 240) * (1.0 - load_ratio * 0.05), 2)
+                    self.emit(gen, {'v': v_out, 'a': gen.get('amps', 13)})
+
                 if gen.get('overload'):
                     gen['overload'] = False
                     gen['state'] = 'on'
                     self.emit(gen, {'v': gen.get('volts', 240), 'a': gen.get('amps', 13)})
                 else:
                     gen['state'] = 'on'
+
+            gen['_prev_draw_watts'] = gen['drawWatts']
 
     # ────────────────────────────────────────────────────────────────────────
     # RIPPLE EFFECTS

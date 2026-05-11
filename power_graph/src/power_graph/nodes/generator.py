@@ -50,7 +50,8 @@ class Generator(NodeBase):
 
     @classmethod
     def _default_ripple(cls):
-        return RippleProfile(enabled=False, amount=2.0, interval=0.8)
+        # Slight output voltage ripple — AC hum, mechanical governor flutter
+        return RippleProfile(enabled=True, amount=1.5, interval=0.8)
 
     @classmethod
     def _default_pips_inbound(cls, node_id):

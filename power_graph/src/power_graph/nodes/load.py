@@ -21,9 +21,18 @@ Noise model
 """
 
 import math
+import random
 from typing import Dict, List, Optional
 from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile
 from power_graph.node_registry import NodeRegistry
+
+
+def _variance_factor(variance_pct: float) -> float:
+    """Return a one-time random multiplier within ±variance_pct of 1.0."""
+    if not variance_pct:
+        return 1.0
+    spread = variance_pct / 100.0
+    return random.uniform(1.0 - spread, 1.0 + spread)
 
 
 class Load(NodeBase):
@@ -36,11 +45,16 @@ class Load(NodeBase):
     consumes_watts = True
 
     catalog = [
-        {'key': 'fan',       'label': 'Fan 50W',        'watts': 50,   'capacitanceWs': 0  },
-        {'key': 'pump',      'label': 'Pump 250W',       'watts': 250,  'capacitanceWs': 0  },
-        {'key': 'motor-sm',  'label': 'Motor 500W',      'watts': 500,  'capacitanceWs': 2  },
-        {'key': 'motor-lg',  'label': 'Motor 2kW',       'watts': 2000, 'capacitanceWs': 8  },
-        {'key': 'ups-buffer','label': 'UPS Buffer 200W', 'watts': 200,  'capacitanceWs': 30 },
+        {'key': 'fan',       'label': 'Fan 50W',        'watts': 50,   'capacitanceWs': 0,
+         'noise': 20, 'noiseInterval': 0.08, 'variance': 3.0},
+        {'key': 'pump',      'label': 'Pump 250W',       'watts': 250,  'capacitanceWs': 0,
+         'noise': 15, 'noiseInterval': 0.12, 'variance': 2.5},
+        {'key': 'motor-sm',  'label': 'Motor 500W',      'watts': 500,  'capacitanceWs': 2,
+         'noise': 12, 'noiseInterval': 0.15, 'variance': 2.5},
+        {'key': 'motor-lg',  'label': 'Motor 2kW',       'watts': 2000, 'capacitanceWs': 8,
+         'noise': 8,  'noiseInterval': 0.18, 'variance': 2.0},
+        {'key': 'ups-buffer','label': 'UPS Buffer 200W', 'watts': 200,  'capacitanceWs': 30,
+         'noise': 2,  'noiseInterval': 1.0,  'variance': 0.5},
     ]
 
     @classmethod
@@ -48,8 +62,13 @@ class Load(NodeBase):
         return SpikeProfile(enabled=True, percent=200, duration=0.5)
 
     @classmethod
+    def _default_ripple(cls) -> RippleProfile:
+        # Current ripple — electromagnetic noise from running load
+        return RippleProfile(enabled=True, amount=0.8, interval=0.3)
+
+    @classmethod
     def _default_pips_outbound(cls, node_id: int) -> List[Dict]:
-        return []  # Loads are sinks
+        return [{'label': node_id, 'index': 0}]  # pass-through: reduced amps downstream
 
     @classmethod
     def defaults(cls, node_id: int, preset: Dict = None) -> Dict:
@@ -64,21 +83,26 @@ class Load(NodeBase):
             'maxVolts':       preset.get('maxVolts',       280),
             'capacitanceWs':  preset.get('capacitanceWs', 0),
             'chargeWs':       0.0,            # current stored charge
-            'noise':          preset.get('noise', 0),        # ±% wattage noise
-            'noiseInterval':  preset.get('noiseInterval', 1.0),
-            'blown':          False,
-            'current_watts':  0.0,
-            'state':          'off',
-            '_last_signal':   None,
-            '_noise_accum':   0.0,
-            '_noise_phase':   0.0,
+            'noise':               preset.get('noise', 0),        # ±% wattage noise
+            'noiseInterval':       preset.get('noiseInterval', 1.0),
+            # variance: ±% one-time random offset baked in at spawn so
+            # identical catalog units never draw exactly the same watts.
+            'variance':            preset.get('variance', 2.0),
+            '_variance_factor':    _variance_factor(preset.get('variance', 2.0)),
+            'blown':               False,
+            'current_watts':       0.0,
+            'state':               'off',
+            '_last_signal':        None,
+            '_noise_accum':        0.0,
+            '_noise_phase':        0.0,
+            '_last_emitted_watts': -1.0,
         })
         return base
 
     @classmethod
     def config_fields(cls) -> List[str]:
         return [*super().config_fields(), 'watts', 'minVolts', 'brownoutVolts',
-                'maxVolts', 'capacitanceWs', 'noise', 'noiseInterval']
+                'maxVolts', 'capacitanceWs', 'noise', 'noiseInterval', 'variance']
 
     @classmethod
     def apply(cls, panel: Dict, signal: Signal, graph):
@@ -106,7 +130,7 @@ class Load(NodeBase):
 
         min_v     = panel.get('minVolts', 100)
         bro_v     = panel.get('brownoutVolts', 180)
-        rated_w   = panel.get('watts', 1000)
+        rated_w   = panel.get('watts', 1000) * panel.get('_variance_factor', 1.0)
         cap_ws    = panel.get('capacitanceWs', 0)
         charge    = panel.get('chargeWs', 0.0)
         prev      = panel['state']
@@ -166,11 +190,14 @@ class Load(NodeBase):
                 cls.dispatch(panel, 'state:change', {'from': prev, 'to': 'on'})
 
         cls.throttle(panel, 'load:watts', {'watts': round(panel['current_watts'], 1)})
-        graph.emit(panel, None)
+        draw_amps = panel['current_watts'] / NOMINAL_VOLTS
+        graph.emit(panel, {'v': volts, 'a': max(0.0, amps - draw_amps)})
 
     @classmethod
     def tick(cls, panel: Dict, dt: float, graph):
+        was_spiking = panel.get('_spike_timer', 0) > 0
         cls.tick_spike(panel, dt)
+        spike_settled = was_spiking and panel.get('_spike_timer', 0) <= 0
 
         # ── Noise oscillation ─────────────────────────────────────────────────
         noise_cfg = panel.get('noise', 0)
@@ -188,7 +215,22 @@ class Load(NodeBase):
                 dt * 2 * math.pi / max(0.01, noise_interval)
             )
             offset = math.sin(panel['_noise_phase']) * noise / 100
-            panel['current_watts'] = panel.get('watts', 1000) * (1.0 + offset) * cls.spike_multiplier(panel)
+            panel['current_watts'] = (panel.get('watts', 1000) * panel.get('_variance_factor', 1.0)
+                                      * (1.0 + offset) * cls.spike_multiplier(panel))
+
+            # Re-apply so upstream (generator) sees the fluctuating draw
+            prev_w = panel.get('_last_emitted_watts', -1.0)
+            if (abs(panel['current_watts'] - prev_w) > 1.0
+                    and panel.get('_last_signal') is not None):
+                panel['_last_emitted_watts'] = panel['current_watts']
+                cls.apply(panel, panel['_last_signal'], graph)
+
+        # ── Re-apply on spike settle so downstream sees rated (not spiked) amps
+        elif spike_settled and panel['state'] in ('on', 'brownout'):
+            if panel.get('_last_signal') is not None:
+                panel['current_watts'] = panel.get('watts', 1000) * panel.get('_variance_factor', 1.0)
+                panel['_last_emitted_watts'] = panel['current_watts']
+                cls.apply(panel, panel['_last_signal'], graph)
 
         # ── Capacitor drain ───────────────────────────────────────────────────
         if panel['state'] == 'capacitor':
@@ -208,6 +250,7 @@ class Load(NodeBase):
         panel['chargeWs']      = 0.0
         panel['_last_signal']  = None
         panel['powerSources']  = {}
+        panel['_last_emitted_watts'] = -1.0
         cls.dispatch(panel, 'state:change', {'from': prev, 'to': 'off'})
         graph.emit(panel, None)
 

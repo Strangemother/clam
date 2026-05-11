@@ -34,10 +34,10 @@ class Heater(Load):
     dispatch_delay = 200
 
     catalog = [
-        {'key': 'heater-1kw',  'label': 'Heater 1kW',     'watts': 1000, 'minWatts':  50, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 2.0, 'coolRate': 0.5, 'maxTemp': 80,  'resetTemp': 60},
-        {'key': 'heater-2kw',  'label': 'Heater 2kW',     'watts': 2000, 'minWatts': 100, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 3.5, 'coolRate': 0.6, 'maxTemp': 80,  'resetTemp': 60},
-        {'key': 'heater-3kw',  'label': 'Heater 3kW',     'watts': 3000, 'minWatts': 150, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 5.0, 'coolRate': 0.8, 'maxTemp': 80,  'resetTemp': 60},
-        {'key': 'heater-oil',  'label': 'Oil Heater 2kW', 'watts': 2000, 'minWatts': 100, 'noise':  6, 'noiseInterval': 0.8, 'heatRate': 1.0, 'coolRate': 0.1, 'maxTemp': 75,  'resetTemp': 45},
+        {'key': 'heater-1kw',  'label': 'Heater 1kW',     'watts': 1000, 'minWatts':  50, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 2.0, 'coolRate': 0.5, 'maxTemp': 80,  'resetTemp': 60, 'variance': 3.0},
+        {'key': 'heater-2kw',  'label': 'Heater 2kW',     'watts': 2000, 'minWatts': 100, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 3.5, 'coolRate': 0.6, 'maxTemp': 80,  'resetTemp': 60, 'variance': 3.0},
+        {'key': 'heater-3kw',  'label': 'Heater 3kW',     'watts': 3000, 'minWatts': 150, 'noise': 10, 'noiseInterval': 0.4, 'heatRate': 5.0, 'coolRate': 0.8, 'maxTemp': 80,  'resetTemp': 60, 'variance': 3.0},
+        {'key': 'heater-oil',  'label': 'Oil Heater 2kW', 'watts': 2000, 'minWatts': 100, 'noise':  6, 'noiseInterval': 0.8, 'heatRate': 1.0, 'coolRate': 0.1, 'maxTemp': 75,  'resetTemp': 45, 'variance': 2.0},
     ]
 
     @classmethod
@@ -121,8 +121,8 @@ class Heater(Load):
                                                     'heatState': panel['heatState']})
 
         # ── Dynamic draw: scale currentWatts from minWatts → rated watts ──────
-        rated = panel['watts']           # never mutated — always the catalog value
-        min_w = panel.get('minWatts', rated * 0.05)
+        rated = panel['watts'] * panel.get('_variance_factor', 1.0)
+        min_w = panel.get('minWatts', panel['watts'] * 0.05)
 
         if panel.get('heatSwitch'):
             # Fraction is relative to the operating band (resetTemp → maxTemp) so

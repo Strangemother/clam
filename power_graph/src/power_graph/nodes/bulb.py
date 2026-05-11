@@ -33,6 +33,11 @@ class Bulb(NodeBase):
     group = 'Loads'
     dispatch_delay = 80
 
+    @classmethod
+    def _default_ripple(cls):
+        # Subtle filament/LED flicker
+        return RippleProfile(enabled=True, amount=0.3, interval=0.2)
+
     catalog = [
         {'key': 'led-5w',   'label': 'LED 5W',     'watts': 5,   'maxVolts': 264},
         {'key': 'bulb-40w', 'label': 'Bulb 40W',   'watts': 40,  'maxVolts': 288},

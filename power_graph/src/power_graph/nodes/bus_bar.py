@@ -39,6 +39,11 @@ class BusBar(NodeBase):
     group = 'Routing'
     dispatch_delay = 80
 
+    @classmethod
+    def _default_ripple(cls):
+        # Bus-bar contact resistance oscillation
+        return RippleProfile(enabled=True, amount=0.5, interval=0.5)
+
     catalog = [
         {'key': 'bus-bar-2', 'label': 'Bus Bar 2-way', 'outputCount': 2, 'weights': [1, 1]},
         {'key': 'bus-bar-4', 'label': 'Bus Bar 4-way', 'outputCount': 4, 'weights': [1, 1, 1, 1]},

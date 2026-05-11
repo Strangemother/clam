@@ -35,6 +35,11 @@ class SeriesBattery(NodeBase):
     group = 'Storage'
     dispatch_delay = 200
 
+    @classmethod
+    def _default_ripple(cls):
+        # Internal resistance variation under charge/discharge cycles
+        return RippleProfile(enabled=True, amount=0.6, interval=1.2)
+
     catalog = [
         {'key': 'series-12v',    'label': 'Lead-Acid 12V 7Ah',  'volts': 12,  'amps': 7,   'chargeAmps': 2,  'capacityWh': 84 },
         {'key': 'series-24v',    'label': 'Lead-Acid 24V 7Ah',  'volts': 24,  'amps': 7,   'chargeAmps': 3,  'capacityWh': 168},
