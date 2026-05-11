@@ -52,6 +52,15 @@ class Bulb extends NodeBase {
         return [...super.configFields(), 'watts', 'maxVolts', 'maxAmps', 'spike']
     }
 
+    /**
+     * Process an inbound signal. Determines brightness (off / dim / on) from the
+     * voltage and amp ratios against the rated wattage. Blows the bulb on
+     * overvoltage or overcurrent. This node is a pure sink — nothing is emitted
+     * downstream.
+     * @param {Object}     panel
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         if (panel.blown) return   // blown = open circuit until manually reset
 
@@ -114,6 +123,13 @@ class Bulb extends NodeBase {
         graph.emit(panel, null)   // sink — nothing forwarded
     }
 
+    /**
+     * Per-frame update — decays the inrush spike timer and tracks the inflated
+     * watt draw so the BFS generator accounting stays accurate during startup.
+     * @param {Object}     panel
+     * @param {number}     dt    — elapsed seconds since last tick
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         const wasSpiking = NodeBase.tickSpike(panel, dt)
         // Track inflated watt draw so computeGenDraw picks it up during the spike.
@@ -124,6 +140,12 @@ class Bulb extends NodeBase {
             Bulb.apply(panel, panel.signal, graph)
     }
 
+    /**
+     * Reset the bulb — clears the blown flag, resets brightness to 0, and
+     * propagates to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.blown      = false
         panel.brightness = 0

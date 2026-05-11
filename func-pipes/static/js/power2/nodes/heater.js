@@ -79,7 +79,14 @@ class Heater extends Load {
         return [...super.configFields(), 'heatRate', 'coolRate', 'maxTemp', 'resetTemp', 'minWatts', 'spike']
     }
 
-    // Override apply to use currentWatts (dynamic) instead of the fixed watts rating.
+    /**
+     * Override Load.apply() to use currentWatts (thermal-dynamic) rather than
+     * the fixed watt rating, so amp draw reflects actual heating state. Also
+     * checks for overvoltage and blows the element directly.
+     * @param {Object}     panel
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         if (panel.blown) return
 
@@ -126,6 +133,17 @@ class Heater extends Load {
             Heater.dispatch(panel, 'state:change', { from: prevState, to: panel.state })
     }
 
+    /**
+     * Per-frame thermal and thermostat update. Steps are:
+     *   1. Delegate capacitor/noise/spike logic to Load.tick().
+     *   2. Run thermostat — trip element off at maxTemp, reset at resetTemp.
+     *   3. Heat or cool temperature at heatRate / coolRate per second.
+     *   4. Update currentWatts proportional to temperature vs maxTemp.
+     *   5. Re-apply signal whenever draw changes by more than 1 W.
+     * @param {Object}     panel
+     * @param {number}     dt    — elapsed seconds since last tick
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         // Capacitor logic (inherited)
         super.tick(panel, dt, graph)
@@ -179,6 +197,12 @@ class Heater extends Load {
         }
     }
 
+    /**
+     * Reset thermal state — zeros temperature, resets thermostat and heatState,
+     * restores currentWatts to standby minimum, then delegates to Load.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.temperature       = 0
         panel.heatState         = 'cold'

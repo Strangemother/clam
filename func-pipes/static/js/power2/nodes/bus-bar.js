@@ -132,6 +132,13 @@ class BusBar extends DecisionNode {
 
     // ── Override tick: rebroadcast on every tick so live changes propagate ──
 
+    /**
+     * No-op tick. BusBar distributes purely in response to signal changes
+     * via apply(); there is no time-driven rerouting logic required.
+     * @param {Object}     panel
+     * @param {number}     dt
+     * @param {PowerGraph} graph
+     */
     static tick(panel, dt, graph) {
         // No tick-driven rerouting needed — signal changes drive apply() directly.
     }
@@ -186,6 +193,13 @@ class BusBar extends DecisionNode {
         BusBar.dispatch(panel, 'busbar:equalised', { weights: panel.weights })
     }
 
+    /**
+     * Re-normalise channel weights and propagate to NodeBase.reset().
+     * Weights themselves are preserved across resets so the user's dial
+     * configuration survives a graph restart.
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel._normWeights = BusBar._normalise(panel.weights)
         BusBar.dispatch(panel, 'busbar:reset', { outputCount: panel.outputCount })

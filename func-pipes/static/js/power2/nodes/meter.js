@@ -36,6 +36,13 @@ class Meter extends NodeBase {
         return [...super.configFields()]   // no extra config beyond label
     }
 
+    /**
+     * Measure the inbound signal and pass it through unchanged. Readings are
+     * throttled and emitted as 'meter:reading' events when V or A changes.
+     * @param {Object}     panel
+     * @param {Object|null} signal — upstream { v, a } or null
+     * @param {PowerGraph} graph
+     */
     static apply(panel, signal, graph) {
         if (!signal || signal.v <= 0) {
             const prev  = panel.state
@@ -69,6 +76,12 @@ class Meter extends NodeBase {
         graph.emit(panel, signal)   // transparent pass-through
     }
 
+    /**
+     * Reset all readings to zero, clear internal de-dupe tracking, and
+     * propagate to NodeBase.reset().
+     * @param {Object}     panel
+     * @param {PowerGraph} graph
+     */
     static reset(panel, graph) {
         panel.volts        = 0
         panel.amps         = 0
