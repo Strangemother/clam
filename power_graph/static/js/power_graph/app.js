@@ -48,8 +48,9 @@ createApp({
 
   watch: {
     selectedPanel(p) {
-      // nextTick ensures Vue has rendered the cards before we measure their rects
-      Vue.nextTick(() => this._canvas.draw(p ? p.id : null, this.connections));
+      if (!p) { this._canvas.clear(); return; }
+      // Refresh connections on every selection so all edges are guaranteed current
+      Vue.nextTick(() => this._fetchAndDraw(p.id));
     },
   },
 
@@ -63,10 +64,24 @@ createApp({
         try { msg = JSON.parse(data); } catch { return; }
         if (msg.type === 'reply' && Array.isArray(msg.connections)) {
           this.connections = msg.connections;
-          if (this.selectedPanel) {
-            this._canvas.draw(this.selectedPanel.id, this.connections);
-          }
           loop.removeEventListener('message', onMsg);
+        }
+      };
+      loop.addEventListener('message', onMsg);
+      this.sendCmd({ op: 'read_connections' });
+    },
+
+    _fetchAndDraw(panelId) {
+      if (!this._ws || this._ws.readyState !== WebSocket.OPEN) return;
+      const loop  = this._ws;
+      const onMsg = ({ data }) => {
+        let msg;
+        try { msg = JSON.parse(data); } catch { return; }
+        if (msg.type === 'reply' && Array.isArray(msg.connections)) {
+          this.connections = msg.connections;
+          loop.removeEventListener('message', onMsg);
+          // Draw after the data arrives, ensuring all cards are in the DOM
+          Vue.nextTick(() => this._canvas.draw(panelId, this.connections));
         }
       };
       loop.addEventListener('message', onMsg);

@@ -90,7 +90,10 @@ class ConnectionCanvas {
 
       const neighbourId   = isOut ? edge.to_id : edge.from_id;
       const neighbourCard = document.querySelector(`.panel-card[data-id="${neighbourId}"]`);
-      if (!neighbourCard) continue;
+      if (!neighbourCard) {
+        console.warn(`[canvas] card not found for panel id=${neighbourId}`);
+        continue;
+      }
 
       const nc = this._center(neighbourCard);
       const [x1, y1, x2, y2] = isOut
