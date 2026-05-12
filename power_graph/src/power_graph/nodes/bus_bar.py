@@ -27,7 +27,7 @@ For a single-unit subclass:
 """
 
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal
+from power_graph.node_base import NodeBase, Signal, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 
@@ -38,6 +38,11 @@ class BusBar(NodeBase):
     label = 'Bus Bar'
     group = 'Routing'
     dispatch_delay = 80
+
+    @classmethod
+    def _default_ripple(cls):
+        # Bus-bar contact resistance oscillation
+        return RippleProfile(enabled=True, amount=0.5, interval=0.5)
 
     catalog = [
         {'key': 'bus-bar-2', 'label': 'Bus Bar 2-way', 'outputCount': 2, 'weights': [1, 1]},

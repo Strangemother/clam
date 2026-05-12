@@ -21,7 +21,7 @@ Brightness model
 
 import math
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile
+from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 
@@ -32,6 +32,11 @@ class Bulb(NodeBase):
     label = 'Light'
     group = 'Loads'
     dispatch_delay = 80
+
+    @classmethod
+    def _default_ripple(cls):
+        # Subtle filament/LED flicker
+        return RippleProfile(enabled=True, amount=0.3, interval=0.2)
 
     catalog = [
         {'key': 'led-5w',   'label': 'LED 5W',     'watts': 5,   'maxVolts': 264},

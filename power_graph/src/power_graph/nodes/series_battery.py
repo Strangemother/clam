@@ -23,7 +23,7 @@ batteries increase total line voltage.
 """
 
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal
+from power_graph.node_base import NodeBase, Signal, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 
@@ -34,6 +34,11 @@ class SeriesBattery(NodeBase):
     label = 'Battery'
     group = 'Storage'
     dispatch_delay = 200
+
+    @classmethod
+    def _default_ripple(cls):
+        # Internal resistance variation under charge/discharge cycles
+        return RippleProfile(enabled=True, amount=0.6, interval=1.2)
 
     catalog = [
         {'key': 'series-12v',    'label': 'Lead-Acid 12V 7Ah',  'volts': 12,  'amps': 7,   'chargeAmps': 2,  'capacityWh': 84 },
@@ -63,6 +68,7 @@ class SeriesBattery(NodeBase):
             'inVolts':        0.0,
             'inAmps':         0.0,
             'live':           False,
+            'running':        True,   # internal on/off switch (toggled by user)
             'state':          'off',
         })
         return base
@@ -72,7 +78,28 @@ class SeriesBattery(NodeBase):
         return [*super().config_fields(), 'volts', 'amps', 'chargeAmps', 'capacityWh']
 
     @classmethod
+    def toggle(cls, panel: Dict, graph):
+        """Internal on/off switch — independent of graph enabled state."""
+        panel['running'] = not panel.get('running', True)
+        prev = panel['state']
+        if not panel['running']:
+            panel['live']  = False
+            panel['state'] = 'off'
+            cls.dispatch(panel, 'state:change', {'from': prev, 'to': 'off'})
+            graph.emit(panel, None)
+        else:
+            # Re-apply with current sources so battery resumes immediately
+            sources  = panel.get('powerSources', {})
+            combined = graph.combine_sources(sources) if sources else None
+            cls.apply(panel, combined, graph)
+
+    @classmethod
     def apply(cls, panel: Dict, signal: Signal, graph):
+        # Internal switch off — cut output regardless of incoming signal
+        if not panel.get('running', True):
+            graph.emit(panel, None)
+            return
+
         cap_wh     = panel.get('capacityWh', 84)
         charge_amp = panel.get('chargeAmps', 2)
 
@@ -172,6 +199,7 @@ class SeriesBattery(NodeBase):
         panel['chargeWh']  = cap_wh * 0.8
         panel['state']     = 'off'
         panel['live']      = False
+        panel['running']   = True
         panel['chargeInW'] = 0.0
         panel['chargeOutW'] = 0.0
         cls.dispatch(panel, 'state:change', {'from': prev, 'to': 'off'})

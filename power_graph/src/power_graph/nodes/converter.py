@@ -18,7 +18,7 @@ re-propagate through the graph.
 """
 
 from typing import Dict, List
-from power_graph.node_base import NodeBase, Signal
+from power_graph.node_base import NodeBase, Signal, RippleProfile
 from power_graph.node_registry import NodeRegistry
 
 
@@ -32,6 +32,11 @@ class Converter(NodeBase):
     label = 'Converter'
     group = 'Power'
     dispatch_delay = 150
+
+    @classmethod
+    def _default_ripple(cls):
+        # Switching-supply output ripple — intrinsic to PWM-based designs
+        return RippleProfile(enabled=True, amount=1.0, interval=0.4)
 
     catalog = [
         {'key': 'conv-480v', 'label': 'Step-Up 480V',  'outVolts': 480, 'efficiency': 0.92},

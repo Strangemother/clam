@@ -1,0 +1,274 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Medbay Primary Feed",
+      "config": {
+        "label": "Medbay Primary Feed",
+        "enabled": true,
+        "volts": 240,
+        "amps": 20,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 2
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "0px", "top": "150px" }
+    },
+    {
+      "id": 2,
+      "type": "gen",
+      "title": "Medbay Backup Feed",
+      "config": {
+        "label": "Medbay Backup Feed",
+        "enabled": true,
+        "volts": 240,
+        "amps": 15,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 2
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "0px", "top": "400px" }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Medbay Distribution Panel",
+      "config": {
+        "label": "Medbay Distribution Panel",
+        "enabled": true
+      },
+      "pos": { "left": "450px", "top": "270px" }
+    },
+    {
+      "id": 4,
+      "type": "breaker",
+      "title": "Critical Systems Breaker",
+      "config": {
+        "label": "Critical Systems Breaker",
+        "enabled": true,
+        "ratingAmps": 15
+      },
+      "pos": { "left": "900px", "top": "150px" }
+    },
+    {
+      "id": 5,
+      "type": "load",
+      "title": "Surgical Lighting Array",
+      "config": {
+        "label": "Surgical Lighting Array",
+        "enabled": true,
+        "watts": 600,
+        "minVolts": 200,
+        "maxVolts": 270,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.02
+        }
+      },
+      "pos": { "left": "1350px", "top": "0px" }
+    },
+    {
+      "id": 6,
+      "type": "load",
+      "title": "Medical Scanner",
+      "config": {
+        "label": "Medical Scanner",
+        "enabled": true,
+        "watts": 800,
+        "minVolts": 200,
+        "maxVolts": 270,
+        "capacitance": 10,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 10,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.02
+        }
+      },
+      "pos": { "left": "1350px", "top": "200px" }
+    },
+    {
+      "id": 7,
+      "type": "load",
+      "title": "Life Monitor Array",
+      "config": {
+        "label": "Life Monitor Array",
+        "enabled": true,
+        "watts": 200,
+        "minVolts": 180,
+        "maxVolts": 270,
+        "capacitance": 15,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.2
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.01
+        }
+      },
+      "pos": { "left": "1350px", "top": "400px" }
+    },
+    {
+      "id": 8,
+      "type": "converter",
+      "title": "Medical Instruments Rail",
+      "config": {
+        "label": "Medical Instruments Rail",
+        "enabled": true,
+        "outVolts": 48,
+        "step": 3,
+        "efficiency": 0.97,
+        "ripple": {
+          "enabled": false,
+          "amount": 0.2,
+          "interval": 1
+        }
+      },
+      "pos": { "left": "900px", "top": "500px" }
+    },
+    {
+      "id": 9,
+      "type": "console",
+      "title": "Medical Console",
+      "config": {
+        "label": "Medical Console",
+        "enabled": true,
+        "watts": 120,
+        "minVolts": 40,
+        "capacitance": 25,
+        "bootDuration": 5,
+        "shutdownDuration": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 5,
+          "duration": 2
+        }
+      },
+      "pos": { "left": "1350px", "top": "580px" }
+    },
+    {
+      "id": 10,
+      "type": "heater",
+      "title": "Sterile Field Emitter",
+      "config": {
+        "label": "Sterile Field Emitter",
+        "enabled": true,
+        "watts": 300,
+        "minVolts": 200,
+        "maxVolts": 270,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.5
+        },
+        "heatRate": 3,
+        "coolRate": 0.5,
+        "maxTemp": 40,
+        "resetTemp": 30,
+        "minWatts": 100
+      },
+      "pos": { "left": "450px", "top": "600px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 8, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-3-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 180, "manualResistance": null },
+    "4-0-5-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null },
+    "4-0-6-0": { "enabled": true, "wireType": "copper", "length": 240, "manualResistance": null },
+    "4-0-7-0": { "enabled": true, "wireType": "copper", "length": 320, "manualResistance": null },
+    "3-0-8-0": { "enabled": true, "wireType": "copper", "length": 350, "manualResistance": null },
+    "8-0-9-0": { "enabled": true, "wireType": "copper", "length": 130, "manualResistance": null },
+    "3-0-10-0": { "enabled": true, "wireType": "copper", "length": 280, "manualResistance": null }
+  }
+}

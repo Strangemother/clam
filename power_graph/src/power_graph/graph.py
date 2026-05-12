@@ -258,12 +258,14 @@ class PowerGraph:
 
         self._propagating.add(panel['id'])
         try:
-            # Store signal from this source
+            # Store signal from this source — always use str keys so JSON-loaded
+            # powerSources (str keys) and runtime-set entries remain consistent.
             if source_id is not None:
+                src_key = str(source_id)
                 if signal is None:
-                    panel['powerSources'].pop(source_id, None)
+                    panel['powerSources'].pop(src_key, None)
                 else:
-                    panel['powerSources'][source_id] = signal
+                    panel['powerSources'][src_key] = signal
 
             # Let multi-input nodes know which pip fired
             panel['_last_in_pip'] = in_pip_index
@@ -360,88 +362,131 @@ class PowerGraph:
 
     def repropagate_all(self):
         """
-        Re-broadcast from every live generator after topology change.
+        Re-broadcast from every generator and enabled source after topology change.
+
+        Dead/disabled generators emit None so downstream powerSources entries are
+        cleared — otherwise stale amps continue to appear at loads.
         """
         for panel in self.panels:
-            if panel['type'] == 'gen' and panel.get('live'):
-                self.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})
+            if panel['type'] in ('gen', 'series-battery'):
+                if panel.get('live') and panel.get('enabled', True) is not False:
+                    self.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})
+                else:
+                    self.emit(panel, None)
+            elif panel.get('enabled') is False:
+                self.emit(panel, None)
 
     # ────────────────────────────────────────────────────────────────────────
     # GENERATOR DRAW (BFS)
     # ────────────────────────────────────────────────────────────────────────
 
     def update_all_gen_draws(self):
-        """Recompute draw watts for every generator and battery."""
-        for p in self.panels:
-            if p['type'] in ('gen', 'series-bat'):
-                self.compute_gen_draw(p)
+        """
+        Recompute draw watts for every generator and battery using a combined BFS.
+
+        A single combined pass pre-computes how many generators can reach each
+        panel, then attributes watts proportionally (1/N) so parallel generators
+        sharing a bus never double-count the same downstream loads.
+        """
+        gens = [p for p in self.panels if p['type'] in ('gen', 'series-battery')]
+        if not gens:
+            return
+
+        # Phase 1 — BFS from every generator; record which panels each gen reaches
+        gen_reachable: Dict[int, Set[int]] = {}
+        for gen in gens:
+            reachable: Set[int] = set()
+            visited:   Set[int] = set()
+            queue:     List[int] = [gen['id']]
+            while queue:
+                node_id = queue.pop(0)
+                if node_id in visited:
+                    continue
+                visited.add(node_id)
+                if node_id != gen['id']:
+                    reachable.add(node_id)
+                panel = self._find_panel(node_id)
+                if not panel:
+                    continue
+                for pip in panel.get('pipsOutbound', []):
+                    pip_idx = pip.get('index', 0)
+                    for to_id, _, _ in self._connections.get((node_id, pip_idx), []):
+                        if to_id not in visited:
+                            queue.append(to_id)
+            gen_reachable[gen['id']] = reachable
+
+        # Phase 2 — for each panel count how many generators can reach it
+        all_reached: Set[int] = set().union(*gen_reachable.values())
+        panel_gen_count: Dict[int, int] = {
+            pid: sum(1 for r in gen_reachable.values() if pid in r)
+            for pid in all_reached
+        }
+
+        # Phase 3 — sum attributed watts per generator, then update states
+        for gen in gens:
+            total_w = 0.0
+            for panel_id in gen_reachable[gen['id']]:
+                panel = self._find_panel(panel_id)
+                if not panel:
+                    continue
+                share = max(1, panel_gen_count.get(panel_id, 1))
+                state = panel.get('state')
+
+                if panel['type'] == 'bulb' and state in ('on', 'dim'):
+                    total_w += panel.get('watts', 0) / share
+
+                node_cls = NodeRegistry.get(panel['type'])
+                if (node_cls and getattr(node_cls, 'consumes_watts', False)
+                        and state in ('on', 'capacitor')):
+                    total_w += panel.get('current_watts', panel.get('watts', 0)) / share
+
+            self._apply_gen_draw(gen, round(total_w, 1))
+
+    def _apply_gen_draw(self, gen: Dict, total_w: float):
+        """Apply a computed draw total to a generator, updating state and emitting."""
+        gen['drawWatts'] = total_w
+        gen['drawAmps']  = round(total_w / gen.get('volts', 240), 2) if gen.get('volts', 240) > 0 else 0
+
+        if not gen.get('live'):
+            return
+
+        ratio = gen['drawAmps'] / max(0.001, gen.get('amps', 13))
+
+        if ratio > 1.3:
+            if gen.get('state') != 'tripped':
+                gen['overload'] = True
+                gen['state'] = 'tripped'
+                self.emit(gen, None)
+        elif ratio > 1.0:
+            sag_volts = round(gen.get('volts', 240) * 0.85, 1)
+            gen['overload'] = True
+            gen['state'] = 'sag'
+            self.emit(gen, {'v': sag_volts, 'a': gen.get('amps', 13)})
+        else:
+            prev_draw = gen.get('_prev_draw_watts', -1.0)
+            if (abs(total_w - prev_draw) > 5.0
+                    and gen.get('enabled', True) is not False):
+                load_ratio = min(1.0, ratio)
+                v_out = round(gen.get('volts', 240) * (1.0 - load_ratio * 0.05), 2)
+                self.emit(gen, {'v': v_out, 'a': gen.get('amps', 13)})
+
+            if gen.get('overload'):
+                gen['overload'] = False
+                gen['state'] = 'on'
+                self.emit(gen, {'v': gen.get('volts', 240), 'a': gen.get('amps', 13)})
+            else:
+                gen['state'] = 'on'
+
+        gen['_prev_draw_watts'] = total_w
 
     def compute_gen_draw(self, gen: Dict):
         """
-        BFS from a generator's outbound pips, summing load contributions.
+        Compatibility shim — delegates to the combined update_all_gen_draws().
 
-        Args:
-            gen: Generator panel
+        Retained so external callers (tests, scripts) don't break.
+        Prefer calling update_all_gen_draws() for correct multi-gen sharing.
         """
-        visited: Set[int] = set()
-        queue: List[int] = [gen['id']]
-        total_w = 0
-
-        while queue:
-            node_id = queue.pop(0)
-            if node_id in visited:
-                continue
-            visited.add(node_id)
-
-            panel = self._find_panel(node_id)
-            if not panel:
-                continue
-
-            # shareCount: load fed by N generators is 1/N attributed to each
-            share_count = max(1, len(panel.get('powerSources', {})))
-
-            # Count bulb watts
-            if panel['type'] == 'bulb' and panel.get('state') in ('on', 'dim'):
-                total_w += panel.get('watts', 0) / share_count
-
-            # Count load watts
-            node_cls = NodeRegistry.get(panel['type'])
-            if node_cls and hasattr(node_cls, 'consumes_watts') and node_cls.consumes_watts:
-                state = panel.get('state')
-                if state in ('on', 'capacitor'):
-                    total_w += panel.get('current_watts', panel.get('watts', 0)) / share_count
-
-            # Enqueue downstream panels
-            for pip in panel.get('pipsOutbound', []):
-                pip_idx = pip.get('index', 0)
-                for to_id, _, _ in self._connections.get((node_id, pip_idx), []):
-                    if to_id not in visited:
-                        queue.append(to_id)
-
-        gen['drawWatts'] = round(total_w, 1)
-        gen['drawAmps'] = round(total_w / gen.get('volts', 240), 2) if gen.get('volts', 240) > 0 else 0
-
-        # Apply load-based state changes
-        if gen.get('live'):
-            ratio = gen['drawAmps'] / gen.get('amps', 13)
-
-            if ratio > 1.3:
-                if gen.get('state') != 'tripped':
-                    gen['overload'] = True
-                    gen['state'] = 'tripped'
-                    self.emit(gen, None)
-            elif ratio > 1.0:
-                sag_volts = round(gen.get('volts', 240) * 0.85, 1)
-                gen['overload'] = True
-                gen['state'] = 'sag'
-                self.emit(gen, {'v': sag_volts, 'a': gen.get('amps', 13)})
-            else:
-                if gen.get('overload'):
-                    gen['overload'] = False
-                    gen['state'] = 'on'
-                    self.emit(gen, {'v': gen.get('volts', 240), 'a': gen.get('amps', 13)})
-                else:
-                    gen['state'] = 'on'
+        self.update_all_gen_draws()
 
     # ────────────────────────────────────────────────────────────────────────
     # RIPPLE EFFECTS
@@ -461,21 +506,38 @@ class PowerGraph:
             panel['_ripple_accum'] = 0
             panel['_ripple_offset'] = _ripple_random(ripple.get('amount', 1.0))
 
-            # Generator ripple
+            node_cls = NodeRegistry.get(panel['type'])
+
+            # Generator: voltage ripple — AC hum / governor flutter
             if panel['type'] == 'gen' and panel.get('live') and panel.get('state') != 'tripped':
                 v_out = max(1, panel.get('volts', 240) + panel['_ripple_offset'])
                 self.emit(panel, {'v': v_out, 'a': panel.get('amps', 13)})
 
-            # Load ripple
-            if panel['type'] == 'load' and panel.get('state') == 'on' and panel.get('signal'):
-                draw_amps = panel.get('watts', 0) / NOMINAL_VOLTS
+            # Any consumes_watts node (load, heater, console…): current ripple
+            elif (node_cls and getattr(node_cls, 'consumes_watts', False)
+                    and panel.get('state') == 'on' and panel.get('_last_signal')):
+                sig = panel['_last_signal']
+                draw_amps  = panel.get('current_watts', panel.get('watts', 0)) / NOMINAL_VOLTS
                 amp_jitter = _ripple_random(ripple.get('amount', 1.0) / NOMINAL_VOLTS)
-                a_out = max(0, panel['signal'].get('a', 0) - draw_amps + amp_jitter)
-                self.emit(panel, {'v': panel['signal'].get('v', 240), 'a': a_out})
+                a_out = max(0.0, sig.get('a', 0) - draw_amps + amp_jitter)
+                self.emit(panel, {'v': sig.get('v', 240), 'a': a_out})
 
-            # Converter and battery ripple can call apply() to regenerate
-            if panel['type'] in ('converter', 'series-bat') and panel.get('signal'):
-                node_cls = NodeRegistry.get(panel['type'])
+            # Bulb: subtle brightness flicker via voltage jitter on its inbound signal
+            elif panel['type'] == 'bulb' and panel.get('state') in ('on', 'dim') and panel.get('signal'):
+                sig   = panel['signal']
+                v_out = max(1.0, sig.get('v', 240) + panel['_ripple_offset'])
+                if node_cls:
+                    node_cls.apply(panel, {'v': v_out, 'a': sig.get('a', 0)}, self)
+
+            # Bus-bar: redistribute with a small voltage offset
+            elif panel['type'] in ('bus-bar', 'power-rail') and panel.get('state') == 'distributing' and panel.get('signal'):
+                sig   = panel['signal']
+                v_out = max(1.0, sig.get('v', 240) + panel['_ripple_offset'])
+                if node_cls:
+                    node_cls.apply(panel, {'v': v_out, 'a': sig.get('a', 0)}, self)
+
+            # Converter and battery: re-apply to regenerate jittered output
+            elif panel['type'] in ('converter', 'series-battery') and panel.get('signal'):
                 if node_cls:
                     node_cls.apply(panel, panel['signal'], self)
 

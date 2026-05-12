@@ -1,0 +1,74 @@
+{% raw %}
+<aside>
+
+  <div class="pane-title">Command Builder</div>
+
+  <div class="cmd-form">
+    <div class="row">
+      <div>
+        <label>op</label>
+        <select v-model="op">
+          <option>toggle</option>
+          <option>set</option>
+          <option>reset</option>
+          <option>read</option>
+          <option>repropagate</option>
+        </select>
+      </div>
+      <div>
+        <label>id</label>
+        <input v-model="opId" type="number" min="1" placeholder="panel id">
+      </div>
+    </div>
+
+    <template v-if="op === 'set'">
+      <label>key</label>
+      <input v-model="opKey" type="text" placeholder="e.g. enabled">
+      <label>value (JSON)</label>
+      <input v-model="opValue" type="text" placeholder='false / 42 / "on"'>
+    </template>
+
+    <button class="btn-accent" @click="sendBuilder">Send</button>
+  </div>
+
+  <div class="raw-area">
+    <div class="pane-title" style="padding:0 0 6px; border:none">Raw JSON</div>
+    <textarea class="raw-cmd" v-model="rawCmd" spellcheck="false"></textarea>
+    <button @click="sendRaw">Send Raw</button>
+  </div>
+
+  <div class="pane-title">Spawn Node</div>
+  <div class="spawn-form">
+    <div class="row">
+      <div>
+        <label>Group</label>
+        <select v-model="spawnGroup">
+          <option v-for="g in spawnGroups" :key="g" :value="g">{{ g }}</option>
+        </select>
+      </div>
+      <div>
+        <label>Type</label>
+        <select v-model="spawnItem">
+          <option v-for="e in spawnGroupItems" :key="e.key" :value="e">{{ e.label }}</option>
+        </select>
+      </div>
+    </div>
+    <label>Label <span style="color:var(--muted);text-transform:none">(optional)</span></label>
+    <input v-model="spawnLabel" type="text" placeholder="Leave blank to use default">
+    <button class="btn-accent" @click="spawnNode" :disabled="!spawnItem">Spawn</button>
+  </div>
+
+  <div class="pane-title log-header">
+    Event Log
+    <span class="log-stat" title="Messages per second">{{ logMsgPerSec }}<em>msg/s</em></span>
+    <span class="log-stat" title="Kilobytes per second">{{ logKbPerSec }}<em>KB/s</em></span>
+    <span class="log-stat" title="Total bytes received">{{ (logTotalBytes / 1024).toFixed(1) }}<em>KB</em></span>
+    <button class="log-btn" @click="clearLog" title="Clear log">Clear</button>
+    <button class="log-btn" @click="toggleLogCollapse" title="Collapse / expand log">{{ logCollapsed ? '▶' : '▼' }}</button>
+  </div>
+  <div v-show="!logCollapsed" class="log">
+    <div v-for="(entry, i) in logEntries" :key="i" :class="['log-entry', entry.type]">{{ entry.text }}</div>
+  </div>
+
+</aside>
+{% endraw %}

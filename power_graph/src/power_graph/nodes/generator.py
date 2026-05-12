@@ -50,7 +50,8 @@ class Generator(NodeBase):
 
     @classmethod
     def _default_ripple(cls):
-        return RippleProfile(enabled=False, amount=2.0, interval=0.8)
+        # Slight output voltage ripple — AC hum, mechanical governor flutter
+        return RippleProfile(enabled=True, amount=1.5, interval=0.8)
 
     @classmethod
     def _default_pips_inbound(cls, node_id):
@@ -86,6 +87,8 @@ class Generator(NodeBase):
         was_nonzero  = (panel.get('_spike_timer', 0) > 0)
         still_active = cls.tick_spike(panel, dt)
         if not still_active and not was_nonzero:
+            return
+        if not panel.get('enabled', True):
             return
         if not panel.get('live') or panel.get('state') in ('tripped', 'off'):
             return

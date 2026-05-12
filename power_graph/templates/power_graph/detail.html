@@ -1,0 +1,34 @@
+{% raw %}
+<div v-if="detailOpen && selectedPanel" class="detail-overlay" @click.self="closeDetail">
+  <div class="detail-box">
+
+    <div class="detail-header">
+      <h2>#{{ selectedPanel.id }} — {{ selectedPanel.label || selectedPanel.type }}</h2>
+      <button @click="togglePanel">Toggle</button>
+      <button @click="resetPanel">Reset</button>
+      <button class="btn-close" @click="closeDetail">✕</button>
+    </div>
+
+    <div class="detail-body">
+      <div v-for="f in detailFields" :key="f.key" class="field-row">
+        <span class="field-key">{{ f.key }}</span>
+        <input
+          v-if="f.editable"
+          class="field-val editable"
+          :class="{ focused: selectedFieldKey === f.key }"
+          v-model="fieldEdits[f.key]"
+          @focus="selectedFieldKey = f.key; focusedFieldKey = f.key"
+          @blur="focusedFieldKey = null"
+        >
+        <span v-else class="field-val">{{ f.raw.slice(0, 60) }}</span>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="btn-accent" @click="setField">Set field →</button>
+      <span class="detail-hint">Click a field, edit, then Set field</span>
+    </div>
+
+  </div>
+</div>
+{% endraw %}

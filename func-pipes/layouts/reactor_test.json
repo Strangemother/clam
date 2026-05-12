@@ -1,0 +1,119 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Test Supply",
+      "config": {
+        "label": "Test Supply",
+        "enabled": true,
+        "volts": 240,
+        "amps": 8,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 10,
+          "duration": 0.5
+        }
+      },
+      "pos": { "left": "0px", "top": "200px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Test Monitor",
+      "config": {
+        "label": "Test Monitor",
+        "enabled": true
+      },
+      "pos": { "left": "400px", "top": "200px" }
+    },
+    {
+      "id": 3,
+      "type": "breaker",
+      "title": "5A Overload Breaker",
+      "config": {
+        "label": "5A Overload Breaker",
+        "enabled": true,
+        "ratingAmps": 5
+      },
+      "pos": { "left": "800px", "top": "100px" }
+    },
+    {
+      "id": 4,
+      "type": "load",
+      "title": "High Draw Test Load",
+      "config": {
+        "label": "High Draw Test Load",
+        "enabled": true,
+        "watts": 2000,
+        "minVolts": 180,
+        "maxVolts": 270,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 5,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 50,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": { "left": "1200px", "top": "100px" }
+    },
+    {
+      "id": 5,
+      "type": "bulb",
+      "title": "Indicator Light",
+      "config": {
+        "label": "Indicator Light",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 288,
+        "maxAmps": 8,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "800px", "top": "360px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "copper", "length": 100, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "copper", "length": 120, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "2-0-5-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null }
+  }
+}

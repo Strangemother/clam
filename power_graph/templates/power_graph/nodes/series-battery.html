@@ -1,0 +1,26 @@
+{% raw %}
+<!-- ── SERIES-BATTERY card extra ── -->
+<!-- Included by panels.html when p.type === 'series-battery'.
+     Shows charge percentage and a colour-graded charge bar. -->
+<template v-if="p.type === 'series-battery'">
+  <div class="panel-extra">
+    <div class="draw-header">
+      <span :class="['draw-pct-label',
+          (p.chargePercent || 0) < 15 ? 'draw-crit' :
+          (p.chargePercent || 0) < 35 ? 'draw-warn' : 'draw-ok']">
+        {{ (p.chargePercent || 0).toFixed(0) }}%
+      </span>
+      <span class="draw-readout">
+        {{ (p.chargeWh || 0).toFixed(1) }} / {{ p.capacityWh }}Wh
+      </span>
+    </div>
+    <div class="draw-bar-bg">
+      <div :class="['draw-bar-fill',
+          (p.chargePercent || 0) < 15 ? 'draw-crit' :
+          (p.chargePercent || 0) < 35 ? 'draw-warn' : 'draw-ok']"
+           :style="{ width: (p.chargePercent || 0) + '%' }">
+      </div>
+    </div>
+  </div>
+</template>
+{% endraw %}

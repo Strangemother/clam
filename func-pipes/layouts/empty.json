@@ -1,0 +1,30 @@
+{
+  "nodes": [ {
+      "id": 1,
+      "type": "gen",
+      "title": "Fusion Reactor Alpha",
+      "config": {
+        "label": "Fusion Reactor Alpha",
+        "enabled": true,
+        "volts": 480,
+        "amps": 20,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 3,
+          "interval": 1.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.94
+        }
+      },
+      "pos": {
+        "left": "-1269.42px",
+        "top": "830.266px"
+      }
+    }],
+  "connections": [],
+  "edges": {}
+}

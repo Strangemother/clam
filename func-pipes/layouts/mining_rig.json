@@ -1,0 +1,256 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Industrial Drill Generator",
+      "config": {
+        "label": "Industrial Drill Generator",
+        "enabled": true,
+        "volts": 480,
+        "amps": 22,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 100,
+          "interval": 0.25
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 70,
+          "duration": 1.5
+        }
+      },
+      "pos": { "left": "0px", "top": "350px" }
+    },
+    {
+      "id": 2,
+      "type": "converter",
+      "title": "Worn-Out Step-Down",
+      "config": {
+        "label": "Worn-Out Step-Down",
+        "enabled": true,
+        "outVolts": 240,
+        "step": 20,
+        "efficiency": 0.68,
+        "ripple": {
+          "enabled": true,
+          "amount": 35,
+          "interval": 0.4
+        }
+      },
+      "pos": { "left": "600px", "top": "350px" }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Mining Deck Bus",
+      "config": {
+        "label": "Mining Deck Bus",
+        "enabled": true
+      },
+      "pos": { "left": "1100px", "top": "350px" }
+    },
+    {
+      "id": 4,
+      "type": "load",
+      "title": "Ore Drill Motor A",
+      "config": {
+        "label": "Ore Drill Motor A",
+        "enabled": true,
+        "watts": 2800,
+        "minVolts": 160,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 70,
+          "interval": 0.2
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 150,
+          "duration": 2.5
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.15,
+          "amount": 0.6
+        }
+      },
+      "pos": { "left": "1600px", "top": "0px" }
+    },
+    {
+      "id": 5,
+      "type": "load",
+      "title": "Ore Drill Motor B",
+      "config": {
+        "label": "Ore Drill Motor B",
+        "enabled": true,
+        "watts": 2600,
+        "minVolts": 160,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 65,
+          "interval": 0.22
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 140,
+          "duration": 2.5
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.18,
+          "amount": 0.55
+        }
+      },
+      "pos": { "left": "1600px", "top": "280px" }
+    },
+    {
+      "id": 6,
+      "type": "heater",
+      "title": "Smelter Furnace",
+      "config": {
+        "label": "Smelter Furnace",
+        "enabled": true,
+        "watts": 3500,
+        "minVolts": 180,
+        "maxVolts": 300,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 100,
+          "duration": 3
+        },
+        "heatRate": 20,
+        "coolRate": 0.8,
+        "maxTemp": 800,
+        "resetTemp": 600,
+        "minWatts": 500
+      },
+      "pos": { "left": "1600px", "top": "560px" }
+    },
+    {
+      "id": 7,
+      "type": "breaker",
+      "title": "Worker Zone Breaker",
+      "config": {
+        "label": "Worker Zone Breaker",
+        "enabled": true,
+        "ratingAmps": 10
+      },
+      "pos": { "left": "1100px", "top": "700px" }
+    },
+    {
+      "id": 8,
+      "type": "bulb",
+      "title": "Shaft Light 1",
+      "config": {
+        "label": "Shaft Light 1",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 258,
+        "maxAmps": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 35,
+          "duration": 0.7
+        }
+      },
+      "pos": { "left": "1600px", "top": "840px" }
+    },
+    {
+      "id": 9,
+      "type": "bulb",
+      "title": "Shaft Light 2",
+      "config": {
+        "label": "Shaft Light 2",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 252,
+        "maxAmps": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 35,
+          "duration": 0.7
+        }
+      },
+      "pos": { "left": "1600px", "top": "1040px" }
+    },
+    {
+      "id": 10,
+      "type": "bulb",
+      "title": "Shaft Light 3",
+      "config": {
+        "label": "Shaft Light 3",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 260,
+        "maxAmps": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 35,
+          "duration": 0.7
+        }
+      },
+      "pos": { "left": "1600px", "top": "1240px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 7, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 7, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 7, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "steel", "length": 800, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "steel", "length": 1000, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "aluminium", "length": 400, "manualResistance": null },
+    "3-0-5-0": { "enabled": true, "wireType": "aluminium", "length": 500, "manualResistance": null },
+    "3-0-6-0": { "enabled": true, "wireType": "steel", "length": 700, "manualResistance": null },
+    "3-0-7-0": { "enabled": true, "wireType": "steel", "length": 1200, "manualResistance": null },
+    "7-0-8-0": { "enabled": true, "wireType": "lossy", "length": 1800, "manualResistance": null },
+    "7-0-9-0": { "enabled": true, "wireType": "lossy", "length": 2200, "manualResistance": null },
+    "7-0-10-0": { "enabled": true, "wireType": "lossy", "length": 2800, "manualResistance": null }
+  }
+}

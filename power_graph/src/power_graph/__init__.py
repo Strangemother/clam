@@ -36,12 +36,14 @@ from .edge_store import EdgeStore, WIRE_TYPES
 from .node_registry import NodeRegistry
 from .node_base import NodeBase, Signal
 from .graph import PowerGraph
+from .runner import GraphRunner
 
 # Import all node types so they self-register via NodeRegistry.register()
 from . import nodes  # noqa: F401
 
 __all__ = [
     'PowerGraph',
+    'GraphRunner',
     'NodeBase',
     'NodeRegistry',
     'EdgeStore',

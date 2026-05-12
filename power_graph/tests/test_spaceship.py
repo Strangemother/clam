@@ -150,11 +150,13 @@ def test_meters_reading():
         assert p['state'] == 'on',  f"Meter {mid} expected on, got {p['state']}"
         assert v > 0, f"Meter {mid} reading_volts == 0"
 
-    # Gen1/2 trip on cold start → Main Bus A and Propulsion Panel go dark
+    # Gen1/2 share the 480V bus load correctly — Main Bus A and Propulsion
+    # Panel remain energised on cold start (BFS splits load between reactors).
     for mid in [5, 9]:
         p = _panel(graph, mid)
-        print(f"  • #{mid:2} {p['label']:30}  state={p['state']}  (gen1/2 tripped)")
-        assert p['state'] == 'off', f"Meter {mid} should be off (gen1/2 tripped), got {p['state']}"
+        v = p.get('reading_volts', 0)
+        print(f"  • #{mid:2} {p['label']:30}  {v:.1f}V  state={p['state']}")
+        assert p['state'] == 'on', f"Meter {mid} expected on (gen1/2 stay live), got {p['state']}"
 
     print("\n✓ Meter readings passed!")
 
@@ -162,7 +164,7 @@ def test_meters_reading():
 def test_buses_voltage_hierarchy():
     """
     Main Bus B (240V nominal, #6) reads higher than the Bridge Panel (48V
-    bus, #44).  Bus A (#5) is dark because gen1/2 tripped on cold start.
+    bus, #44).  Bus A (#5) is live because gen1/2 share the 480V load correctly.
     """
     print("\n" + "=" * 70)
     print("TEST 6: Bus voltage hierarchy")

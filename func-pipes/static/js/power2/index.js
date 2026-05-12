@@ -182,6 +182,15 @@ createApp({
         resetGraph()       { this.graph.resetGraph() },
         exportJSON()       { this.graph.exportJSON() },
         importJSON()       { this.graph.importJSON() },
+
+        // ── Scenarios ────────────────────────────────────────────────────────
+        runScenario(name) {
+            if (name === 'avionics-isolation') {
+                runAvionicsIsolationFix(this.graph, msg => console.log('[Scenario]', msg))
+            } else {
+                console.warn('[Scenarios] unknown scenario:', name)
+            }
+        },
     },
 
 }).mount('#app')

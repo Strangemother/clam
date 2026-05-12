@@ -1,0 +1,254 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Damaged Reactor Core",
+      "config": {
+        "label": "Damaged Reactor Core",
+        "enabled": true,
+        "volts": 480,
+        "amps": 18,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 90,
+          "interval": 0.2
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 60,
+          "duration": 0.6
+        }
+      },
+      "pos": { "left": "0px", "top": "400px" }
+    },
+    {
+      "id": 2,
+      "type": "gen",
+      "title": "Aux Reactor (Flailing)",
+      "config": {
+        "label": "Aux Reactor (Flailing)",
+        "enabled": true,
+        "volts": 460,
+        "amps": 14,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 120,
+          "interval": 0.15
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 80,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "0px", "top": "800px" }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Main Battle Bus",
+      "config": {
+        "label": "Main Battle Bus",
+        "enabled": true
+      },
+      "pos": { "left": "500px", "top": "600px" }
+    },
+    {
+      "id": 4,
+      "type": "breaker",
+      "title": "Weapons Breaker",
+      "config": {
+        "label": "Weapons Breaker",
+        "enabled": true,
+        "ratingAmps": 12
+      },
+      "pos": { "left": "1000px", "top": "200px" }
+    },
+    {
+      "id": 5,
+      "type": "load",
+      "title": "Railgun Capacitor Bank",
+      "config": {
+        "label": "Railgun Capacitor Bank",
+        "enabled": true,
+        "watts": 4800,
+        "minVolts": 380,
+        "maxVolts": 600,
+        "capacitance": 50,
+        "ripple": {
+          "enabled": true,
+          "amount": 60,
+          "interval": 0.3
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 200,
+          "duration": 0.8
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.2,
+          "amount": 0.5
+        }
+      },
+      "pos": { "left": "1500px", "top": "100px" }
+    },
+    {
+      "id": 6,
+      "type": "load",
+      "title": "Point Defence Array",
+      "config": {
+        "label": "Point Defence Array",
+        "enabled": true,
+        "watts": 2200,
+        "minVolts": 360,
+        "maxVolts": 600,
+        "capacitance": 10,
+        "ripple": {
+          "enabled": true,
+          "amount": 40,
+          "interval": 0.4
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 80,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.3,
+          "amount": 0.4
+        }
+      },
+      "pos": { "left": "1500px", "top": "400px" }
+    },
+    {
+      "id": 7,
+      "type": "breaker",
+      "title": "Hull Breach Isolator",
+      "config": {
+        "label": "Hull Breach Isolator",
+        "enabled": true,
+        "ratingAmps": 8
+      },
+      "pos": { "left": "1000px", "top": "700px" }
+    },
+    {
+      "id": 8,
+      "type": "heater",
+      "title": "Damaged Life Support",
+      "config": {
+        "label": "Damaged Life Support",
+        "enabled": true,
+        "watts": 1800,
+        "minVolts": 300,
+        "maxVolts": 560,
+        "capacitance": 5,
+        "ripple": {
+          "enabled": true,
+          "amount": 50,
+          "interval": 0.35
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 50,
+          "duration": 1.2
+        },
+        "heatRate": 15,
+        "coolRate": 0.3,
+        "maxTemp": 200,
+        "resetTemp": 150,
+        "minWatts": 300
+      },
+      "pos": { "left": "1500px", "top": "700px" }
+    },
+    {
+      "id": 9,
+      "type": "bulb",
+      "title": "Corridor Warning Light A",
+      "config": {
+        "label": "Corridor Warning Light A",
+        "enabled": true,
+        "watts": 80,
+        "maxVolts": 500,
+        "maxAmps": 6,
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "500px", "top": "1050px" }
+    },
+    {
+      "id": 10,
+      "type": "bulb",
+      "title": "Corridor Warning Light B",
+      "config": {
+        "label": "Corridor Warning Light B",
+        "enabled": true,
+        "watts": 80,
+        "maxVolts": 490,
+        "maxAmps": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "1000px", "top": "1100px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 7, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-3-0": { "enabled": true, "wireType": "aluminium", "length": 500, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "aluminium", "length": 500, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 400, "manualResistance": null },
+    "4-0-5-0": { "enabled": true, "wireType": "copper", "length": 300, "manualResistance": null },
+    "4-0-6-0": { "enabled": true, "wireType": "copper", "length": 350, "manualResistance": null },
+    "3-0-7-0": { "enabled": true, "wireType": "aluminium", "length": 800, "manualResistance": null },
+    "7-0-8-0": { "enabled": true, "wireType": "steel", "length": 600, "manualResistance": null },
+    "3-0-9-0": { "enabled": true, "wireType": "steel", "length": 1200, "manualResistance": null },
+    "3-0-10-0": { "enabled": true, "wireType": "steel", "length": 1500, "manualResistance": null }
+  }
+}

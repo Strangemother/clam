@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Power Graph</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/power_graph.css') }}">
+</head>
+<body>
+
+<div id="app">
+  {% include 'power_graph/header.html' %}
+  {% include 'power_graph/sidebar.html' %}
+  {% include 'power_graph/panels.html' %}
+  {% include 'power_graph/detail.html' %}
+</div>
+
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script>const NODE_CATALOG = {{ catalog | tojson }};</script>
+<script src="{{ url_for('static', filename='js/power_graph/canvas.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power_graph/scenarios/avionics-isolation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/power_graph/app.js') }}"></script>
+
+</body>
+</html>
