@@ -35,6 +35,11 @@
       <div class="panel-label">{{ p.label || '(unlabelled)' }}</div>
       <div :class="['panel-state', p.state || 'off']">{{ p.state || 'off' }}</div>
       <div class="panel-watts">{{ panelWatts(p) }}</div>
+
+      <!-- per-type extras -->
+{% endraw %}{% include 'power_graph/nodes/heater.html' %}
+{% include 'power_graph/nodes/gen.html' %}
+{% include 'power_graph/nodes/series-battery.html' %}{% raw %}
     </div>
 
   </div>

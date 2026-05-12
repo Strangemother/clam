@@ -336,6 +336,39 @@ aside {
 .panel-state.off      { color: var(--muted);  }
 .panel-watts {/* font-size: 11px; */color: #ca4ee1;}
 
+/* ── Per-type card extras ──────────────────────────────────────────── */
+
+/* Heater thermal display */
+.heat-bar-bg   { height: 6px; background: #1a1a2e; border-radius: 3px; margin: 5px 0 2px; overflow: hidden; }
+.heat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; background: #ff6600; }
+.heat-bar-fill.cold    { background: #4488ff; }
+.heat-bar-fill.warming { background: #ff9900; }
+.heat-bar-fill.hot     { background: #ff2200; }
+.heat-state-badge {
+  display: inline-block; padding: 1px 5px; border-radius: 3px;
+  font-size: 9px; font-weight: bold; letter-spacing: .05em; text-transform: uppercase;
+}
+.heat-state-badge.cold    { background: #1e3a6e; color: #88aaff; }
+.heat-state-badge.warming { background: #5a3000; color: #ffaa44; }
+.heat-state-badge.hot     { background: #5a0000; color: #ff6644; }
+
+.panel-extra { margin-top: 4px; }
+
+/* Generator / battery draw + charge bar */
+.draw-header   { display: flex; align-items: baseline; gap: 5px; font-size: 11px; }
+.draw-pct-label { font-weight: bold; min-width: 28px; }
+.draw-readout  { color: var(--muted); font-size: 10px; margin-left: auto; }
+.draw-bar-bg   { height: 5px; background: #1a1a2e; border-radius: 3px; margin: 3px 0 1px; overflow: hidden; }
+.draw-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.draw-ok   { color: var(--accent); }
+.draw-ok.draw-bar-fill   { background: var(--accent); }
+.draw-warn { color: var(--warn); }
+.draw-warn.draw-bar-fill { background: var(--warn); }
+.draw-over { color: #ff8800; }
+.draw-over.draw-bar-fill { background: #ff8800; }
+.draw-crit { color: var(--danger); }
+.draw-crit.draw-bar-fill { background: var(--danger); }
+
 .empty-note { color: var(--muted); padding: 20px; }
 
 /* ── Detail overlay ────────────────────────────────────────────────── */

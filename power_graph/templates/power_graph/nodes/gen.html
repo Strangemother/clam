@@ -1,0 +1,28 @@
+{% raw %}
+<!-- ── GENERATOR card extra ── -->
+<!-- Included by panels.html when p.type === 'gen'.
+     Shows draw watts/amps as a percentage-of-capacity bar. -->
+<template v-if="p.type === 'gen'">
+  <div class="panel-extra" v-if="p.live || p.state === 'tripped'">
+    <div class="draw-header">
+      <span :class="['draw-pct-label',
+          p.drawAmps > p.amps * 1.3  ? 'draw-crit' :
+          p.drawAmps > p.amps        ? 'draw-over' :
+          p.drawAmps >= p.amps * 0.7 ? 'draw-warn' : 'draw-ok']">
+        {{ (Math.min((p.drawAmps / p.amps) * 100, 999)).toFixed(0) }}%
+      </span>
+      <span class="draw-readout">
+        {{ p.drawWatts }}W / {{ p.drawAmps }}A
+      </span>
+    </div>
+    <div class="draw-bar-bg">
+      <div :class="['draw-bar-fill',
+          p.drawAmps > p.amps * 1.3  ? 'draw-crit' :
+          p.drawAmps > p.amps        ? 'draw-over' :
+          p.drawAmps >= p.amps * 0.7 ? 'draw-warn' : 'draw-ok']"
+           :style="{ width: Math.min(100, (p.drawAmps / p.amps) * 100) + '%' }">
+      </div>
+    </div>
+  </div>
+</template>
+{% endraw %}

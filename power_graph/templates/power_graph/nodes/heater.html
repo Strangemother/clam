@@ -1,0 +1,22 @@
+{% raw %}
+<!-- ── HEATER card extra ── -->
+<!-- Included by panels.html when p.type === 'heater'.
+     Shows thermal state badge, temperature reading, and a heat-level bar. -->
+<template v-if="p.type === 'heater'">
+  <div class="panel-extra">
+    <div style="display:flex; align-items:center; gap:5px; font-size:11px;">
+      <span :class="['heat-state-badge', p.heatState || 'cold']">
+        {{ p.heatState || 'cold' }}
+      </span>
+      <span style="margin-left:auto; color:#888;">
+        {{ (p.temperature || 0).toFixed(0) }}°
+      </span>
+    </div>
+    <div class="heat-bar-bg">
+      <div :class="['heat-bar-fill', p.heatState || 'cold']"
+           :style="{ width: (p.temperature || 0) + '%' }">
+      </div>
+    </div>
+  </div>
+</template>
+{% endraw %}
