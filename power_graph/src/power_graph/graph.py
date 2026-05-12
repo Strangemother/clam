@@ -381,88 +381,112 @@ class PowerGraph:
     # ────────────────────────────────────────────────────────────────────────
 
     def update_all_gen_draws(self):
-        """Recompute draw watts for every generator and battery."""
-        for p in self.panels:
-            if p['type'] in ('gen', 'series-battery'):
-                self.compute_gen_draw(p)
+        """
+        Recompute draw watts for every generator and battery using a combined BFS.
+
+        A single combined pass pre-computes how many generators can reach each
+        panel, then attributes watts proportionally (1/N) so parallel generators
+        sharing a bus never double-count the same downstream loads.
+        """
+        gens = [p for p in self.panels if p['type'] in ('gen', 'series-battery')]
+        if not gens:
+            return
+
+        # Phase 1 — BFS from every generator; record which panels each gen reaches
+        gen_reachable: Dict[int, Set[int]] = {}
+        for gen in gens:
+            reachable: Set[int] = set()
+            visited:   Set[int] = set()
+            queue:     List[int] = [gen['id']]
+            while queue:
+                node_id = queue.pop(0)
+                if node_id in visited:
+                    continue
+                visited.add(node_id)
+                if node_id != gen['id']:
+                    reachable.add(node_id)
+                panel = self._find_panel(node_id)
+                if not panel:
+                    continue
+                for pip in panel.get('pipsOutbound', []):
+                    pip_idx = pip.get('index', 0)
+                    for to_id, _, _ in self._connections.get((node_id, pip_idx), []):
+                        if to_id not in visited:
+                            queue.append(to_id)
+            gen_reachable[gen['id']] = reachable
+
+        # Phase 2 — for each panel count how many generators can reach it
+        all_reached: Set[int] = set().union(*gen_reachable.values())
+        panel_gen_count: Dict[int, int] = {
+            pid: sum(1 for r in gen_reachable.values() if pid in r)
+            for pid in all_reached
+        }
+
+        # Phase 3 — sum attributed watts per generator, then update states
+        for gen in gens:
+            total_w = 0.0
+            for panel_id in gen_reachable[gen['id']]:
+                panel = self._find_panel(panel_id)
+                if not panel:
+                    continue
+                share = max(1, panel_gen_count.get(panel_id, 1))
+                state = panel.get('state')
+
+                if panel['type'] == 'bulb' and state in ('on', 'dim'):
+                    total_w += panel.get('watts', 0) / share
+
+                node_cls = NodeRegistry.get(panel['type'])
+                if (node_cls and getattr(node_cls, 'consumes_watts', False)
+                        and state in ('on', 'capacitor')):
+                    total_w += panel.get('current_watts', panel.get('watts', 0)) / share
+
+            self._apply_gen_draw(gen, round(total_w, 1))
+
+    def _apply_gen_draw(self, gen: Dict, total_w: float):
+        """Apply a computed draw total to a generator, updating state and emitting."""
+        gen['drawWatts'] = total_w
+        gen['drawAmps']  = round(total_w / gen.get('volts', 240), 2) if gen.get('volts', 240) > 0 else 0
+
+        if not gen.get('live'):
+            return
+
+        ratio = gen['drawAmps'] / max(0.001, gen.get('amps', 13))
+
+        if ratio > 1.3:
+            if gen.get('state') != 'tripped':
+                gen['overload'] = True
+                gen['state'] = 'tripped'
+                self.emit(gen, None)
+        elif ratio > 1.0:
+            sag_volts = round(gen.get('volts', 240) * 0.85, 1)
+            gen['overload'] = True
+            gen['state'] = 'sag'
+            self.emit(gen, {'v': sag_volts, 'a': gen.get('amps', 13)})
+        else:
+            prev_draw = gen.get('_prev_draw_watts', -1.0)
+            if (abs(total_w - prev_draw) > 5.0
+                    and gen.get('enabled', True) is not False):
+                load_ratio = min(1.0, ratio)
+                v_out = round(gen.get('volts', 240) * (1.0 - load_ratio * 0.05), 2)
+                self.emit(gen, {'v': v_out, 'a': gen.get('amps', 13)})
+
+            if gen.get('overload'):
+                gen['overload'] = False
+                gen['state'] = 'on'
+                self.emit(gen, {'v': gen.get('volts', 240), 'a': gen.get('amps', 13)})
+            else:
+                gen['state'] = 'on'
+
+        gen['_prev_draw_watts'] = total_w
 
     def compute_gen_draw(self, gen: Dict):
         """
-        BFS from a generator's outbound pips, summing load contributions.
+        Compatibility shim — delegates to the combined update_all_gen_draws().
 
-        Args:
-            gen: Generator panel
+        Retained so external callers (tests, scripts) don't break.
+        Prefer calling update_all_gen_draws() for correct multi-gen sharing.
         """
-        visited: Set[int] = set()
-        queue: List[int] = [gen['id']]
-        total_w = 0
-
-        while queue:
-            node_id = queue.pop(0)
-            if node_id in visited:
-                continue
-            visited.add(node_id)
-
-            panel = self._find_panel(node_id)
-            if not panel:
-                continue
-
-            # shareCount: load fed by N generators is 1/N attributed to each
-            share_count = max(1, len(panel.get('powerSources', {})))
-
-            # Count bulb watts
-            if panel['type'] == 'bulb' and panel.get('state') in ('on', 'dim'):
-                total_w += panel.get('watts', 0) / share_count
-
-            # Count load watts
-            node_cls = NodeRegistry.get(panel['type'])
-            if node_cls and hasattr(node_cls, 'consumes_watts') and node_cls.consumes_watts:
-                state = panel.get('state')
-                if state in ('on', 'capacitor'):
-                    total_w += panel.get('current_watts', panel.get('watts', 0)) / share_count
-
-            # Enqueue downstream panels
-            for pip in panel.get('pipsOutbound', []):
-                pip_idx = pip.get('index', 0)
-                for to_id, _, _ in self._connections.get((node_id, pip_idx), []):
-                    if to_id not in visited:
-                        queue.append(to_id)
-
-        gen['drawWatts'] = round(total_w, 1)
-        gen['drawAmps'] = round(total_w / gen.get('volts', 240), 2) if gen.get('volts', 240) > 0 else 0
-
-        # Apply load-based state changes
-        if gen.get('live'):
-            ratio = gen['drawAmps'] / gen.get('amps', 13)
-
-            if ratio > 1.3:
-                if gen.get('state') != 'tripped':
-                    gen['overload'] = True
-                    gen['state'] = 'tripped'
-                    self.emit(gen, None)
-            elif ratio > 1.0:
-                sag_volts = round(gen.get('volts', 240) * 0.85, 1)
-                gen['overload'] = True
-                gen['state'] = 'sag'
-                self.emit(gen, {'v': sag_volts, 'a': gen.get('amps', 13)})
-            else:
-                # Proportional micro-sag: voltage drops slightly under load,
-                # rippling load noise through the circuit to all downstream nodes.
-                prev_draw = gen.get('_prev_draw_watts', -1.0)
-                draw_changed = abs(gen['drawWatts'] - prev_draw) > 5.0
-                if draw_changed and gen.get('enabled', True) is not False:
-                    load_ratio = min(1.0, ratio)
-                    v_out = round(gen.get('volts', 240) * (1.0 - load_ratio * 0.05), 2)
-                    self.emit(gen, {'v': v_out, 'a': gen.get('amps', 13)})
-
-                if gen.get('overload'):
-                    gen['overload'] = False
-                    gen['state'] = 'on'
-                    self.emit(gen, {'v': gen.get('volts', 240), 'a': gen.get('amps', 13)})
-                else:
-                    gen['state'] = 'on'
-
-            gen['_prev_draw_watts'] = gen['drawWatts']
+        self.update_all_gen_draws()
 
     # ────────────────────────────────────────────────────────────────────────
     # RIPPLE EFFECTS

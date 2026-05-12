@@ -214,7 +214,7 @@ def test_fuse_replacement_after_cold_start():
     _tick(graph, seconds=1.0)
 
     blown = [p for p in graph.panels if p.get('state') == 'blown']
-    assert len(blown) == 23, f"Expected 23 blown after cold start, got {len(blown)}"
+    assert len(blown) == 14, f"Expected 14 blown after cold start, got {len(blown)}"
     print(f"  • After spike decay: {len(blown)} blown components confirmed")
 
     # Buses must be at safe nominal voltages before any fuse replacement

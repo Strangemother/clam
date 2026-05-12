@@ -321,7 +321,7 @@ aside {
   border: none;
   color: var(--muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 20px;
   line-height: 1;
   padding: 0 2px;
 }
@@ -334,7 +334,7 @@ aside {
 .panel-state.brownout { color: var(--warn);   }
 .panel-state.tripped  { color: var(--danger); }
 .panel-state.off      { color: var(--muted);  }
-.panel-watts { font-size: 11px; color: var(--muted); }
+.panel-watts {/* font-size: 11px; */color: #ca4ee1;}
 
 .empty-note { color: var(--muted); padding: 20px; }
 
