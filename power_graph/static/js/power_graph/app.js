@@ -379,5 +379,14 @@ createApp({
     },
     clearLog() { this.logEntries = []; this.logTotalBytes = 0; },
     toggleLogCollapse() { this.logCollapsed = !this.logCollapsed; },
+
+    // ── Scenarios ──────────────────────────────────────────────────────
+    runScenario(name) {
+      if (name === 'avionics-isolation') {
+        runAvionicsIsolationFix(this, this.addLog.bind(this))
+      } else {
+        this.addLog('err', `unknown scenario: ${name}`)
+      }
+    },
   },
 }).mount('#app');

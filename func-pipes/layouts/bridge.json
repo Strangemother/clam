@@ -1,0 +1,251 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Bridge Primary Feed",
+      "config": {
+        "label": "Bridge Primary Feed",
+        "enabled": true,
+        "volts": 240,
+        "amps": 20,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 2
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 5,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "0px", "top": "300px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Bridge Distribution Panel",
+      "config": {
+        "label": "Bridge Distribution Panel",
+        "enabled": true
+      },
+      "pos": { "left": "450px", "top": "300px" }
+    },
+    {
+      "id": 3,
+      "type": "breaker",
+      "title": "Console Circuit Breaker",
+      "config": {
+        "label": "Console Circuit Breaker",
+        "enabled": true,
+        "ratingAmps": 12
+      },
+      "pos": { "left": "900px", "top": "200px" }
+    },
+    {
+      "id": 4,
+      "type": "converter",
+      "title": "48V Console Rail",
+      "config": {
+        "label": "48V Console Rail",
+        "enabled": true,
+        "outVolts": 48,
+        "step": 5,
+        "efficiency": 0.95,
+        "ripple": {
+          "enabled": false,
+          "amount": 0.5,
+          "interval": 1
+        }
+      },
+      "pos": { "left": "1350px", "top": "200px" }
+    },
+    {
+      "id": 5,
+      "type": "console",
+      "title": "Navigation Console",
+      "config": {
+        "label": "Navigation Console",
+        "enabled": true,
+        "watts": 200,
+        "minVolts": 40,
+        "capacitance": 25,
+        "bootDuration": 10,
+        "shutdownDuration": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 8,
+          "duration": 3
+        }
+      },
+      "pos": { "left": "1800px", "top": "0px" }
+    },
+    {
+      "id": 6,
+      "type": "console",
+      "title": "Communications Array",
+      "config": {
+        "label": "Communications Array",
+        "enabled": true,
+        "watts": 150,
+        "minVolts": 40,
+        "capacitance": 20,
+        "bootDuration": 8,
+        "shutdownDuration": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 6,
+          "duration": 2
+        }
+      },
+      "pos": { "left": "1800px", "top": "220px" }
+    },
+    {
+      "id": 7,
+      "type": "console",
+      "title": "Tactical Display",
+      "config": {
+        "label": "Tactical Display",
+        "enabled": true,
+        "watts": 160,
+        "minVolts": 40,
+        "capacitance": 20,
+        "bootDuration": 12,
+        "shutdownDuration": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 7,
+          "duration": 3
+        }
+      },
+      "pos": { "left": "1800px", "top": "440px" }
+    },
+    {
+      "id": 8,
+      "type": "load",
+      "title": "Sensor Array",
+      "config": {
+        "label": "Sensor Array",
+        "enabled": true,
+        "watts": 400,
+        "minVolts": 180,
+        "maxVolts": 270,
+        "capacitance": 10,
+        "ripple": {
+          "enabled": true,
+          "amount": 10,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 10,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": true,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": { "left": "900px", "top": "450px" }
+    },
+    {
+      "id": 9,
+      "type": "load",
+      "title": "Comms Transmitter",
+      "config": {
+        "label": "Comms Transmitter",
+        "enabled": true,
+        "watts": 300,
+        "minVolts": 180,
+        "maxVolts": 270,
+        "capacitance": 5,
+        "ripple": {
+          "enabled": true,
+          "amount": 15,
+          "interval": 0.8
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": { "left": "900px", "top": "650px" }
+    },
+    {
+      "id": 10,
+      "type": "bulb",
+      "title": "Bridge Lighting",
+      "config": {
+        "label": "Bridge Lighting",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 288,
+        "maxAmps": 20,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "450px", "top": "550px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 250, "manualResistance": null },
+    "4-0-5-0": { "enabled": true, "wireType": "copper", "length": 320, "manualResistance": null },
+    "4-0-6-0": { "enabled": true, "wireType": "copper", "length": 280, "manualResistance": null },
+    "4-0-7-0": { "enabled": true, "wireType": "copper", "length": 380, "manualResistance": null },
+    "2-0-8-0": { "enabled": true, "wireType": "copper", "length": 350, "manualResistance": null },
+    "2-0-9-0": { "enabled": true, "wireType": "copper", "length": 430, "manualResistance": null },
+    "2-0-10-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null }
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Cabin Power Feed",
+      "config": {
+        "label": "Cabin Power Feed",
+        "enabled": true,
+        "volts": 240,
+        "amps": 10,
+        "live": true,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 2
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 10,
+          "duration": 0.5
+        }
+      },
+      "pos": { "left": "0px", "top": "250px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Cabin Distribution Panel",
+      "config": {
+        "label": "Cabin Distribution Panel",
+        "enabled": true
+      },
+      "pos": { "left": "450px", "top": "250px" }
+    },
+    {
+      "id": 3,
+      "type": "breaker",
+      "title": "Climate Circuit Breaker",
+      "config": {
+        "label": "Climate Circuit Breaker",
+        "enabled": true,
+        "ratingAmps": 8
+      },
+      "pos": { "left": "900px", "top": "80px" }
+    },
+    {
+      "id": 4,
+      "type": "heater",
+      "title": "Bunk Heater",
+      "config": {
+        "label": "Bunk Heater",
+        "enabled": true,
+        "watts": 600,
+        "minVolts": 200,
+        "maxVolts": 270,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 3
+        },
+        "heatRate": 4,
+        "coolRate": 1,
+        "maxTemp": 45,
+        "resetTemp": 35,
+        "minWatts": 50
+      },
+      "pos": { "left": "1350px", "top": "0px" }
+    },
+    {
+      "id": 5,
+      "type": "load",
+      "title": "HVAC Circulation Fan",
+      "config": {
+        "label": "HVAC Circulation Fan",
+        "enabled": true,
+        "watts": 100,
+        "minVolts": 180,
+        "maxVolts": 270,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 5,
+          "interval": 0.6
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.8
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.05
+        }
+      },
+      "pos": { "left": "1350px", "top": "200px" }
+    },
+    {
+      "id": 6,
+      "type": "converter",
+      "title": "Low Voltage Rail",
+      "config": {
+        "label": "Low Voltage Rail",
+        "enabled": true,
+        "outVolts": 48,
+        "step": 5,
+        "efficiency": 0.93,
+        "ripple": {
+          "enabled": false,
+          "amount": 0.5,
+          "interval": 1
+        }
+      },
+      "pos": { "left": "900px", "top": "450px" }
+    },
+    {
+      "id": 7,
+      "type": "console",
+      "title": "Cabin Management Panel",
+      "config": {
+        "label": "Cabin Management Panel",
+        "enabled": true,
+        "watts": 80,
+        "minVolts": 40,
+        "capacitance": 20,
+        "bootDuration": 6,
+        "shutdownDuration": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 5,
+          "duration": 2
+        }
+      },
+      "pos": { "left": "1350px", "top": "380px" }
+    },
+    {
+      "id": 8,
+      "type": "load",
+      "title": "Bunk Charging Port",
+      "config": {
+        "label": "Bunk Charging Port",
+        "enabled": true,
+        "watts": 60,
+        "minVolts": 40,
+        "maxVolts": 56,
+        "capacitance": 5,
+        "ripple": {
+          "enabled": false,
+          "amount": 1,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 10,
+          "duration": 0.3
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.05
+        }
+      },
+      "pos": { "left": "1350px", "top": "560px" }
+    },
+    {
+      "id": 9,
+      "type": "bulb",
+      "title": "Overhead Light",
+      "config": {
+        "label": "Overhead Light",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 288,
+        "maxAmps": 10,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "450px", "top": "520px" }
+    },
+    {
+      "id": 10,
+      "type": "bulb",
+      "title": "Reading Lamp",
+      "config": {
+        "label": "Reading Lamp",
+        "enabled": true,
+        "watts": 25,
+        "maxVolts": 288,
+        "maxAmps": 10,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.2
+        }
+      },
+      "pos": { "left": "720px", "top": "680px" }
+    },
+    {
+      "id": 11,
+      "type": "bulb",
+      "title": "Nightlight",
+      "config": {
+        "label": "Nightlight",
+        "enabled": true,
+        "watts": 10,
+        "maxVolts": 288,
+        "maxAmps": 10,
+        "spike": {
+          "enabled": false,
+          "percent": 10,
+          "duration": 0.1
+        }
+      },
+      "pos": { "left": "1050px", "top": "680px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 6, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 6, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 11, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "copper", "length": 100, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null },
+    "3-0-5-0": { "enabled": true, "wireType": "copper", "length": 180, "manualResistance": null },
+    "2-0-6-0": { "enabled": true, "wireType": "copper", "length": 300, "manualResistance": null },
+    "6-0-7-0": { "enabled": true, "wireType": "copper", "length": 100, "manualResistance": null },
+    "6-0-8-0": { "enabled": true, "wireType": "copper", "length": 120, "manualResistance": null },
+    "2-0-9-0": { "enabled": true, "wireType": "copper", "length": 220, "manualResistance": null },
+    "2-0-10-0": { "enabled": true, "wireType": "copper", "length": 280, "manualResistance": null },
+    "2-0-11-0": { "enabled": true, "wireType": "copper", "length": 350, "manualResistance": null }
+  }
+}

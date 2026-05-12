@@ -1,0 +1,152 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Power Station",
+      "config": {
+        "label": "Power Station",
+        "enabled": true,
+        "volts": 480,
+        "amps": 15,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 3,
+          "interval": 1.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.94
+        }
+      },
+      "pos": { "left": "0px", "top": "250px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Near Station Monitor",
+      "config": {
+        "label": "Near Station Monitor",
+        "enabled": true
+      },
+      "pos": { "left": "400px", "top": "250px" }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Remote Junction",
+      "config": {
+        "label": "Remote Junction",
+        "enabled": true
+      },
+      "pos": { "left": "1200px", "top": "250px" }
+    },
+    {
+      "id": 4,
+      "type": "load",
+      "title": "Remote Lab Alpha",
+      "config": {
+        "label": "Remote Lab Alpha",
+        "enabled": true,
+        "watts": 1000,
+        "minVolts": 300,
+        "maxVolts": 540,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 5,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": { "left": "1600px", "top": "100px" }
+    },
+    {
+      "id": 5,
+      "type": "load",
+      "title": "Remote Lab Beta",
+      "config": {
+        "label": "Remote Lab Beta",
+        "enabled": true,
+        "watts": 800,
+        "minVolts": 300,
+        "maxVolts": 540,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": false,
+          "amount": 5,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": { "left": "1600px", "top": "300px" }
+    },
+    {
+      "id": 6,
+      "type": "bulb",
+      "title": "Remote Indicator",
+      "config": {
+        "label": "Remote Indicator",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 576,
+        "maxAmps": 15,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "1600px", "top": "500px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "copper", "length": 150, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "steel", "length": 4200, "manualResistance": null },
+    "3-0-4-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null },
+    "3-0-5-0": { "enabled": true, "wireType": "copper", "length": 200, "manualResistance": null },
+    "3-0-6-0": { "enabled": true, "wireType": "copper", "length": 250, "manualResistance": null }
+  }
+}

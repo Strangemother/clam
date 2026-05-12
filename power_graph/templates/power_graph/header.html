@@ -14,5 +14,12 @@
     <input v-model="saveLayoutName" type="text" placeholder="Layout name…" spellcheck="false" class="save-layout-input">
     <button @click="saveLayout" :disabled="!saveLayoutName.trim()" title="Save current layout to file">Save Layout</button>
   </div>
+  <div class="scenario-controls">
+    <button class="btn-scenario"
+            @click="runScenario('avionics-isolation')"
+            title="Tier-2 fix: isolate avionics onto a dedicated clean generator, eliminating motor-inrush brownout">
+      🔧 Fix Avionics
+    </button>
+  </div>
 </header>
 {% endraw %}

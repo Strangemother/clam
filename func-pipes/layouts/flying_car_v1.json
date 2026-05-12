@@ -1,0 +1,2038 @@
+{
+  "meta": {
+    "title": "Flying Car v1",
+    "description": "Jetsons/Fifth-Element style hover car. First generation \u2014 intentionally noisy. Ripple and inrush spikes are gameplay hazards the player mitigates through upgrades and wiring corrections.",
+    "challenges": [
+      {
+        "id": "avionics_brownout",
+        "title": "Avionics Brownout on Motor Startup",
+        "description": "The 48V Avionics Converter (node 19) uses a proportional turns-ratio model. When the 4 lift motors start simultaneously they produce ~190% inrush on the Motor Bus (node 4), dragging the HV Bus (node 3) below ~190V. The converter output drops to ~38V \u2014 below the Flight Computer's minVolts:40 \u2014 causing a reboot mid-startup.",
+        "symptoms": [
+          "Flight Computer reboots during lift motor startup",
+          "Navigation and Comms go dark briefly",
+          "Stability Control Unit disconnects"
+        ],
+        "solutions": [
+          {
+            "tier": 1,
+            "label": "Stagger Motor Startup",
+            "description": "Start lift motors in sequence (FL \u2192 FR \u2192 RL \u2192 RR) with 500ms gaps so inrush spikes do not overlap. Cheap, no new parts, but fragile \u2014 a single rough landing still causes simultaneous restart.",
+            "type": "procedure"
+          },
+          {
+            "tier": 2,
+            "label": "Isolate Avionics to Dedicated Generator",
+            "description": "Disconnect the Avionics Converter from the shared HV Bus and feed it from a small, clean, dedicated power cell. Avionics are now fully isolated from motor noise. This is the recommended Tier-2 upgrade.",
+            "type": "rewire",
+            "scenario": "avionics-isolation"
+          },
+          {
+            "tier": 3,
+            "label": "Install Motor Bus Breaker",
+            "description": "Insert a breaker between HV Bus and Motor Bus rated just above normal motor draw. Motor trips are isolated from the avionics rail, but doesn't prevent brownout during healthy inrush.",
+            "type": "rewire"
+          },
+          {
+            "tier": 4,
+            "label": "Upgrade to Regulated Converter",
+            "description": "Replace the proportional Avionics Converter with a regulated model that holds outVolts fixed regardless of input sag. Any input above ~55V produces a stable 48V output.",
+            "type": "component_upgrade"
+          }
+        ]
+      },
+      {
+        "id": "running_light_blowouts",
+        "title": "Running Lights Blow on Startup",
+        "description": "The 4 corner running lights (nodes 34\u201337) have maxVolts 255\u2013263V on a 240V bus with \u00b128V ripple. Startup spikes routinely push voltage past their threshold, blowing them.",
+        "symptoms": [
+          "Running lights go dark within seconds of startup",
+          "Fog lights occasionally blow"
+        ],
+        "solutions": [
+          {
+            "tier": 1,
+            "label": "Swap to Hardened Bulbs",
+            "description": "Replace running lights with units rated to maxVolts 310V \u2014 the same tolerance as the headlights. Simple component swap.",
+            "type": "component_upgrade"
+          },
+          {
+            "tier": 2,
+            "label": "Install Lighting Surge Suppressor",
+            "description": "Insert a converter on the Lighting Bus set to outVolts 230V with a tight efficiency. Clips peaks before they reach the bulbs.",
+            "type": "rewire"
+          }
+        ]
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Main Fusion Cell",
+      "config": {
+        "label": "Main Fusion Cell",
+        "enabled": true,
+        "volts": 240,
+        "amps": 30,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 28,
+          "interval": 0.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.35
+        }
+      },
+      "pos": {
+        "left": "0px",
+        "top": "300px"
+      }
+    },
+    {
+      "id": 2,
+      "type": "gen",
+      "title": "Reserve Cell (Old)",
+      "config": {
+        "label": "Reserve Cell (Old)",
+        "enabled": true,
+        "volts": 240,
+        "amps": 15,
+        "live": false,
+        "ripple": {
+          "enabled": true,
+          "amount": 55,
+          "interval": 0.35
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.7
+        }
+      },
+      "pos": {
+        "left": "0px",
+        "top": "700px"
+      }
+    },
+    {
+      "id": 3,
+      "type": "meter",
+      "title": "Main HV Bus (240V)",
+      "config": {
+        "label": "Main HV Bus (240V)",
+        "enabled": true
+      },
+      "pos": {
+        "left": "500px",
+        "top": "500px"
+      }
+    },
+    {
+      "id": 4,
+      "type": "meter",
+      "title": "Motor Bus",
+      "config": {
+        "label": "Motor Bus",
+        "enabled": true
+      },
+      "pos": {
+        "left": "1000px",
+        "top": "200px"
+      }
+    },
+    {
+      "id": 5,
+      "type": "console",
+      "title": "Front Drive Controller",
+      "config": {
+        "label": "Front Drive Controller",
+        "enabled": true,
+        "watts": 180,
+        "minVolts": 180,
+        "capacitance": 15,
+        "bootDuration": 8,
+        "shutdownDuration": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 8,
+          "duration": 2
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "0px"
+      }
+    },
+    {
+      "id": 6,
+      "type": "console",
+      "title": "Rear Drive Controller",
+      "config": {
+        "label": "Rear Drive Controller",
+        "enabled": true,
+        "watts": 180,
+        "minVolts": 180,
+        "capacitance": 15,
+        "bootDuration": 8,
+        "shutdownDuration": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 8,
+          "duration": 2
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "300px"
+      }
+    },
+    {
+      "id": 7,
+      "type": "console",
+      "title": "Lateral Thruster Controller",
+      "config": {
+        "label": "Lateral Thruster Controller",
+        "enabled": true,
+        "watts": 120,
+        "minVolts": 180,
+        "capacitance": 10,
+        "bootDuration": 5,
+        "shutdownDuration": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 6,
+          "duration": 1.5
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "600px"
+      }
+    },
+    {
+      "id": 8,
+      "type": "load",
+      "title": "FL Lift Motor",
+      "config": {
+        "label": "FL Lift Motor",
+        "enabled": true,
+        "watts": 1800,
+        "minVolts": 175,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.35
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 190,
+          "duration": 2.2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.3,
+          "amount": 0.35
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "-200px"
+      }
+    },
+    {
+      "id": 9,
+      "type": "load",
+      "title": "FR Lift Motor",
+      "config": {
+        "label": "FR Lift Motor",
+        "enabled": true,
+        "watts": 1800,
+        "minVolts": 175,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.38
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 190,
+          "duration": 2.2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.32,
+          "amount": 0.35
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "0px"
+      }
+    },
+    {
+      "id": 10,
+      "type": "load",
+      "title": "RL Lift Motor",
+      "config": {
+        "label": "RL Lift Motor",
+        "enabled": true,
+        "watts": 1800,
+        "minVolts": 175,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.42
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 190,
+          "duration": 2.2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.28,
+          "amount": 0.35
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "220px"
+      }
+    },
+    {
+      "id": 11,
+      "type": "load",
+      "title": "RR Lift Motor",
+      "config": {
+        "label": "RR Lift Motor",
+        "enabled": true,
+        "watts": 1800,
+        "minVolts": 175,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.36
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 190,
+          "duration": 2.2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.31,
+          "amount": 0.35
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "440px"
+      }
+    },
+    {
+      "id": 12,
+      "type": "load",
+      "title": "Forward Thrust Motor",
+      "config": {
+        "label": "Forward Thrust Motor",
+        "enabled": true,
+        "watts": 1200,
+        "minVolts": 170,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 35,
+          "interval": 0.45
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 160,
+          "duration": 1.8
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.4,
+          "amount": 0.3
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "660px"
+      }
+    },
+    {
+      "id": 13,
+      "type": "load",
+      "title": "Reverse Thrust Motor",
+      "config": {
+        "label": "Reverse Thrust Motor",
+        "enabled": true,
+        "watts": 600,
+        "minVolts": 160,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 25,
+          "interval": 0.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 120,
+          "duration": 1.2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.5,
+          "amount": 0.25
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "880px"
+      }
+    },
+    {
+      "id": 14,
+      "type": "load",
+      "title": "Nose Pitch Thruster",
+      "config": {
+        "label": "Nose Pitch Thruster",
+        "enabled": true,
+        "watts": 280,
+        "minVolts": 150,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 18,
+          "interval": 0.6
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 100,
+          "duration": 0.9
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.6,
+          "amount": 0.2
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "1100px"
+      }
+    },
+    {
+      "id": 15,
+      "type": "load",
+      "title": "Tail Pitch Thruster",
+      "config": {
+        "label": "Tail Pitch Thruster",
+        "enabled": true,
+        "watts": 280,
+        "minVolts": 150,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 18,
+          "interval": 0.62
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 100,
+          "duration": 0.9
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.65,
+          "amount": 0.2
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "1320px"
+      }
+    },
+    {
+      "id": 16,
+      "type": "load",
+      "title": "Yaw Thruster Port",
+      "config": {
+        "label": "Yaw Thruster Port",
+        "enabled": true,
+        "watts": 350,
+        "minVolts": 150,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 20,
+          "interval": 0.55
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 110,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.5,
+          "amount": 0.22
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "1540px"
+      }
+    },
+    {
+      "id": 17,
+      "type": "load",
+      "title": "Yaw Thruster Starboard",
+      "config": {
+        "label": "Yaw Thruster Starboard",
+        "enabled": true,
+        "watts": 350,
+        "minVolts": 150,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 20,
+          "interval": 0.58
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 110,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.52,
+          "amount": 0.22
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "1760px"
+      }
+    },
+    {
+      "id": 18,
+      "type": "load",
+      "title": "Repulsor Field Emitter",
+      "config": {
+        "label": "Repulsor Field Emitter",
+        "enabled": true,
+        "watts": 3200,
+        "minVolts": 200,
+        "maxVolts": 310,
+        "capacitance": 20,
+        "ripple": {
+          "enabled": true,
+          "amount": 60,
+          "interval": 0.25
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 80,
+          "duration": 3
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.2,
+          "amount": 0.45
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "900px"
+      }
+    },
+    {
+      "id": 19,
+      "type": "converter",
+      "title": "48V Avionics Rail",
+      "config": {
+        "label": "48V Avionics Rail",
+        "enabled": true,
+        "outVolts": 48,
+        "step": 8,
+        "efficiency": 0.89,
+        "ripple": {
+          "enabled": true,
+          "amount": 6,
+          "interval": 0.7
+        }
+      },
+      "pos": {
+        "left": "1000px",
+        "top": "700px"
+      }
+    },
+    {
+      "id": 20,
+      "type": "meter",
+      "title": "Avionics Bus (48V)",
+      "config": {
+        "label": "Avionics Bus (48V)",
+        "enabled": true
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "1100px"
+      }
+    },
+    {
+      "id": 21,
+      "type": "console",
+      "title": "Flight Computer",
+      "config": {
+        "label": "Flight Computer",
+        "enabled": true,
+        "watts": 200,
+        "minVolts": 40,
+        "capacitance": 25,
+        "bootDuration": 15,
+        "shutdownDuration": 6,
+        "spike": {
+          "enabled": true,
+          "percent": 10,
+          "duration": 3
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "1980px"
+      }
+    },
+    {
+      "id": 22,
+      "type": "console",
+      "title": "Stability Control Unit",
+      "config": {
+        "label": "Stability Control Unit",
+        "enabled": true,
+        "watts": 120,
+        "minVolts": 40,
+        "capacitance": 20,
+        "bootDuration": 10,
+        "shutdownDuration": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 8,
+          "duration": 2
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "2220px"
+      }
+    },
+    {
+      "id": 23,
+      "type": "console",
+      "title": "Dash & Instruments",
+      "config": {
+        "label": "Dash & Instruments",
+        "enabled": true,
+        "watts": 80,
+        "minVolts": 38,
+        "capacitance": 18,
+        "bootDuration": 5,
+        "shutdownDuration": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 5,
+          "duration": 1.5
+        }
+      },
+      "pos": {
+        "left": "2000px",
+        "top": "2460px"
+      }
+    },
+    {
+      "id": 24,
+      "type": "load",
+      "title": "Navigation Array",
+      "config": {
+        "label": "Navigation Array",
+        "enabled": true,
+        "watts": 150,
+        "minVolts": 38,
+        "maxVolts": 60,
+        "capacitance": 10,
+        "ripple": {
+          "enabled": true,
+          "amount": 3,
+          "interval": 1
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 5,
+          "duration": 1
+        },
+        "noise": {
+          "enabled": true,
+          "period": 2,
+          "amount": 0.1
+        }
+      },
+      "pos": {
+        "left": "2500px",
+        "top": "1980px"
+      }
+    },
+    {
+      "id": 25,
+      "type": "load",
+      "title": "Comms Transceiver",
+      "config": {
+        "label": "Comms Transceiver",
+        "enabled": true,
+        "watts": 100,
+        "minVolts": 36,
+        "maxVolts": 60,
+        "capacitance": 5,
+        "ripple": {
+          "enabled": true,
+          "amount": 9,
+          "interval": 0.45
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 12,
+          "duration": 0.8
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.4,
+          "amount": 0.28
+        }
+      },
+      "pos": {
+        "left": "2500px",
+        "top": "2160px"
+      }
+    },
+    {
+      "id": 26,
+      "type": "load",
+      "title": "Altimeter & Speed Sensor",
+      "config": {
+        "label": "Altimeter & Speed Sensor",
+        "enabled": true,
+        "watts": 60,
+        "minVolts": 36,
+        "maxVolts": 60,
+        "capacitance": 8,
+        "ripple": {
+          "enabled": true,
+          "amount": 2,
+          "interval": 1.5
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 3,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": false,
+          "period": 2,
+          "amount": 0.05
+        }
+      },
+      "pos": {
+        "left": "2500px",
+        "top": "2340px"
+      }
+    },
+    {
+      "id": 27,
+      "type": "load",
+      "title": "Fuel Cell Monitor",
+      "config": {
+        "label": "Fuel Cell Monitor",
+        "enabled": true,
+        "watts": 40,
+        "minVolts": 36,
+        "maxVolts": 60,
+        "capacitance": 5,
+        "ripple": {
+          "enabled": true,
+          "amount": 2,
+          "interval": 2
+        },
+        "spike": {
+          "enabled": false,
+          "percent": 3,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": false,
+          "period": 3,
+          "amount": 0.05
+        }
+      },
+      "pos": {
+        "left": "2500px",
+        "top": "2460px"
+      }
+    },
+    {
+      "id": 28,
+      "type": "load",
+      "title": "Traffic Management System",
+      "config": {
+        "label": "Traffic Management System",
+        "enabled": true,
+        "watts": 180,
+        "minVolts": 38,
+        "maxVolts": 60,
+        "capacitance": 12,
+        "ripple": {
+          "enabled": true,
+          "amount": 4,
+          "interval": 0.8
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 7,
+          "duration": 1.5
+        },
+        "noise": {
+          "enabled": true,
+          "period": 1,
+          "amount": 0.12
+        }
+      },
+      "pos": {
+        "left": "2500px",
+        "top": "2640px"
+      }
+    },
+    {
+      "id": 29,
+      "type": "meter",
+      "title": "Lighting Bus",
+      "config": {
+        "label": "Lighting Bus",
+        "enabled": true
+      },
+      "pos": {
+        "left": "1000px",
+        "top": "1100px"
+      }
+    },
+    {
+      "id": 30,
+      "type": "bulb",
+      "title": "Headlight Left",
+      "config": {
+        "label": "Headlight Left",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 295,
+        "maxAmps": 15,
+        "spike": {
+          "enabled": true,
+          "percent": 22,
+          "duration": 0.4
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "1350px"
+      }
+    },
+    {
+      "id": 31,
+      "type": "bulb",
+      "title": "Headlight Right",
+      "config": {
+        "label": "Headlight Right",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 295,
+        "maxAmps": 15,
+        "spike": {
+          "enabled": true,
+          "percent": 22,
+          "duration": 0.4
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "1530px"
+      }
+    },
+    {
+      "id": 32,
+      "type": "bulb",
+      "title": "Fog Light Left",
+      "config": {
+        "label": "Fog Light Left",
+        "enabled": true,
+        "watts": 55,
+        "maxVolts": 272,
+        "maxAmps": 8,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.5
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "1710px"
+      }
+    },
+    {
+      "id": 33,
+      "type": "bulb",
+      "title": "Fog Light Right",
+      "config": {
+        "label": "Fog Light Right",
+        "enabled": true,
+        "watts": 55,
+        "maxVolts": 269,
+        "maxAmps": 8,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.5
+        }
+      },
+      "pos": {
+        "left": "1500px",
+        "top": "1890px"
+      }
+    },
+    {
+      "id": 34,
+      "type": "bulb",
+      "title": "Running Light FL",
+      "config": {
+        "label": "Running Light FL",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 260,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 18,
+          "duration": 0.3
+        }
+      },
+      "pos": {
+        "left": "1800px",
+        "top": "1350px"
+      }
+    },
+    {
+      "id": 35,
+      "type": "bulb",
+      "title": "Running Light FR",
+      "config": {
+        "label": "Running Light FR",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 257,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 18,
+          "duration": 0.3
+        }
+      },
+      "pos": {
+        "left": "1800px",
+        "top": "1530px"
+      }
+    },
+    {
+      "id": 36,
+      "type": "bulb",
+      "title": "Running Light RL",
+      "config": {
+        "label": "Running Light RL",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 263,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 18,
+          "duration": 0.3
+        }
+      },
+      "pos": {
+        "left": "1800px",
+        "top": "1710px"
+      }
+    },
+    {
+      "id": 37,
+      "type": "bulb",
+      "title": "Running Light RR",
+      "config": {
+        "label": "Running Light RR",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 255,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 18,
+          "duration": 0.3
+        }
+      },
+      "pos": {
+        "left": "1800px",
+        "top": "1890px"
+      }
+    },
+    {
+      "id": 38,
+      "type": "bulb",
+      "title": "Tail Light Left",
+      "config": {
+        "label": "Tail Light Left",
+        "enabled": true,
+        "watts": 30,
+        "maxVolts": 274,
+        "maxAmps": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.4
+        }
+      },
+      "pos": {
+        "left": "2100px",
+        "top": "1350px"
+      }
+    },
+    {
+      "id": 39,
+      "type": "bulb",
+      "title": "Tail Light Right",
+      "config": {
+        "label": "Tail Light Right",
+        "enabled": true,
+        "watts": 30,
+        "maxVolts": 271,
+        "maxAmps": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.4
+        }
+      },
+      "pos": {
+        "left": "2100px",
+        "top": "1530px"
+      }
+    },
+    {
+      "id": 40,
+      "type": "bulb",
+      "title": "Landing Spotlight",
+      "config": {
+        "label": "Landing Spotlight",
+        "enabled": true,
+        "watts": 150,
+        "maxVolts": 300,
+        "maxAmps": 15,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.5
+        }
+      },
+      "pos": {
+        "left": "2100px",
+        "top": "1710px"
+      }
+    },
+    {
+      "id": 41,
+      "type": "bulb",
+      "title": "Anti-Collision Beacon",
+      "config": {
+        "label": "Anti-Collision Beacon",
+        "enabled": true,
+        "watts": 40,
+        "maxVolts": 280,
+        "maxAmps": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 22,
+          "duration": 0.35
+        }
+      },
+      "pos": {
+        "left": "2100px",
+        "top": "1890px"
+      }
+    },
+    {
+      "id": 42,
+      "type": "bulb",
+      "title": "Cabin Interior Light",
+      "config": {
+        "label": "Cabin Interior Light",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 278,
+        "maxAmps": 8,
+        "spike": {
+          "enabled": true,
+          "percent": 22,
+          "duration": 0.4
+        }
+      },
+      "pos": {
+        "left": "1300px",
+        "top": "1350px"
+      }
+    },
+    {
+      "id": 43,
+      "type": "bulb",
+      "title": "Dash Backlight",
+      "config": {
+        "label": "Dash Backlight",
+        "enabled": true,
+        "watts": 10,
+        "maxVolts": 264,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.2
+        }
+      },
+      "pos": {
+        "left": "1300px",
+        "top": "1530px"
+      }
+    },
+    {
+      "id": 44,
+      "type": "bulb",
+      "title": "Hazard Strobe",
+      "config": {
+        "label": "Hazard Strobe",
+        "enabled": true,
+        "watts": 25,
+        "maxVolts": 285,
+        "maxAmps": 4,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.3
+        }
+      },
+      "pos": {
+        "left": "1300px",
+        "top": "1710px"
+      }
+    },
+    {
+      "id": 45,
+      "type": "heater",
+      "title": "Cabin Climate Unit",
+      "config": {
+        "label": "Cabin Climate Unit",
+        "enabled": true,
+        "watts": 800,
+        "minVolts": 180,
+        "maxVolts": 290,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 15,
+          "interval": 0.9
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 2.5
+        },
+        "heatRate": 5,
+        "coolRate": 1.5,
+        "maxTemp": 42,
+        "resetTemp": 32,
+        "minWatts": 100
+      },
+      "pos": {
+        "left": "1000px",
+        "top": "1400px"
+      }
+    },
+    {
+      "id": 46,
+      "type": "load",
+      "title": "Horn & Proximity Alert",
+      "config": {
+        "label": "Horn & Proximity Alert",
+        "enabled": true,
+        "watts": 60,
+        "minVolts": 150,
+        "maxVolts": 350,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 28,
+          "interval": 0.18
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 45,
+          "duration": 0.25
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.18,
+          "amount": 0.5
+        }
+      },
+      "pos": {
+        "left": "1000px",
+        "top": "1650px"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "sender": {
+        "label": 1,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 3,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 2,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 3,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 4,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 19,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 29,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 45,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 3,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 46,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 4,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 5,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 4,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 6,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 4,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 7,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 4,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 18,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 5,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 8,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 5,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 9,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 5,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 12,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 5,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 14,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 10,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 11,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 13,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 6,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 15,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 7,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 16,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 7,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 17,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 19,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 20,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 20,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 21,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 20,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 22,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 20,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 23,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 21,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 24,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 21,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 25,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 22,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 26,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 23,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 27,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 23,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 28,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 30,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 31,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 32,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 33,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 34,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 35,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 36,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 37,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 38,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 39,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 40,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 41,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 42,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 43,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    },
+    {
+      "sender": {
+        "label": 29,
+        "direction": "outbound",
+        "pipIndex": 0
+      },
+      "receiver": {
+        "label": 44,
+        "direction": "inbound",
+        "pipIndex": 0
+      }
+    }
+  ],
+  "edges": {
+    "1-0-3-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 200,
+      "manualResistance": null
+    },
+    "2-0-3-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 350,
+      "manualResistance": null
+    },
+    "3-0-4-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 300,
+      "manualResistance": null
+    },
+    "3-0-19-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 280,
+      "manualResistance": null
+    },
+    "3-0-29-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 500,
+      "manualResistance": null
+    },
+    "3-0-45-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 350,
+      "manualResistance": null
+    },
+    "3-0-46-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 400,
+      "manualResistance": null
+    },
+    "4-0-5-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 350,
+      "manualResistance": null
+    },
+    "4-0-6-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 350,
+      "manualResistance": null
+    },
+    "4-0-7-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 450,
+      "manualResistance": null
+    },
+    "4-0-18-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 600,
+      "manualResistance": null
+    },
+    "5-0-8-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 380,
+      "manualResistance": null
+    },
+    "5-0-9-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 380,
+      "manualResistance": null
+    },
+    "5-0-12-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 430,
+      "manualResistance": null
+    },
+    "5-0-14-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 480,
+      "manualResistance": null
+    },
+    "6-0-10-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 380,
+      "manualResistance": null
+    },
+    "6-0-11-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 380,
+      "manualResistance": null
+    },
+    "6-0-13-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 440,
+      "manualResistance": null
+    },
+    "6-0-15-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 490,
+      "manualResistance": null
+    },
+    "7-0-16-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 420,
+      "manualResistance": null
+    },
+    "7-0-17-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 420,
+      "manualResistance": null
+    },
+    "19-0-20-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 300,
+      "manualResistance": null
+    },
+    "20-0-21-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 250,
+      "manualResistance": null
+    },
+    "20-0-22-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 300,
+      "manualResistance": null
+    },
+    "20-0-23-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 350,
+      "manualResistance": null
+    },
+    "21-0-24-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 180,
+      "manualResistance": null
+    },
+    "21-0-25-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 200,
+      "manualResistance": null
+    },
+    "22-0-26-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 200,
+      "manualResistance": null
+    },
+    "23-0-27-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 170,
+      "manualResistance": null
+    },
+    "23-0-28-0": {
+      "enabled": true,
+      "wireType": "copper",
+      "length": 210,
+      "manualResistance": null
+    },
+    "29-0-30-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 300,
+      "manualResistance": null
+    },
+    "29-0-31-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 300,
+      "manualResistance": null
+    },
+    "29-0-32-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 380,
+      "manualResistance": null
+    },
+    "29-0-33-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 380,
+      "manualResistance": null
+    },
+    "29-0-34-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 450,
+      "manualResistance": null
+    },
+    "29-0-35-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 450,
+      "manualResistance": null
+    },
+    "29-0-36-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 560,
+      "manualResistance": null
+    },
+    "29-0-37-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 560,
+      "manualResistance": null
+    },
+    "29-0-38-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 640,
+      "manualResistance": null
+    },
+    "29-0-39-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 640,
+      "manualResistance": null
+    },
+    "29-0-40-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 700,
+      "manualResistance": null
+    },
+    "29-0-41-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 720,
+      "manualResistance": null
+    },
+    "29-0-42-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 200,
+      "manualResistance": null
+    },
+    "29-0-43-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 220,
+      "manualResistance": null
+    },
+    "29-0-44-0": {
+      "enabled": true,
+      "wireType": "aluminium",
+      "length": 250,
+      "manualResistance": null
+    }
+  }
+}

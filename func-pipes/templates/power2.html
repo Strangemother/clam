@@ -111,6 +111,17 @@
                     :title="graphRunning ? 'Simulation active' : 'Simulation paused'">
                 {{ graphRunning ? '⏹ Pause' : '▶ Run' }}
             </button>
+
+            <span class="toolbar-sep"></span>
+
+            <div class="toolbar-group">
+                <span class="toolbar-label">Scenarios</span>
+                <button class="btn-load"
+                        @click="runScenario('avionics-isolation')"
+                        title="Tier-2 fix: isolate avionics onto a dedicated clean generator, eliminating motor-inrush brownout">
+                    🔧 Fix Avionics
+                </button>
+            </div>
         </div>
 
         <!-- ════════════════════════════════════════════════════════════════ -->
@@ -281,6 +292,9 @@
 <script src="{{ url_for('static', filename='js/power2/nodes/series-battery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/decision.js') }}"></script>
 <script src="{{ url_for('static', filename='js/power2/nodes/bus-bar.js') }}"></script>
+
+<!-- ── Scenarios ────────────────────────────────────────────────────────── -->
+<script src="{{ url_for('static', filename='js/power2/scenarios/avionics-isolation.js') }}"></script>
 
 <!-- ── App bootstrap (must be last) ─────────────────────────────────────── -->
 <script src="{{ url_for('static', filename='js/power2/index.js') }}"></script>

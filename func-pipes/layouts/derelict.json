@@ -1,0 +1,183 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Emergency Battery (Dying)",
+      "config": {
+        "label": "Emergency Battery (Dying)",
+        "enabled": true,
+        "volts": 120,
+        "amps": 5,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 45,
+          "interval": 0.6
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.8
+        }
+      },
+      "pos": { "left": "0px", "top": "400px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Emergency Bus",
+      "config": {
+        "label": "Emergency Bus",
+        "enabled": true
+      },
+      "pos": { "left": "500px", "top": "400px" }
+    },
+    {
+      "id": 3,
+      "type": "bulb",
+      "title": "Corridor Emergency Light A",
+      "config": {
+        "label": "Corridor Emergency Light A",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 145,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "1000px", "top": "100px" }
+    },
+    {
+      "id": 4,
+      "type": "bulb",
+      "title": "Corridor Emergency Light B",
+      "config": {
+        "label": "Corridor Emergency Light B",
+        "enabled": true,
+        "watts": 15,
+        "maxVolts": 140,
+        "maxAmps": 2,
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.4
+        }
+      },
+      "pos": { "left": "1000px", "top": "300px" }
+    },
+    {
+      "id": 5,
+      "type": "bulb",
+      "title": "Airlock Status Light",
+      "config": {
+        "label": "Airlock Status Light",
+        "enabled": true,
+        "watts": 10,
+        "maxVolts": 148,
+        "maxAmps": 1,
+        "spike": {
+          "enabled": true,
+          "percent": 15,
+          "duration": 0.3
+        }
+      },
+      "pos": { "left": "1000px", "top": "500px" }
+    },
+    {
+      "id": 6,
+      "type": "load",
+      "title": "Distress Beacon",
+      "config": {
+        "label": "Distress Beacon",
+        "enabled": true,
+        "watts": 80,
+        "minVolts": 60,
+        "maxVolts": 180,
+        "capacitance": 30,
+        "ripple": {
+          "enabled": true,
+          "amount": 25,
+          "interval": 1.2
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 20,
+          "duration": 0.5
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.8,
+          "amount": 0.3
+        }
+      },
+      "pos": { "left": "1000px", "top": "700px" }
+    },
+    {
+      "id": 7,
+      "type": "heater",
+      "title": "Cryo Pod Life Support",
+      "config": {
+        "label": "Cryo Pod Life Support",
+        "enabled": true,
+        "watts": 260,
+        "minVolts": 55,
+        "maxVolts": 175,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 18,
+          "interval": 0.9
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 1
+        },
+        "heatRate": 2,
+        "coolRate": 0.1,
+        "maxTemp": 35,
+        "resetTemp": 28,
+        "minWatts": 50
+      },
+      "pos": { "left": "500px", "top": "700px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "lossy", "length": 800, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "lossy", "length": 1200, "manualResistance": null },
+    "2-0-4-0": { "enabled": true, "wireType": "lossy", "length": 1400, "manualResistance": null },
+    "2-0-5-0": { "enabled": true, "wireType": "lossy", "length": 1600, "manualResistance": null },
+    "2-0-6-0": { "enabled": true, "wireType": "steel", "length": 2000, "manualResistance": null },
+    "2-0-7-0": { "enabled": true, "wireType": "lossy", "length": 900, "manualResistance": null }
+  }
+}

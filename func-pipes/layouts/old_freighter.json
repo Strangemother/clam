@@ -1,0 +1,219 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "gen",
+      "title": "Corroded Diesel Gen",
+      "config": {
+        "label": "Corroded Diesel Gen",
+        "enabled": true,
+        "volts": 240,
+        "amps": 10,
+        "live": true,
+        "ripple": {
+          "enabled": true,
+          "amount": 55,
+          "interval": 0.3
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 40,
+          "duration": 1.2
+        }
+      },
+      "pos": { "left": "0px", "top": "300px" }
+    },
+    {
+      "id": 2,
+      "type": "meter",
+      "title": "Corroded Bus Bar",
+      "config": {
+        "label": "Corroded Bus Bar",
+        "enabled": true
+      },
+      "pos": { "left": "500px", "top": "300px" }
+    },
+    {
+      "id": 3,
+      "type": "heater",
+      "title": "Rusted Boiler Unit",
+      "config": {
+        "label": "Rusted Boiler Unit",
+        "enabled": true,
+        "watts": 1400,
+        "minVolts": 150,
+        "maxVolts": 280,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 30,
+          "interval": 0.4
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 80,
+          "duration": 1.5
+        },
+        "noise": 20,
+        "noiseInterval": 0.2,
+        "heatRate": 12,
+        "coolRate": 0.4,
+        "maxTemp": 120,
+        "resetTemp": 90,
+        "minWatts": 200
+      },
+      "pos": { "left": "1000px", "top": "80px" }
+    },
+    {
+      "id": 4,
+      "type": "load",
+      "title": "Cargo Winch Motor",
+      "config": {
+        "label": "Cargo Winch Motor",
+        "enabled": true,
+        "watts": 900,
+        "minVolts": 150,
+        "maxVolts": 310,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 40,
+          "interval": 0.5
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 120,
+          "duration": 2
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.3,
+          "amount": 0.4
+        }
+      },
+      "pos": { "left": "1000px", "top": "340px" }
+    },
+    {
+      "id": 5,
+      "type": "bulb",
+      "title": "Hold Light 1",
+      "config": {
+        "label": "Hold Light 1",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 256,
+        "maxAmps": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.5
+        }
+      },
+      "pos": { "left": "1000px", "top": "580px" }
+    },
+    {
+      "id": 6,
+      "type": "bulb",
+      "title": "Hold Light 2",
+      "config": {
+        "label": "Hold Light 2",
+        "enabled": true,
+        "watts": 60,
+        "maxVolts": 250,
+        "maxAmps": 3,
+        "spike": {
+          "enabled": true,
+          "percent": 30,
+          "duration": 0.5
+        }
+      },
+      "pos": { "left": "1000px", "top": "760px" }
+    },
+    {
+      "id": 7,
+      "type": "bulb",
+      "title": "Gangway Lamp",
+      "config": {
+        "label": "Gangway Lamp",
+        "enabled": true,
+        "watts": 100,
+        "maxVolts": 262,
+        "maxAmps": 5,
+        "spike": {
+          "enabled": true,
+          "percent": 25,
+          "duration": 0.6
+        }
+      },
+      "pos": { "left": "500px", "top": "600px" }
+    },
+    {
+      "id": 8,
+      "type": "load",
+      "title": "Bilge Pump",
+      "config": {
+        "label": "Bilge Pump",
+        "enabled": true,
+        "watts": 600,
+        "minVolts": 130,
+        "maxVolts": 320,
+        "capacitance": 0,
+        "ripple": {
+          "enabled": true,
+          "amount": 20,
+          "interval": 0.7
+        },
+        "spike": {
+          "enabled": true,
+          "percent": 90,
+          "duration": 1.8
+        },
+        "noise": {
+          "enabled": true,
+          "period": 0.5,
+          "amount": 0.3
+        }
+      },
+      "pos": { "left": "500px", "top": "820px" }
+    }
+  ],
+  "connections": [
+    {
+      "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 }
+    },
+    {
+      "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 },
+      "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 }
+    }
+  ],
+  "edges": {
+    "1-0-2-0": { "enabled": true, "wireType": "aluminium", "length": 400, "manualResistance": null },
+    "2-0-3-0": { "enabled": true, "wireType": "steel", "length": 600, "manualResistance": null },
+    "2-0-4-0": { "enabled": true, "wireType": "aluminium", "length": 500, "manualResistance": null },
+    "2-0-5-0": { "enabled": true, "wireType": "steel", "length": 700, "manualResistance": null },
+    "2-0-6-0": { "enabled": true, "wireType": "steel", "length": 900, "manualResistance": null },
+    "2-0-7-0": { "enabled": true, "wireType": "aluminium", "length": 350, "manualResistance": null },
+    "2-0-8-0": { "enabled": true, "wireType": "steel", "length": 1100, "manualResistance": null }
+  }
+}
