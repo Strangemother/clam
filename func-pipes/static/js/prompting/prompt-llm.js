@@ -108,10 +108,14 @@ const LLMMethods = {
     /* ── prompt file loading ────────────────────────────────────────── */
 
     async selectPrompt(panel, promptPath) {
+        panel.promptPath = promptPath || ''
         if (!promptPath) {
             panel.prompt      = null
             panel.description = ''
-            if (panel._chat) panel._chat.options.system = ''
+            if (panel._chat) {
+                panel._chat.options.system = ''
+                if (panel.mode === 'chat') panel._chat.reset()
+            }
             return
         }
         try {
