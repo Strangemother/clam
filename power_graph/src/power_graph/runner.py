@@ -67,6 +67,7 @@ Usage
 """
 
 import asyncio
+import copy
 import time
 import logging
 from pathlib import Path
@@ -180,18 +181,39 @@ class GraphRunner:
                 log.warning("GraphRunner: error applying command %s — %s", cmd, exc)
 
     def _tick(self, dt: float) -> None:
-        for panel in self.graph.panels:
-            node_cls = NodeRegistry.get(panel['type'])
-            if node_cls:
-                node_cls.tick(panel, dt, self.graph)
-        self.graph.update_all_gen_draws()
+        self.graph.tick(dt)
+
+    @staticmethod
+    def _panel_snapshot(panel: Dict) -> Dict:
+        """Return a detached panel snapshot safe for external consumers."""
+        return copy.deepcopy(panel)
+
+    def _after_set(self, panel: Dict, key: str, old_value: Any) -> None:
+        """Apply graph-side effects for stateful field writes."""
+        if old_value == panel.get(key):
+            return
+
+        node_cls = NodeRegistry.get(panel['type'])
+
+        if key == 'weights' and node_cls and hasattr(node_cls, '_normalise'):
+            panel['_norm_weights'] = node_cls._normalise(panel.get('weights', []))
+            sources = panel.get('powerSources', {})
+            combined = self.graph.combine_sources(sources) if sources else None
+            node_cls.apply(panel, combined, self.graph)
+            return
+
+        if key in {'volts', 'amps'} and node_cls and hasattr(node_cls, 'params_changed'):
+            node_cls.params_changed(panel, self.graph)
+            return
+
+        if key in {'enabled', 'live', 'running', 'closed', 'volts', 'amps'}:
+            self.graph.repropagate_all()
+            self.graph.update_all_gen_draws()
 
     def _notify_subscribers(self) -> None:
         if not self._tick_subscribers:
             return
-        # Pass a shallow list of panel dicts — subscribers must not mutate;
-        # mutations must come through send().
-        panels = self.graph.panels
+        panels = [self._panel_snapshot(panel) for panel in self.graph.panels]
         for cb in self._tick_subscribers:
             try:
                 cb(panels)
@@ -217,7 +239,9 @@ class GraphRunner:
 
         if op == 'set':
             p = panel()
+            old_value = p.get(cmd['key'])
             p[cmd['key']] = cmd['value']
+            self._after_set(p, cmd['key'], old_value)
 
         elif op == 'toggle':
             p = panel()
@@ -263,18 +287,17 @@ class GraphRunner:
             )
 
         elif op == 'remove':
-            self.graph.remove_panel(cmd['id'])
-            self.graph.repropagate_all()
+            self.graph.remove(cmd['id'])
 
         elif op == 'repropagate':
             self.graph.repropagate_all()
 
         elif op == 'read':
             p = panel()
-            resolve(cmd.get('reply'), dict(p))
+            resolve(cmd.get('reply'), self._panel_snapshot(p))
 
         elif op == 'read_all':
-            resolve(cmd.get('reply'), [dict(p) for p in self.graph.panels])
+            resolve(cmd.get('reply'), [self._panel_snapshot(p) for p in self.graph.panels])
 
         elif op == 'read_connections':
             edges = []

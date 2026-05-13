@@ -27,12 +27,13 @@ from power_graph.node_base import NodeBase, Signal, NOMINAL_VOLTS, SpikeProfile,
 from power_graph.node_registry import NodeRegistry
 
 
-def _variance_factor(variance_pct: float) -> float:
-    """Return a one-time random multiplier within ±variance_pct of 1.0."""
+def _variance_factor(variance_pct: float, seed=None) -> float:
+    """Return a reproducible one-time multiplier within ±variance_pct of 1.0."""
     if not variance_pct:
         return 1.0
     spread = variance_pct / 100.0
-    return random.uniform(1.0 - spread, 1.0 + spread)
+    rng = random.Random(seed) if seed is not None else random
+    return rng.uniform(1.0 - spread, 1.0 + spread)
 
 
 class Load(NodeBase):
@@ -76,6 +77,8 @@ class Load(NodeBase):
             preset = {}
         base = super().defaults(node_id, preset)
         watts = preset.get('watts', 1000)
+        variance = preset.get('variance', 2.0)
+        variance_seed = f"{cls.type}:{node_id}:{preset.get('label', cls.label)}:{watts}:{variance}"
         base.update({
             'watts':          watts,
             'minVolts':       preset.get('minVolts',       100),
@@ -87,8 +90,8 @@ class Load(NodeBase):
             'noiseInterval':       preset.get('noiseInterval', 1.0),
             # variance: ±% one-time random offset baked in at spawn so
             # identical catalog units never draw exactly the same watts.
-            'variance':            preset.get('variance', 2.0),
-            '_variance_factor':    _variance_factor(preset.get('variance', 2.0)),
+            'variance':            variance,
+            '_variance_factor':    _variance_factor(variance, variance_seed),
             'blown':               False,
             'current_watts':       0.0,
             'state':               'off',

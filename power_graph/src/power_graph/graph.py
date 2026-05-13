@@ -24,7 +24,7 @@ from collections import defaultdict
 
 from .node_registry import NodeRegistry
 from .node_base import NodeBase, Signal, NOMINAL_VOLTS
-from .edge_store import EdgeStore, get_edge_store
+from .edge_store import EdgeStore
 from .event_system import EventEmitter
 
 
@@ -45,8 +45,7 @@ class PowerGraph:
             event_emitter: EventEmitter instance (creates if None)
         """
         self.emitter = event_emitter or EventEmitter()
-        NodeBase._emitter = self.emitter
-        self.edge_store = get_edge_store()
+        self.edge_store = EdgeStore()
 
         # Panel state
         self.panels: List[Dict] = []
@@ -64,6 +63,14 @@ class PowerGraph:
         self._tick_handle = None
         self._last_tick_time = None
         self._target_fps = 60
+
+    def _bind_panel_runtime(self, panel: Dict):
+        """Attach graph-scoped runtime state to a panel."""
+        NodeBase.bind_runtime(panel, self.emitter)
+
+    def _unbind_panel_runtime(self, panel: Dict):
+        """Detach graph-scoped runtime state from a panel."""
+        NodeBase.unbind_runtime(panel)
 
     # ────────────────────────────────────────────────────────────────────────
     # PANEL MANAGEMENT
@@ -97,6 +104,7 @@ class PowerGraph:
         if panel is None:
             raise ValueError(f"Cannot create node of type {node_type}")
 
+        self._bind_panel_runtime(panel)
         self.panels.append(panel)
         self.emitter.emit('graph:spawn', f"panel-{panel_id}", {'type': node_type, 'label': panel.get('label')})
 
@@ -116,31 +124,72 @@ class PowerGraph:
         if not panel:
             return False
 
-        # Remove all connections involving this panel
-        connections_to_remove = []
+        connection_keys: Set[str] = set()
+        affected_panels: Set[int] = set()
+        removed_source_prefix = f"{panel_id}:"
+
+        # Remove all connections involving this panel.
         for key, conn_list in list(self._connections.items()):
             from_id = key[0]
             if from_id == panel_id:
-                connections_to_remove.extend([c[2] for c in conn_list])
+                connection_keys.update(c[2] for c in conn_list)
+                affected_panels.update(c[0] for c in conn_list)
+                self._connections.pop(key, None)
+                continue
+
+            remaining = []
+            for to_id, to_pip, conn_key in conn_list:
+                if to_id == panel_id:
+                    connection_keys.add(conn_key)
+                    continue
+                remaining.append((to_id, to_pip, conn_key))
+
+            if remaining:
+                self._connections[key] = remaining
             else:
-                # Filter out connections to this panel
-                self._connections[key] = [c for c in conn_list if c[0] != panel_id]
+                self._connections.pop(key, None)
 
-        for key in connections_to_remove:
-            self.edge_store.remove(key)
+        for other in self.panels:
+            if other['id'] == panel_id:
+                continue
 
+            sources = other.get('powerSources', {})
+            removed_source = False
+            for source_key in list(sources):
+                if source_key == str(panel_id) or source_key.startswith(removed_source_prefix):
+                    sources.pop(source_key, None)
+                    removed_source = True
+
+            if removed_source:
+                affected_panels.add(other['id'])
+
+        for conn_key in connection_keys:
+            self.edge_store.remove(conn_key)
+
+        NodeBase.clear_dispatches(panel)
+        self._unbind_panel_runtime(panel)
         self.panels = [p for p in self.panels if p['id'] != panel_id]
+        self._propagating.discard(panel_id)
         self.emitter.emit('graph:remove', f"panel-{panel_id}")
+
+        for affected_panel_id in affected_panels:
+            target = self._find_panel(affected_panel_id)
+            if target:
+                self.receive(target, None)
+
+        self.repropagate_all()
 
         return True
 
     def reset(self):
         """Reset all panels to initial state."""
         for panel in self.panels:
+            NodeBase.clear_dispatches(panel)
             node_cls = NodeRegistry.get(panel['type'])
             if node_cls:
                 node_cls.reset(panel, self)
         self.emitter.emit('graph:reset')
+        self.flush_event_dispatches(force=True)
 
     # ────────────────────────────────────────────────────────────────────────
     # CONNECTIONS & WIRING
@@ -175,6 +224,10 @@ class PowerGraph:
 
         # Store in topology
         key = (from_id, from_pip)
+        if any(existing[2] == conn_key for existing in self._connections[key]):
+            self.edge_store.update(conn_key, edge_props)
+            return conn_key
+
         self._connections[key].append((to_id, to_pip, conn_key))
 
         # Create edge properties
@@ -206,7 +259,7 @@ class PowerGraph:
         from_part, to_part = parts
         try:
             from_id, from_pip = map(int, from_part.split(':'))
-            to_id, _ = map(int, to_part.split(':'))
+            _, _ = map(int, to_part.split(':'))
         except ValueError:
             return False
 
@@ -219,6 +272,8 @@ class PowerGraph:
         self._connections[key] = [c for c in self._connections[key] if c[2] != conn_key]
 
         if len(self._connections[key]) < original_len:
+            if not self._connections[key]:
+                self._connections.pop(key, None)
             self.edge_store.remove(conn_key)
             self.emitter.emit('graph:disconnect', conn_key)
             return True
@@ -240,7 +295,7 @@ class PowerGraph:
         self,
         panel: Dict,
         signal: Signal,
-        source_id: Optional[int] = None,
+        source_id: Optional[Any] = None,
         in_pip_index: int = 0
     ):
         """
@@ -282,11 +337,15 @@ class PowerGraph:
             # Handle disabled state
             if panel.get('enabled') is False:
                 panel['state'] = 'off'
-                if hasattr(node_cls, 'on_disabled'):
-                    node_cls.on_disabled(panel, self)
-                else:
-                    self.emit(panel, None)
+                if not panel.get('_disabled_output_blocked'):
+                    if hasattr(node_cls, 'on_disabled'):
+                        node_cls.on_disabled(panel, self)
+                    else:
+                        self.emit(panel, None)
+                    panel['_disabled_output_blocked'] = True
                 return
+
+            panel.pop('_disabled_output_blocked', None)
 
             # Apply node-specific logic
             node_cls.apply(panel, combined, self)
@@ -334,7 +393,7 @@ class PowerGraph:
                 # Use composite source ID
                 composite_source = f"{source_id}:{pip_index}"
                 transformed = self.edge_store.apply_edge(signal, conn_key)
-                self.receive(target, transformed, source_id, to_pip)
+                self.receive(target, transformed, composite_source, to_pip)
 
     # Alias used by multi-output nodes
     emit_pip = emit_to
@@ -368,13 +427,63 @@ class PowerGraph:
         cleared — otherwise stale amps continue to appear at loads.
         """
         for panel in self.panels:
-            if panel['type'] in ('gen', 'series-battery'):
-                if panel.get('live') and panel.get('enabled', True) is not False:
-                    self.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})
-                else:
+            if panel['type'] == 'gen':
+                if panel.get('enabled', True) is False or not panel.get('live'):
                     self.emit(panel, None)
+                    continue
+
+                if panel.get('state') == 'tripped':
+                    self.emit(panel, None)
+                    continue
+
+                volts = panel.get('volts', 240)
+                amps = panel.get('amps', 13)
+                node_cls = NodeRegistry.get(panel['type'])
+
+                if panel.get('state') == 'sag':
+                    volts = round(volts * 0.85, 1)
+                elif node_cls and panel.get('_spike_timer', 0) > 0:
+                    multiplier = node_cls.spike_multiplier(panel)
+                    volts = round(volts * multiplier, 2)
+                    amps = round(amps * multiplier, 3)
+
+                self.emit(panel, {'v': volts, 'a': amps})
+            elif panel['type'] == 'series-battery':
+                if panel.get('enabled', True) is False:
+                    self.emit(panel, None)
+                    continue
+
+                node_cls = NodeRegistry.get(panel['type'])
+                if not node_cls:
+                    self.emit(panel, None)
+                    continue
+
+                sources = panel.get('powerSources', {})
+                combined = self.combine_sources(sources) if sources else None
+                node_cls.apply(panel, combined, self)
             elif panel.get('enabled') is False:
                 self.emit(panel, None)
+
+        self.flush_event_dispatches(force=True)
+
+    def flush_event_dispatches(self, force: bool = False):
+        """Flush queued debounced node events for all live panels."""
+        for panel in self.panels:
+            node_cls = NodeRegistry.get(panel['type'])
+            if node_cls:
+                node_cls.flush_dispatches(panel, force=force)
+
+    def tick(self, dt: float):
+        """Advance the graph by one simulation step."""
+        self._tick_ripple(dt)
+
+        for panel in list(self.panels):
+            node_cls = NodeRegistry.get(panel['type'])
+            if node_cls:
+                node_cls.tick(panel, dt, self)
+
+        self.update_all_gen_draws()
+        self.flush_event_dispatches()
 
     # ────────────────────────────────────────────────────────────────────────
     # GENERATOR DRAW (BFS)
@@ -425,6 +534,10 @@ class PowerGraph:
         # Phase 3 — sum attributed watts per generator, then update states
         for gen in gens:
             total_w = 0.0
+            tracked_states = ('on', 'capacitor')
+            if gen['type'] == 'series-battery':
+                tracked_states = ('on', 'brownout', 'capacitor')
+
             for panel_id in gen_reachable[gen['id']]:
                 panel = self._find_panel(panel_id)
                 if not panel:
@@ -437,13 +550,26 @@ class PowerGraph:
 
                 node_cls = NodeRegistry.get(panel['type'])
                 if (node_cls and getattr(node_cls, 'consumes_watts', False)
-                        and state in ('on', 'capacitor')):
+            and state in tracked_states):
                     total_w += panel.get('current_watts', panel.get('watts', 0)) / share
 
             self._apply_gen_draw(gen, round(total_w, 1))
 
     def _apply_gen_draw(self, gen: Dict, total_w: float):
         """Apply a computed draw total to a generator, updating state and emitting."""
+        if gen.get('enabled', True) is False:
+            gen['drawWatts'] = 0.0
+            gen['drawAmps']  = 0.0
+            gen['overload']  = False
+            gen['state']     = 'off'
+            gen['_prev_draw_watts'] = 0.0
+            return
+
+        # A tripped generator is latched off until a user reset/toggle.
+        if gen.get('live') and gen.get('state') == 'tripped':
+            gen['overload'] = True
+            return
+
         gen['drawWatts'] = total_w
         gen['drawAmps']  = round(total_w / gen.get('volts', 240), 2) if gen.get('volts', 240) > 0 else 0
 
@@ -498,6 +624,8 @@ class PowerGraph:
             ripple = panel.get('ripple')
             if not ripple or not ripple.get('enabled'):
                 continue
+            if panel.get('enabled', True) is False:
+                continue
 
             panel['_ripple_accum'] = panel.get('_ripple_accum', 0) + dt
             if panel['_ripple_accum'] < ripple.get('interval', 1.0):
@@ -509,7 +637,10 @@ class PowerGraph:
             node_cls = NodeRegistry.get(panel['type'])
 
             # Generator: voltage ripple — AC hum / governor flutter
-            if panel['type'] == 'gen' and panel.get('live') and panel.get('state') != 'tripped':
+            if (panel['type'] == 'gen'
+                    and panel.get('enabled', True) is not False
+                    and panel.get('live')
+                    and panel.get('state') != 'tripped'):
                 v_out = max(1, panel.get('volts', 240) + panel['_ripple_offset'])
                 self.emit(panel, {'v': v_out, 'a': panel.get('amps', 13)})
 
@@ -554,17 +685,7 @@ class PowerGraph:
             dt = min(now - self._last_tick_time, 0.1)  # Cap dt at 100ms
             self._last_tick_time = now
 
-            # Apply ripple effects
-            self._tick_ripple(dt)
-
-            # Tick each node
-            for panel in self.panels:
-                node_cls = NodeRegistry.get(panel['type'])
-                if node_cls:
-                    node_cls.tick(panel, dt, self)
-
-            # Recompute generator draws
-            self.update_all_gen_draws()
+            self.tick(dt)
 
             # Sleep to maintain target FPS
             frame_time = 1.0 / self._target_fps
@@ -588,13 +709,20 @@ class PowerGraph:
             if duration is None:
                 await self._tick_loop()
             else:
-                start_time = time.time()
-                while time.time() - start_time < duration and self._running:
-                    await self._tick_loop()
+                end_time = time.time() + duration
+                while time.time() < end_time and self._running:
+                    now = time.time()
+                    dt = min(now - self._last_tick_time, 0.1)  # Cap dt at 100ms
+                    self._last_tick_time = now
+                    self.tick(dt)
+
+                    frame_time = 1.0 / self._target_fps
+                    await asyncio.sleep(max(0, frame_time - (time.time() - now)))
         except asyncio.CancelledError:
             pass
         finally:
             self._running = False
+            self.flush_event_dispatches(force=True)
             self.emitter.emit('graph:stop', label='graph')
 
     def start(self):
@@ -648,6 +776,9 @@ class PowerGraph:
 
     def import_json(self, data: Dict):
         """Import graph state from exported JSON."""
+        for panel in self.panels:
+            self._unbind_panel_runtime(panel)
+
         self.panels.clear()
         self._connections.clear()
         self.edge_store._store.clear()
@@ -661,6 +792,7 @@ class PowerGraph:
 
             node = NodeRegistry.create(node_type, node_id, config)
             if node:
+                self._bind_panel_runtime(node)
                 self.panels.append(node)
                 node_map[node_id] = node
                 self._next_id = max(self._next_id, node_id + 1)

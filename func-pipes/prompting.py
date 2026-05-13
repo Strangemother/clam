@@ -5,6 +5,7 @@ Flask Blueprint for the /prompting sub-app.
 
 Registers:
   GET  /prompting/               → serves prompting.html
+    GET  /prompting/layouts/<path> → returns a saved layout JSON file
   GET  /prompting/prompts/       → lists prompt files as JSON
   GET  /prompting/prompts/<path> → returns parsed prompt content/meta
   POST /prompting/prompts/render → renders a Jinja2 prompt template
@@ -123,11 +124,62 @@ def _safe_target(prompt_path: str):
     return target, None
 
 
+def _safe_layout_target(layout_name: str):
+    """Resolve a layout JSON file inside PROMPTS_DIR.
+
+    Supports either:
+    - an exact relative path such as ``self-2/self-2.prompting-layout``
+    - a bare filename such as ``self-2.prompting-layout`` when that filename is unique
+    """
+    raw_name = (layout_name or '').strip()
+    if not raw_name:
+        return None, (jsonify({'error': 'no layout specified'}), 400)
+
+    layout_path = raw_name if raw_name.lower().endswith('.json') else f'{raw_name}.json'
+    root = PROMPTS_DIR.resolve()
+
+    target = (PROMPTS_DIR / layout_path).resolve()
+    if str(target).startswith(str(root)) and target.is_file():
+        return target, None
+
+    # If the user supplied only a bare name, search by filename under PROMPTS_DIR.
+    if '/' not in raw_name and '\\' not in raw_name:
+        basename = pathlib.Path(layout_path).name
+        matches = []
+        for candidate in PROMPTS_DIR.rglob(basename):
+            resolved = candidate.resolve()
+            if not str(resolved).startswith(str(root)):
+                continue
+            if resolved.is_file() and resolved not in matches:
+                matches.append(resolved)
+
+        if len(matches) == 1:
+            return matches[0], None
+        if len(matches) > 1:
+            return None, (jsonify({
+                'error': 'ambiguous layout name',
+                'matches': [str(p.relative_to(root)) for p in matches],
+            }), 409)
+
+    return None, (jsonify({'error': 'layout not found'}), 404)
+
+
 # ── routes ───────────────────────────────────────────────────────────────────
 
 @prompting_bp.route('/', strict_slashes=False)
 def index():
     return render_template('prompting.html')
+
+
+@prompting_bp.route('/layouts/<path:layout_name>', strict_slashes=False)
+def get_layout(layout_name):
+    """Return a prompting layout JSON file from PROMPTS_DIR."""
+    target, err = _safe_layout_target(layout_name)
+    if err:
+        return err
+    return target.read_text(encoding='utf-8', errors='replace'), 200, {
+        'Content-Type': 'application/json'
+    }
 
 
 @prompting_bp.route('/prompts/', strict_slashes=False)

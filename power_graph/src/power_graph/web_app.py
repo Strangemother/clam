@@ -1,18 +1,16 @@
-import sys
 import json
-import re
 import pathlib
+import re
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent / 'src'))
+from flask import Flask, jsonify, render_template, request
 
-import power_graph.nodes  # noqa — side-effect: registers all built-in node types
+import power_graph.nodes  # noqa: F401 - registers built-in node types as a side effect
 from power_graph.node_registry import NodeRegistry
-
-from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-LAYOUTS_DIR = pathlib.Path(__file__).parent.parent / 'func-pipes' / 'layouts'
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
+LAYOUTS_DIR = PROJECT_ROOT.parent / 'func-pipes' / 'layouts'
 
 
 @app.route('/')
@@ -30,24 +28,19 @@ def save_layout():
     if not name:
         return jsonify({'error': 'name is required'}), 400
 
-    # Sanitize: allow alphanumeric, hyphens, underscores, spaces → replace spaces with hyphens
     safe_name = re.sub(r'[^\w\s-]', '', name).strip()
     safe_name = re.sub(r'[\s]+', '-', safe_name)
     if not safe_name:
         return jsonify({'error': 'name contains no valid characters'}), 400
 
-    nodes       = data.get('nodes', [])
-    connections = data.get('connections', [])
-    edges       = data.get('edges', {})
-
-    layout = {'nodes': nodes, 'connections': connections, 'edges': edges}
+    layout = {
+        'nodes': data.get('nodes', []),
+        'connections': data.get('connections', []),
+        'edges': data.get('edges', {}),
+    }
 
     LAYOUTS_DIR.mkdir(parents=True, exist_ok=True)
     dest = LAYOUTS_DIR / f'{safe_name}.json'
     dest.write_text(json.dumps(layout, indent=2))
 
-    return jsonify({'saved': str(dest.name)})
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5002, host='0.0.0.0')
+    return jsonify({'saved': dest.name})

@@ -1,7 +1,7 @@
 /*
   prompt-persist.js
   ─────────────────────────────────────────────────────────────────────────────
-  Save / restore layout to localStorage or JSON file.
+    Save / restore layout to localStorage, server route, or JSON file.
   Mirrors inputs-persist.js; serialises prompt-specific fields.
 */
 
@@ -23,10 +23,38 @@ const PersistMethods = {
         a.click()
     },
 
-    loadLayout(json = null) {
-        const src = json ?? localStorage.getItem(STORAGE_KEY)
+    async loadLayout(json = null) {
+        if (json !== null) {
+            const layout = this._parseLayout(json)
+            if (layout) await this._restoreLayout(layout)
+            return
+        }
+
+        const name = (this.layoutName || '').trim()
+        if (name) {
+            const encodedName = name.split('/').map(part => encodeURIComponent(part)).join('/')
+            this.loadingLayout = true
+            try {
+                const res = await fetch(`${PROMPTING_API_BASE}/layouts/${encodedName}`)
+                const src = await res.text()
+                if (!res.ok) throw new Error(src || String(res.status))
+                const layout = this._parseLayout(src)
+                if (layout) {
+                    await this._restoreLayout(layout)
+                    console.info('PromptSave: layout loaded from server:', name)
+                }
+            } catch (e) {
+                console.warn('PromptSave: server load failed', e)
+            } finally {
+                this.loadingLayout = false
+            }
+            return
+        }
+
+        const src = localStorage.getItem(STORAGE_KEY)
         if (!src) { console.warn('PromptSave: nothing to load'); return }
-        this._restoreLayout(JSON.parse(src))
+        const layout = this._parseLayout(src)
+        if (layout) await this._restoreLayout(layout)
     },
 
     importJSON() {
@@ -44,6 +72,21 @@ const PersistMethods = {
     },
 
     // ── internal ──────────────────────────────────────────────────────
+
+    _parseLayout(src) {
+        if (!src) return null
+        if (typeof src === 'string') {
+            try {
+                return JSON.parse(src)
+            } catch (e) {
+                console.warn('PromptSave: invalid layout JSON', e)
+                return null
+            }
+        }
+        if (typeof src === 'object') return src
+        console.warn('PromptSave: unsupported layout payload', typeof src)
+        return null
+    },
 
     _toJSON() {
         const nodes = this.panels.map(p => {

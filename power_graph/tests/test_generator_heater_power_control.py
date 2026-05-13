@@ -77,7 +77,7 @@ def _tick(graph, steps=5, fps=20):
         graph.update_all_gen_draws()
 
 
-def _layout_json(gen_id: int, heater_id: int) -> dict:
+def _layout_json(gen_id: int, heater_id: int, *, gen_enabled: bool = True, gen_live: bool = True) -> dict:
     """
     Build a minimal layout dict that mimics what JSON round-trip produces:
     - powerSources keys are *strings* (this is the regression scenario)
@@ -91,11 +91,13 @@ def _layout_json(gen_id: int, heater_id: int) -> dict:
                 "title": "Gen",
                 "config": {
                     "label": "Gen",
-                    "enabled": True,
+                    "enabled": gen_enabled,
                     "volts": 240,
                     "amps": 20,
-                    "live": True,
+                    "live": gen_live,
                     "state": "on",
+                    "drawWatts": 9999,
+                    "drawAmps": 41.66,
                 },
             },
             {
@@ -184,6 +186,23 @@ class TestGeneratorEnabled:
         assert heater['state'] in ('on', 'brownout'), \
             f"Heater should be on after gen re-enabled, got {heater['state']!r}"
 
+    def test_disabled_generator_can_be_live_without_powering_heater(self):
+        graph, gen, heater = _build()
+        gen['enabled'] = False
+        gen['live'] = False
+        graph.repropagate_all()
+        _tick(graph)
+
+        NodeRegistry.get('gen').toggle(gen, graph)
+        _tick(graph)
+
+        assert gen['live'] is True, "Disabled generator should keep its internal live flag"
+        assert gen['state'] == 'off', f"Disabled live generator should stay off, got {gen['state']!r}"
+        assert heater['state'] == 'off', \
+            f"Heater should stay off while generator is disabled, got {heater['state']!r}"
+        assert heater['signal'] is None, \
+            f"Disabled generator must not emit signal, got {heater['signal']!r}"
+
 
 # ── Tests: JSON round-trip (str-key powerSources regression) ──────────────────
 
@@ -249,3 +268,36 @@ class TestGeneratorEnabledAfterLayoutLoad:
         _tick(graph)
         assert heater['state'] in ('on', 'brownout'), \
             f"Heater should be on after gen re-enabled, got {heater['state']!r}"
+
+    def test_disabled_live_generator_stays_off_after_layout_load(self):
+        graph = PowerGraph()
+        layout = _layout_json(gen_id=1, heater_id=2, gen_enabled=False, gen_live=True)
+        load_layout(graph, layout)
+        gen = next(p for p in graph.panels if p['type'] == 'gen')
+        heater = next(p for p in graph.panels if p['type'] == 'heater')
+
+        assert gen['state'] == 'off', f"Disabled generator should stay off, got {gen['state']!r}"
+        assert gen['drawWatts'] == 0.0, f"Disabled generator should not retain stale draw, got {gen['drawWatts']!r}"
+        assert heater['state'] == 'off', f"Heater should stay off when source is disabled on load, got {heater['state']!r}"
+        assert heater['signal'] is None, f"Heater signal should be cleared on load, got {heater['signal']!r}"
+
+
+class TestGeneratorTripLatch:
+    """A tripped generator must remain tripped until manually reset."""
+
+    def test_overloaded_generator_stays_tripped_until_toggle(self):
+        graph = PowerGraph()
+        gen = graph.spawn('gen', label='Gen', preset={'volts': 240, 'amps': 10})
+        load = graph.spawn('load', label='Load', preset={'watts': 4000})
+
+        gen['live'] = True
+        graph.connect(gen, 0, load, 0)
+        graph.repropagate_all()
+        graph.update_all_gen_draws()
+
+        assert gen['state'] == 'tripped', f"Expected trip on overload, got {gen['state']!r}"
+
+        _tick(graph, steps=10)
+
+        assert gen['state'] == 'tripped', "Generator should remain tripped until manually reset"
+        assert load['state'] == 'off', "Downstream load should remain off while generator is latched tripped"

@@ -18,6 +18,7 @@
       }"
       :data-id="p.id"
       :data-state="p.state || 'off'"
+      :data-enabled="p.enabled !== false ? 'true' : 'false'"
       @click="selectPanel(p)"
     >
       <div class="card-head">
@@ -27,17 +28,31 @@
           <button class="card-open" title="Open detail" @click="openDetail(p)">⋯</button>
           <input type="checkbox" class="card-enable"
             :checked="p.enabled !== false"
-            :title="p.enabled !== false ? 'Disable' : 'Enable'"
+            :title="p.enabled !== false ? 'Disable node' : 'Enable node'"
             @change="cardEnable(p, $event.target.checked)">
           <button class="card-reset" title="Reset" @click="cardReset(p)">↺</button>
         </div>
       </div>
       <div class="panel-label">{{ p.label || '(unlabelled)' }}</div>
+      <div class="panel-flags">
+        <span :class="['panel-flag', p.enabled !== false ? 'enabled' : 'disabled']">
+          {{ p.enabled !== false ? 'enabled' : 'disabled' }}
+        </span>
+        <span v-if="panelModeLabel(p)"
+              :class="['panel-flag', panelModeLabel(p)]">
+          {{ panelModeLabel(p) }}
+        </span>
+        <span v-if="panelPowerLabel(p)"
+              :class="['panel-flag', panelPowerLabel(p)]">
+          {{ panelPowerLabel(p) }}
+        </span>
+      </div>
       <div :class="['panel-state', p.state || 'off']">{{ p.state || 'off' }}</div>
       <div class="panel-watts">{{ panelWatts(p) }}</div>
 
       <!-- per-type extras -->
 {% endraw %}{% include 'power_graph/nodes/heater.html' %}
+    {% include 'power_graph/nodes/bulb.html' %}
 {% include 'power_graph/nodes/gen.html' %}
 {% include 'power_graph/nodes/series-battery.html' %}{% raw %}
     </div>

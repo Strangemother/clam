@@ -300,7 +300,11 @@ aside {
 .panel-card[data-state="blown"]    { border-left: 3px solid var(--danger); }
 .panel-card[data-state="brownout"] { border-left: 3px solid var(--warn); }
 .panel-card[data-state="tripped"]  { border-left: 3px solid var(--danger); }
-.panel-card[data-state="off"]      { border-left: 3px solid var(--muted); opacity: .7; }
+.panel-card[data-state="off"]      { border-left: 3px solid var(--muted); }
+.panel-card[data-enabled="false"] {
+  border-style: dashed;
+  opacity: .58;
+}
 
 .card-head   { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
 .panel-id    { font-size: 10px; color: var(--muted); }
@@ -328,6 +332,32 @@ aside {
 .card-open:hover,
 .card-reset:hover { color: var(--accent); border-color: transparent; }
 .panel-label { font-size: 12px; font-weight: 600; margin: 2px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 4px;
+}
+.panel-flag {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .04em;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+.panel-flag.enabled,
+.panel-flag.live,
+.panel-flag.running,
+.panel-flag.closed,
+.panel-flag.powered { border-color: var(--accent); color: var(--accent); }
+.panel-flag.disabled,
+.panel-flag.stopped,
+.panel-flag.paused,
+.panel-flag.open,
+.panel-flag.unpowered { border-color: var(--muted); color: var(--muted); }
+.panel-flag.fault { border-color: var(--danger); color: var(--danger); }
 .panel-state { font-size: 11px; }
 .panel-state.on       { color: var(--accent); }
 .panel-state.blown    { color: var(--danger); }
@@ -353,6 +383,89 @@ aside {
 .heat-state-badge.hot     { background: #5a0000; color: #ff6644; }
 
 .panel-extra { margin-top: 4px; }
+
+/* Lighting / bulb display */
+.lighting-extra { margin-top: 6px; }
+.light-header {
+  align-items: center;
+  display: flex;
+  gap: 5px;
+  font-size: 11px;
+}
+.light-readout {
+  color: var(--muted);
+  font-size: 10px;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.light-state-badge {
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: .05em;
+  padding: 1px 6px;
+}
+.light-state-badge.on   { background: #5a4200; color: #ffd76a; }
+.light-state-badge.dim  { background: #4a3500; color: #ffbf57; }
+.light-state-badge.off  { background: #20242f; color: #7f8797; }
+.light-state-badge.blown { background: #4a0d12; color: #ff7a7a; }
+.light-preview-shell {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  height: 32px;
+  margin: 5px 0 3px;
+  position: relative;
+}
+.light-preview-glow,
+.light-preview-core {
+  border-radius: 999px;
+  position: absolute;
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.25s ease;
+}
+.light-preview-glow {
+  filter: blur(8px);
+  height: 24px;
+  width: 24px;
+}
+.light-preview-core {
+  box-shadow: 0 0 10px rgba(255, 214, 100, 0.28);
+  height: 12px;
+  width: 12px;
+}
+.light-preview-glow.on,
+.light-preview-core.on {
+  background: radial-gradient(circle, #fff4bd 0%, #ffd76a 55%, #ffb347 100%);
+}
+.light-preview-glow.dim,
+.light-preview-core.dim {
+  background: radial-gradient(circle, #ffe2a1 0%, #ffbf57 60%, #e28a24 100%);
+}
+.light-preview-glow.off,
+.light-preview-core.off {
+  background: radial-gradient(circle, #666d7d 0%, #444b5a 60%, #2d3340 100%);
+}
+.light-preview-glow.blown,
+.light-preview-core.blown {
+  background: radial-gradient(circle, #ff9a9a 0%, #ff5d5d 55%, #aa1c1c 100%);
+}
+.light-bar-bg {
+  background: #1a1a2e;
+  border-radius: 3px;
+  height: 6px;
+  margin: 4px 0 1px;
+  overflow: hidden;
+}
+.light-bar-fill {
+  border-radius: 3px;
+  height: 100%;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+.light-bar-fill.on  { background: linear-gradient(90deg, #ffbf57 0%, #ffe28f 100%); }
+.light-bar-fill.dim { background: linear-gradient(90deg, #d9862d 0%, #ffbf57 100%); }
+.light-bar-fill.off { background: linear-gradient(90deg, #3b4250 0%, #5c6473 100%); }
+.light-bar-fill.blown { background: linear-gradient(90deg, #c43131 0%, #ff6f6f 100%); }
 
 /* Generator / battery draw + charge bar */
 .draw-header   { display: flex; align-items: baseline; gap: 5px; font-size: 11px; }

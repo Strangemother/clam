@@ -95,11 +95,11 @@ class NodeBase:
     # Debounce / throttle period in milliseconds (override per subclass)
     dispatch_delay: ClassVar[int] = 100
 
-    # Set by PowerGraph at construction — shared across all node classes
+    # Fallback emitter for panels created outside a bound PowerGraph.
     _emitter: ClassVar[Any] = None
 
-    # Throttle cooldown end-times: {panel_id:event_type → monotonic deadline}
-    _throttle_until: ClassVar[Dict[str, float]] = {}
+    # Runtime-only event state keyed by panel object identity.
+    _runtime_event_state: ClassVar[Dict[int, Dict[str, Any]]] = {}
 
     # ── Defaults and profiles ────────────────────────────────────────────────
 
@@ -156,6 +156,36 @@ class NodeBase:
     def _default_pips_outbound(cls, node_id: int) -> List[Dict]:
         """Override to suppress outbound pips (Bulb is a sink)."""
         return [{'label': node_id, 'index': 0}]
+
+    @classmethod
+    def bind_runtime(cls, panel: Dict, emitter: Any):
+        """Attach graph-scoped runtime event state to a panel."""
+        state = cls._runtime_event_state.setdefault(id(panel), {})
+        state['emitter'] = emitter
+        state.setdefault('cooldowns', {})
+        state.setdefault('pending', {})
+
+    @classmethod
+    def unbind_runtime(cls, panel: Dict):
+        """Discard graph-scoped runtime event state for a panel."""
+        cls._runtime_event_state.pop(id(panel), None)
+
+    @classmethod
+    def clear_dispatches(cls, panel: Dict):
+        """Drop pending and cooldown state for a panel."""
+        state = cls._runtime_event_state.get(id(panel))
+        if not state:
+            return
+        state.get('cooldowns', {}).clear()
+        state.get('pending', {}).clear()
+
+    @classmethod
+    def _event_state(cls, panel: Dict) -> Dict[str, Any]:
+        state = cls._runtime_event_state.setdefault(id(panel), {})
+        state.setdefault('emitter', cls._emitter)
+        state.setdefault('cooldowns', {})
+        state.setdefault('pending', {})
+        return state
 
     # ── Spike (inrush current) helpers ───────────────────────────────────────
 
@@ -215,24 +245,34 @@ class NodeBase:
         """
         if not panel.get('enabled', True):
             return
-        if cls._emitter is None:
+        state = cls._event_state(panel)
+        emitter = state.get('emitter')
+        if emitter is None:
             return
 
-        key      = f"{panel['id']}:{event_type}"
-        delay    = getattr(cls, 'dispatch_delay', NodeBase.dispatch_delay) / 1000
-        now      = time.monotonic()
-        deadline = cls._throttle_until.get(key, 0)
+        cooldowns = state['cooldowns']
+        pending   = state['pending']
+        delay     = getattr(cls, 'dispatch_delay', NodeBase.dispatch_delay) / 1000
+        now       = time.monotonic()
+        deadline  = cooldowns.get(event_type, 0.0)
+        label     = f"{panel['type']}:{panel['id']}"
+        payload   = data or {}
 
         if now < deadline:
-            # Still in cooldown — update the pending payload so newest wins
-            cls._throttle_until[key] = now + delay
+            pending[event_type] = {
+                'label': label,
+                'data': payload,
+                'emit_at': now + delay,
+            }
+            cooldowns[event_type] = now + delay
             return
 
-        cls._throttle_until[key] = now + delay
-        cls._emitter.emit(
+        pending.pop(event_type, None)
+        cooldowns[event_type] = now + delay
+        emitter.emit(
             event_type,
-            f"{panel['type']}:{panel['id']}",
-            data or {},
+            label,
+            payload,
         )
 
     @classmethod
@@ -250,22 +290,50 @@ class NodeBase:
         """
         if not panel.get('enabled', True):
             return
-        if cls._emitter is None:
+        state = cls._event_state(panel)
+        emitter = state.get('emitter')
+        if emitter is None:
             return
 
-        key   = f"{panel['id']}:{event_type}"
-        delay = getattr(cls, 'dispatch_delay', NodeBase.dispatch_delay) / 1000
-        now   = time.monotonic()
+        cooldowns = state['cooldowns']
+        delay     = getattr(cls, 'dispatch_delay', NodeBase.dispatch_delay) / 1000
+        now       = time.monotonic()
 
-        if now < cls._throttle_until.get(key, 0):
+        if now < cooldowns.get(event_type, 0.0):
             return  # In cooldown — skip
 
-        cls._throttle_until[key] = now + delay
-        cls._emitter.emit(
+        cooldowns[event_type] = now + delay
+        emitter.emit(
             event_type,
             f"{panel['type']}:{panel['id']}",
             data or {},
         )
+
+    @classmethod
+    def flush_dispatches(cls, panel: Dict, force: bool = False):
+        """Flush trailing-edge debounced events whose cooldown has expired."""
+        state = cls._runtime_event_state.get(id(panel))
+        if not state:
+            return
+
+        emitter = state.get('emitter')
+        if emitter is None:
+            return
+
+        pending = state.get('pending', {})
+        if not pending:
+            return
+
+        cooldowns = state.get('cooldowns', {})
+        delay = getattr(cls, 'dispatch_delay', NodeBase.dispatch_delay) / 1000
+        now = time.monotonic()
+
+        for event_type, item in list(pending.items()):
+            if not force and now < item.get('emit_at', 0.0):
+                continue
+            emitter.emit(event_type, item['label'], item['data'])
+            cooldowns[event_type] = now + delay
+            pending.pop(event_type, None)
 
     # ── Serialization ────────────────────────────────────────────────────────
 
@@ -314,7 +382,13 @@ class NodeBase:
     @classmethod
     def on_disabled(cls, panel: Dict, graph):
         """Called when enabled=False. Default: emit null downstream."""
-        graph.emit(panel, None)
+        outbound = panel.get('pipsOutbound', [])
+        if len(outbound) <= 1:
+            graph.emit(panel, None)
+            return
+
+        for pip in outbound:
+            graph.emit_to(panel, pip.get('index', 0), None)
 
     @classmethod
     def reset(cls, panel: Dict, graph):
@@ -322,6 +396,7 @@ class NodeBase:
         Reset node to off state without altering config fields.
         Subclasses should call super().reset() then clear their own extras.
         """
+        cls.clear_dispatches(panel)
         panel['signal']       = None
         panel['powerSources'] = {}
         panel['state']        = 'off'

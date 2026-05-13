@@ -158,6 +158,11 @@ class GraphWSServer:
         if not self._clients:
             return
 
+        live_ids = {panel['id'] for panel in panels}
+        stale_ids = set(self._panel_snapshots) - live_ids
+        for panel_id in stale_ids:
+            self._panel_snapshots.pop(panel_id, None)
+
         changed = []
         for p in panels:
             pid = p['id']

@@ -1,0 +1,561 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "text-input",
+      "title": "Foreground Input",
+      "config": {
+        "label": "Foreground Input"
+      },
+      "pos": {
+        "left": "60px",
+        "top": "220px"
+      }
+    },
+    {
+      "id": 2,
+      "type": "llm",
+      "title": "Perception",
+      "config": {
+        "label": "Perception",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/perception.prompt.md",
+        "promptTitle": "Perception"
+      },
+      "pos": {
+        "left": "320px",
+        "top": "40px"
+      }
+    },
+    {
+      "id": 3,
+      "type": "transform",
+      "title": "Facet Packet",
+      "config": {
+        "label": "Facet Packet",
+        "inputs": [
+          { "name": "prompt", "index": 0 },
+          { "name": "perception", "index": 1 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "if (!inputs.prompt || !inputs.perception) return null; return ['USER PROMPT:', inputs.prompt, '', 'PERCEPTION:', inputs.perception].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "320px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 4,
+      "type": "llm",
+      "title": "Curious Facet",
+      "config": {
+        "label": "Curious Facet",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/facet-curious.prompt.md",
+        "promptTitle": "Facet Curious"
+      },
+      "pos": {
+        "left": "650px",
+        "top": "20px"
+      }
+    },
+    {
+      "id": 5,
+      "type": "llm",
+      "title": "Skeptical Facet",
+      "config": {
+        "label": "Skeptical Facet",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/facet-skeptical.prompt.md",
+        "promptTitle": "Facet Skeptical"
+      },
+      "pos": {
+        "left": "650px",
+        "top": "160px"
+      }
+    },
+    {
+      "id": 6,
+      "type": "llm",
+      "title": "Caring Facet",
+      "config": {
+        "label": "Caring Facet",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/facet-caring.prompt.md",
+        "promptTitle": "Facet Caring"
+      },
+      "pos": {
+        "left": "650px",
+        "top": "300px"
+      }
+    },
+    {
+      "id": 7,
+      "type": "llm",
+      "title": "Practical Facet",
+      "config": {
+        "label": "Practical Facet",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/facet-practical.prompt.md",
+        "promptTitle": "Facet Practical"
+      },
+      "pos": {
+        "left": "650px",
+        "top": "440px"
+      }
+    },
+    {
+      "id": 8,
+      "type": "llm",
+      "title": "Contrarian Facet",
+      "config": {
+        "label": "Contrarian Facet",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/facet-contrarian.prompt.md",
+        "promptTitle": "Facet Contrarian"
+      },
+      "pos": {
+        "left": "650px",
+        "top": "580px"
+      }
+    },
+    {
+      "id": 9,
+      "type": "transform",
+      "title": "Resolver Packet",
+      "config": {
+        "label": "Resolver Packet",
+        "inputs": [
+          { "name": "prompt", "index": 0 },
+          { "name": "perception", "index": 1 },
+          { "name": "curious", "index": 2 },
+          { "name": "skeptical", "index": 3 },
+          { "name": "caring", "index": 4 },
+          { "name": "practical", "index": 5 },
+          { "name": "contrarian", "index": 6 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "const need=['prompt','perception','curious','skeptical','caring','practical','contrarian']; if (need.some(k => !inputs[k])) return null; return ['USER PROMPT:', inputs.prompt, '', 'PERCEPTION:', inputs.perception, '', 'FACET curious:', inputs.curious, '', 'FACET skeptical:', inputs.skeptical, '', 'FACET caring:', inputs.caring, '', 'FACET practical:', inputs.practical, '', 'FACET contrarian:', inputs.contrarian].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "990px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 10,
+      "type": "llm",
+      "title": "Primary Resolver",
+      "config": {
+        "label": "Primary Resolver",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/primary-resolver.prompt.md",
+        "promptTitle": "Primary Resolver"
+      },
+      "pos": {
+        "left": "1320px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 11,
+      "type": "transform",
+      "title": "Governance Packet",
+      "config": {
+        "label": "Governance Packet",
+        "inputs": [
+          { "name": "prompt", "index": 0 },
+          { "name": "resolver", "index": 1 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "if (!inputs.prompt || !inputs.resolver) return null; return ['USER PROMPT:', inputs.prompt, '', 'RESOLVER:', inputs.resolver].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "1640px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 12,
+      "type": "llm",
+      "title": "Expression Governor",
+      "config": {
+        "label": "Expression Governor",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/expression-governor.prompt.md",
+        "promptTitle": "Expression Governor"
+      },
+      "pos": {
+        "left": "1940px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 13,
+      "type": "text-display",
+      "title": "Outward Speech",
+      "config": {
+        "label": "Outward Speech"
+      },
+      "pos": {
+        "left": "2260px",
+        "top": "250px"
+      }
+    },
+    {
+      "id": 14,
+      "type": "transform",
+      "title": "After Speech Packet",
+      "config": {
+        "label": "After Speech Packet",
+        "inputs": [
+          { "name": "prompt", "index": 0 },
+          { "name": "response", "index": 1 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "if (!inputs.prompt || !inputs.response) return null; return ['USER PROMPT:', inputs.prompt, '', 'SPOKEN RESPONSE:', inputs.response].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "2260px",
+        "top": "500px"
+      }
+    },
+    {
+      "id": 15,
+      "type": "llm",
+      "title": "Response Critic",
+      "config": {
+        "label": "Response Critic",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/response-critic.prompt.md",
+        "promptTitle": "Response Critic"
+      },
+      "pos": {
+        "left": "2590px",
+        "top": "80px"
+      }
+    },
+    {
+      "id": 16,
+      "type": "llm",
+      "title": "Memory Gate",
+      "config": {
+        "label": "Memory Gate",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/memory-gate.prompt.md",
+        "promptTitle": "Memory Gate"
+      },
+      "pos": {
+        "left": "2590px",
+        "top": "280px"
+      }
+    },
+    {
+      "id": 17,
+      "type": "llm",
+      "title": "Private Sanctuary",
+      "config": {
+        "label": "Private Sanctuary",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/private-sanctuary.prompt.md",
+        "promptTitle": "Private Sanctuary"
+      },
+      "pos": {
+        "left": "2590px",
+        "top": "480px"
+      }
+    },
+    {
+      "id": 18,
+      "type": "transform",
+      "title": "Trait Packet",
+      "config": {
+        "label": "Trait Packet",
+        "inputs": [
+          { "name": "critic", "index": 0 },
+          { "name": "memory", "index": 1 },
+          { "name": "private", "index": 2 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "const need=['critic','memory','private']; if (need.some(k => !inputs[k])) return null; return ['RESPONSE CRITIC:', inputs.critic, '', 'MEMORY GATE:', inputs.memory, '', 'PRIVATE SANCTUARY:', inputs.private].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "2920px",
+        "top": "420px"
+      }
+    },
+    {
+      "id": 19,
+      "type": "llm",
+      "title": "Trait Shaper",
+      "config": {
+        "label": "Trait Shaper",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/trait-shaper.prompt.md",
+        "promptTitle": "Trait Shaper"
+      },
+      "pos": {
+        "left": "3240px",
+        "top": "420px"
+      }
+    },
+    {
+      "id": 20,
+      "type": "transform",
+      "title": "State Packet",
+      "config": {
+        "label": "State Packet",
+        "inputs": [
+          { "name": "critic", "index": 0 },
+          { "name": "memory", "index": 1 },
+          { "name": "private", "index": 2 },
+          { "name": "trait", "index": 3 },
+          { "name": "meta", "index": 4 }
+        ],
+        "outputs": [
+          { "name": "out", "index": 0 }
+        ],
+        "fnSrc": "const need=['critic','memory','private','trait']; if (need.some(k => !inputs[k])) return null; return ['RESPONSE CRITIC:', inputs.critic, '', 'MEMORY GATE:', inputs.memory, '', 'PRIVATE SANCTUARY:', inputs.private, '', 'TRAIT SHAPER:', inputs.trait, '', 'BACKGROUND META:', inputs.meta || '<none>'].join('\\n')",
+        "gatePip": null,
+        "gateMode": "truthy",
+        "gatePattern": ""
+      },
+      "pos": {
+        "left": "3560px",
+        "top": "420px"
+      }
+    },
+    {
+      "id": 21,
+      "type": "llm",
+      "title": "State Governor",
+      "config": {
+        "label": "State Governor",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/state-governor.prompt.md",
+        "promptTitle": "State Governor"
+      },
+      "pos": {
+        "left": "3880px",
+        "top": "420px"
+      }
+    },
+    {
+      "id": 22,
+      "type": "delay",
+      "title": "Background Delay A",
+      "config": {
+        "label": "Background Delay A",
+        "delayMs": 3000
+      },
+      "pos": {
+        "left": "4200px",
+        "top": "240px"
+      }
+    },
+    {
+      "id": 23,
+      "type": "llm",
+      "title": "Idle Dream",
+      "config": {
+        "label": "Idle Dream",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/idle-dream.prompt.md",
+        "promptTitle": "Idle Dream"
+      },
+      "pos": {
+        "left": "4520px",
+        "top": "240px"
+      }
+    },
+    {
+      "id": 24,
+      "type": "delay",
+      "title": "Background Delay B",
+      "config": {
+        "label": "Background Delay B",
+        "delayMs": 3000
+      },
+      "pos": {
+        "left": "4840px",
+        "top": "240px"
+      }
+    },
+    {
+      "id": 25,
+      "type": "llm",
+      "title": "Metacognitive Narrator",
+      "config": {
+        "label": "Metacognitive Narrator",
+        "endpointKey": "lmstudio",
+        "endpoint": "",
+        "model": "granite-4.1-8b",
+        "mode": "prompt",
+        "templated": false,
+        "promptPath": "self-2/metacognitive-narrator.prompt.md",
+        "promptTitle": "Metacognitive Narrator"
+      },
+      "pos": {
+        "left": "5160px",
+        "top": "240px"
+      }
+    },
+    {
+      "id": 26,
+      "type": "delay",
+      "title": "Background Delay C",
+      "config": {
+        "label": "Background Delay C",
+        "delayMs": 3000
+      },
+      "pos": {
+        "left": "5480px",
+        "top": "240px"
+      }
+    },
+    {
+      "id": 27,
+      "type": "text-display",
+      "title": "Background Trace",
+      "config": {
+        "label": "Background Trace"
+      },
+      "pos": {
+        "left": "4200px",
+        "top": "560px"
+      }
+    }
+  ],
+  "connections": [
+    { "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 2, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 3, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 3, "direction": "inbound", "pipIndex": 1 } },
+
+    { "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 4, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 5, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 6, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 7, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 3, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 8, "direction": "inbound", "pipIndex": 0 } },
+
+    { "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 2, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 1 } },
+    { "sender": { "label": 4, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 2 } },
+    { "sender": { "label": 5, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 3 } },
+    { "sender": { "label": 6, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 4 } },
+    { "sender": { "label": 7, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 5 } },
+    { "sender": { "label": 8, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 9, "direction": "inbound", "pipIndex": 6 } },
+
+    { "sender": { "label": 9, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 10, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 11, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 10, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 11, "direction": "inbound", "pipIndex": 1 } },
+    { "sender": { "label": 11, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 12, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 12, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 13, "direction": "inbound", "pipIndex": 0 } },
+
+    { "sender": { "label": 1, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 14, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 13, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 14, "direction": "inbound", "pipIndex": 1 } },
+    { "sender": { "label": 14, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 15, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 14, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 16, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 14, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 17, "direction": "inbound", "pipIndex": 0 } },
+
+    { "sender": { "label": 15, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 18, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 16, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 18, "direction": "inbound", "pipIndex": 1 } },
+    { "sender": { "label": 17, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 18, "direction": "inbound", "pipIndex": 2 } },
+    { "sender": { "label": 18, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 19, "direction": "inbound", "pipIndex": 0 } },
+
+    { "sender": { "label": 15, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 20, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 16, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 20, "direction": "inbound", "pipIndex": 1 } },
+    { "sender": { "label": 17, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 20, "direction": "inbound", "pipIndex": 2 } },
+    { "sender": { "label": 19, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 20, "direction": "inbound", "pipIndex": 3 } },
+    { "sender": { "label": 20, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 21, "direction": "inbound", "pipIndex": 0 } },
+
+    { "sender": { "label": 21, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 22, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 21, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 27, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 22, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 23, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 23, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 24, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 24, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 25, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 25, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 26, "direction": "inbound", "pipIndex": 0 } },
+    { "sender": { "label": 26, "direction": "outbound", "pipIndex": 0 }, "receiver": { "label": 20, "direction": "inbound", "pipIndex": 4 } }
+  ]
+}
