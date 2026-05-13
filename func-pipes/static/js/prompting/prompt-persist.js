@@ -24,6 +24,10 @@ const PersistMethods = {
     },
 
     async loadLayout(json = null) {
+        if (!this.prompts?.length && typeof this.fetchPrompts === 'function') {
+            await this.fetchPrompts()
+        }
+
         if (json !== null) {
             const layout = this._parseLayout(json)
             if (layout) await this._restoreLayout(layout)
