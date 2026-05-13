@@ -40,6 +40,26 @@ from pathlib import Path
 from typing import Dict, Union
 
 
+_RUNTIME_DEFAULTS = {
+    'state': 'off',
+    'drawWatts': 0.0,
+    'drawAmps': 0.0,
+    'current_watts': 0.0,
+    'reading_volts': 0.0,
+    'reading_amps': 0.0,
+    'reading_watts': 0.0,
+    'brightness': 0.0,
+    'chargeInW': 0.0,
+    'chargeOutW': 0.0,
+    'inVolts': 0.0,
+    'inAmps': 0.0,
+    'outAmps': 0.0,
+    'ratio': 1.0,
+    'overload': False,
+    '_last_signal': None,
+}
+
+
 def load_layout(graph, layout: Dict) -> None:
     """
     Populate *graph* from a layout dict.  Modifies graph in-place.
@@ -78,12 +98,15 @@ def load_layout(graph, layout: Dict) -> None:
 
         id_map[json_id] = panel
 
-    # Clear stale runtime state so first propagation rewrites them cleanly.
-    # powerSources may have been persisted from a previous live session;
-    # those values are meaningless until generators re-emit on startup.
+    # Clear stale runtime state so first propagation rewrites it cleanly.
+    # Layout files may include persisted panel snapshots from the UI; those
+    # runtime values must not override the actual boot-time simulation state.
     for panel in graph.panels:
         panel['powerSources'] = {}
         panel['signal'] = None
+        for key, default in _RUNTIME_DEFAULTS.items():
+            if key in panel:
+                panel[key] = default
 
     # Ensure _next_id is beyond all used ids so future spawns don't collide
     if id_map:
@@ -124,7 +147,9 @@ def load_layout(graph, layout: Dict) -> None:
 
     # ── 3. Initial propagation from live generators ───────────────────────────
     for panel in graph.panels:
-        if panel.get('type') == 'gen' and panel.get('live'):
+        if (panel.get('type') == 'gen'
+            and panel.get('live')
+            and panel.get('enabled', True) is not False):
             from .nodes.generator import Generator
             Generator.start_spike(panel)
             m = Generator.spike_multiplier(panel)

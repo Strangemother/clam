@@ -215,6 +215,48 @@ createApp({
       return w !== null ? `${Number(w).toFixed(0)} W` : '';
     },
 
+    panelToggleLabel(panel) {
+      if (!panel) return 'Toggle';
+      if (panel.type === 'gen') {
+        if (panel.state === 'tripped') return 'Reset Trip';
+        return panel.live ? 'Stop' : 'Start';
+      }
+      if (panel.type === 'series-battery') {
+        return panel.running ? 'Pause' : 'Resume';
+      }
+      if (Object.prototype.hasOwnProperty.call(panel, 'closed')) {
+        return panel.closed ? 'Open' : 'Close';
+      }
+      return 'Toggle';
+    },
+
+    panelModeLabel(panel) {
+      if (!panel) return null;
+      if (panel.type === 'gen') {
+        return panel.live ? 'live' : 'stopped';
+      }
+      if (panel.type === 'series-battery') {
+        return panel.running ? 'running' : 'paused';
+      }
+      if (Object.prototype.hasOwnProperty.call(panel, 'closed')) {
+        return panel.closed ? 'closed' : 'open';
+      }
+      return null;
+    },
+
+    panelPowerLabel(panel) {
+      if (!panel || panel.enabled === false) return null;
+
+      const state = panel.state || 'off';
+      if (['tripped', 'blown', 'fault', 'dead', 'blocked', 'error'].includes(state)) {
+        return 'fault';
+      }
+      if (['on', 'dim', 'brownout', 'sag', 'distributing', 'step-up', 'step-down', 'unity', 'charging', 'discharging', 'full', 'pass', 'routing'].includes(state)) {
+        return 'powered';
+      }
+      return 'unpowered';
+    },
+
     // ── Detail overlay ─────────────────────────────────────────────────
     openDetail(panel) {
       this.selectedPanel   = panel;
@@ -277,7 +319,6 @@ createApp({
     cardEnable(p, enabled) {
       p.enabled = enabled;              // optimistic — Vue re-renders immediately
       this.sendCmd({ op: 'set', id: p.id, key: 'enabled', value: enabled });
-      this.sendCmd({ op: 'repropagate' });
       setTimeout(() => this.sendCmd({ op: 'read', id: p.id }), 120);
     },
 

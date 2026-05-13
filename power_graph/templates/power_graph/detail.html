@@ -4,7 +4,7 @@
 
     <div class="detail-header">
       <h2>#{{ selectedPanel.id }} — {{ selectedPanel.label || selectedPanel.type }}</h2>
-      <button @click="togglePanel">Toggle</button>
+      <button @click="togglePanel">{{ panelToggleLabel(selectedPanel) }}</button>
       <button @click="resetPanel">Reset</button>
       <button class="btn-close" @click="closeDetail">✕</button>
     </div>

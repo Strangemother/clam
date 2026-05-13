@@ -1,0 +1,38 @@
+{% raw %}
+<!-- ── LIGHT / BULB card extra ── -->
+<!-- Included by panels.html when a node exposes a numeric brightness field.
+     Shows a compact glow preview plus a brightness percentage bar. -->
+<template v-if="typeof p.brightness === 'number'">
+  <div class="panel-extra lighting-extra">
+    <div class="light-header">
+      <span :class="['light-state-badge', p.state || 'off']">
+        {{ ((p.brightness || 0) * 100).toFixed(0) }}%
+      </span>
+      <span class="light-readout">brightness</span>
+    </div>
+
+    <div class="light-preview-shell">
+      <div class="light-preview-glow"
+           :class="p.state || 'off'"
+           :style="{
+             opacity: Math.max(0.08, p.brightness || 0),
+             transform: `scale(${0.75 + (p.brightness || 0) * 0.25})`
+           }">
+      </div>
+      <div class="light-preview-core"
+           :class="p.state || 'off'"
+           :style="{ opacity: Math.max(0.12, p.brightness || 0) }">
+      </div>
+    </div>
+
+    <div class="light-bar-bg">
+      <div :class="['light-bar-fill', p.state || 'off']"
+           :style="{
+             width: ((p.brightness || 0) * 100) + '%',
+             opacity: Math.max(0.18, p.brightness || 0)
+           }">
+      </div>
+    </div>
+  </div>
+</template>
+{% endraw %}

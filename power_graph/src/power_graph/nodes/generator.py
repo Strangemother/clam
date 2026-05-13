@@ -114,10 +114,15 @@ class Generator(NodeBase):
 
         prev          = panel.get('state', 'off')
         panel['live'] = not panel.get('live', False)
-        panel['state'] = 'on' if panel['live'] else 'off'
+        panel['state'] = 'on' if panel['live'] and panel.get('enabled', True) else 'off'
         cls.dispatch(panel, 'state:change', {'from': prev, 'to': panel['state']})
 
         if panel['live']:
+            if not panel.get('enabled', True):
+                graph.emit(panel, None)
+                graph.update_all_gen_draws()
+                return
+
             cls.start_spike(panel)
             m = cls.spike_multiplier(panel)
             cls.dispatch(panel, 'gen:start', {'volts': panel.get('volts'), 'amps': panel.get('amps')})
@@ -134,7 +139,7 @@ class Generator(NodeBase):
     @classmethod
     def params_changed(cls, panel: Dict, graph):
         """Call after volts/amps changed on a live generator."""
-        if panel.get('live') and panel.get('state') != 'tripped':
+        if panel.get('live') and panel.get('state') != 'tripped' and panel.get('enabled', True):
             panel['overload'] = False
             cls.dispatch(panel, 'gen:params', {'volts': panel.get('volts'), 'amps': panel.get('amps')})
             graph.emit(panel, {'v': panel.get('volts', 240), 'a': panel.get('amps', 13)})

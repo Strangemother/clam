@@ -8,10 +8,16 @@ allowing nodes and the graph to publish simulation events for monitoring and
 debugging.
 """
 
+import json
+import logging
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Dict, List, Any
 from collections import defaultdict
+
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -37,6 +43,7 @@ class EventEmitter:
 
     def __init__(self):
         self._listeners: Dict[str, List[Callable]] = defaultdict(list)
+        self._any_listeners: List[Callable] = []
         self._log: List[Event] = []
         self._max_log = 1000
 
@@ -56,6 +63,16 @@ class EventEmitter:
         def unsubscribe():
             if callback in self._listeners[event_type]:
                 self._listeners[event_type].remove(callback)
+
+        return unsubscribe
+
+    def on_any(self, callback: Callable) -> Callable:
+        """Subscribe to every event emitted by this emitter."""
+        self._any_listeners.append(callback)
+
+        def unsubscribe():
+            if callback in self._any_listeners:
+                self._any_listeners.remove(callback)
 
         return unsubscribe
 
@@ -88,11 +105,12 @@ class EventEmitter:
             self._log = self._log[-self._max_log:]
 
         # Fire callbacks
-        for callback in self._listeners.get(event_type, []):
+        listeners = [*list(self._any_listeners), *list(self._listeners.get(event_type, []))]
+        for callback in listeners:
             try:
                 callback(event)
-            except Exception as e:
-                print(f"Error in event listener for {event_type}: {e}")
+            except Exception:
+                log.exception("Error in event listener for %s", event_type)
 
     def get_log(self) -> List[Event]:
         """Get event log (newest first)."""
@@ -120,8 +138,19 @@ class EventMonitor:
         self.emitter = emitter or EventEmitter()
         self.enabled = True
         self._event_counts: Dict[str, int] = defaultdict(int)
-        self._events_per_second = 0
-        self._bytes_per_second = 0
+        self._total_bytes = 0
+        self._started_at = time.monotonic()
+        self._last_event_at = None
+        self._unsubscribe = self.emitter.on_any(self._record_event)
+
+    def _record_event(self, event: Event):
+        """Capture event stats from the attached emitter."""
+        if not self.enabled:
+            return
+
+        self._event_counts[event.type] += 1
+        self._total_bytes += len(json.dumps(event.to_dict()))
+        self._last_event_at = time.monotonic()
 
     def start(self):
         """Start monitoring."""
@@ -152,16 +181,26 @@ class EventMonitor:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get monitoring statistics."""
+        total_events = sum(self._event_counts.values())
+        if total_events and self._last_event_at is not None:
+            elapsed = max(self._last_event_at - self._started_at, 1e-9)
+            events_per_second = round(total_events / elapsed, 3)
+            bytes_per_second = round(self._total_bytes / elapsed, 3)
+        else:
+            events_per_second = 0
+            bytes_per_second = 0
+
         return {
             'enabled': self.enabled,
             'event_counts': dict(self._event_counts),
-            'events_per_second': self._events_per_second,
-            'bytes_per_second': self._bytes_per_second,
-            'total_events': sum(self._event_counts.values()),
+            'events_per_second': events_per_second,
+            'bytes_per_second': bytes_per_second,
+            'total_events': total_events,
         }
 
     def reset_stats(self):
         """Reset statistics."""
         self._event_counts.clear()
-        self._events_per_second = 0
-        self._bytes_per_second = 0
+        self._total_bytes = 0
+        self._started_at = time.monotonic()
+        self._last_event_at = None
