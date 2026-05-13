@@ -337,11 +337,15 @@ class PowerGraph:
             # Handle disabled state
             if panel.get('enabled') is False:
                 panel['state'] = 'off'
-                if hasattr(node_cls, 'on_disabled'):
-                    node_cls.on_disabled(panel, self)
-                else:
-                    self.emit(panel, None)
+                if not panel.get('_disabled_output_blocked'):
+                    if hasattr(node_cls, 'on_disabled'):
+                        node_cls.on_disabled(panel, self)
+                    else:
+                        self.emit(panel, None)
+                    panel['_disabled_output_blocked'] = True
                 return
+
+            panel.pop('_disabled_output_blocked', None)
 
             # Apply node-specific logic
             node_cls.apply(panel, combined, self)
@@ -530,6 +534,10 @@ class PowerGraph:
         # Phase 3 — sum attributed watts per generator, then update states
         for gen in gens:
             total_w = 0.0
+            tracked_states = ('on', 'capacitor')
+            if gen['type'] == 'series-battery':
+                tracked_states = ('on', 'brownout', 'capacitor')
+
             for panel_id in gen_reachable[gen['id']]:
                 panel = self._find_panel(panel_id)
                 if not panel:
@@ -542,7 +550,7 @@ class PowerGraph:
 
                 node_cls = NodeRegistry.get(panel['type'])
                 if (node_cls and getattr(node_cls, 'consumes_watts', False)
-                        and state in ('on', 'capacitor')):
+            and state in tracked_states):
                     total_w += panel.get('current_watts', panel.get('watts', 0)) / share
 
             self._apply_gen_draw(gen, round(total_w, 1))
@@ -615,6 +623,8 @@ class PowerGraph:
         for panel in self.panels:
             ripple = panel.get('ripple')
             if not ripple or not ripple.get('enabled'):
+                continue
+            if panel.get('enabled', True) is False:
                 continue
 
             panel['_ripple_accum'] = panel.get('_ripple_accum', 0) + dt

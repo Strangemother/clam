@@ -139,3 +139,61 @@ def test_repropagate_does_not_revive_tripped_generator():
     assert gen['state'] == 'tripped'
     assert load['state'] == 'off'
     assert load['signal'] is None
+
+
+def test_disabled_converter_stays_quiet_on_tick():
+    graph = PowerGraph()
+    gen = graph.spawn('gen', preset={'volts': 240, 'amps': 20})
+    conv = graph.spawn('converter', preset={'outVolts': 48, 'efficiency': 0.9})
+    load = graph.spawn(
+        'load',
+        preset={'watts': 150, 'minVolts': 38, 'brownoutVolts': 44, 'maxVolts': 60},
+    )
+
+    graph.connect(gen, 0, conv, 0)
+    graph.connect(conv, 0, load, 0)
+
+    gen['live'] = True
+    graph.repropagate_all()
+
+    conv['enabled'] = False
+    graph.repropagate_all()
+
+    gen['ripple']['enabled'] = True
+    gen['ripple']['interval'] = 0
+    conv['ripple']['enabled'] = True
+    conv['ripple']['interval'] = 0
+    graph.emitter.clear_log()
+
+    graph.tick(1.0 / 20)
+
+    converter_events = [
+        event for event in graph.emitter.get_log()
+        if event.type == 'graph:emit' and event.label == f"panel-{conv['id']}"
+    ]
+
+    assert converter_events == []
+    assert conv['state'] == 'off'
+    assert load['state'] == 'off'
+    assert load['signal'] is None
+
+
+def test_brownout_load_counts_toward_battery_draw():
+    graph = PowerGraph()
+    battery = graph.spawn(
+        'series-battery',
+        preset={'volts': 12, 'amps': 10, 'chargeAmps': 0, 'capacityWh': 20, 'chargeWh': 20},
+    )
+    load = graph.spawn(
+        'load',
+        preset={'watts': 240, 'minVolts': 8, 'brownoutVolts': 18, 'maxVolts': 60},
+    )
+
+    graph.connect(battery, 0, load, 0)
+    graph.repropagate_all()
+    graph.update_all_gen_draws()
+
+    assert battery['state'] == 'discharging'
+    assert load['state'] == 'brownout'
+    assert load['current_watts'] > 0
+    assert battery['drawWatts'] == round(load['current_watts'], 1)
