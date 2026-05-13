@@ -60,8 +60,18 @@
             <!-- Layout persistence -->
             <div class="toolbar-group">
                 <span class="toolbar-label">Layout</span>
+                <input type="text"
+                       v-model.trim="layoutName"
+                       @keyup.enter="loadLayout()"
+                       placeholder="layout name or path"
+                       title="Server layout name, e.g. self-2/self-2.prompting-layout"
+                       style="width:180px" />
                 <button @click="saveLayout"   title="Save to browser storage">💾 Save</button>
-                <button @click="loadLayout()" title="Restore from browser storage">📂 Load</button>
+                <button @click="loadLayout()"
+                        :disabled="loadingLayout"
+                        title="If a name is entered, load from the server; otherwise restore from browser storage">
+                    {{ loadingLayout ? 'Loading…' : '📂 Load' }}
+                </button>
                 <button @click="exportJSON"   title="Download as JSON">⬇ Export</button>
                 <button @click="importJSON"   title="Load from JSON file">⬆ Import</button>
             </div>

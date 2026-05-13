@@ -40,6 +40,9 @@ createApp({
             disconnectMode:   false,
             disconnectFirst:  null,
             transformPresets: TRANSFORM_PRESETS,
+            // Layout toolbar state
+            layoutName:         '',
+            loadingLayout:      false,
             // LLM toolbar state
             endpoints:          [],               // loaded from /prompting/endpoints/
             modelsEndpointKey:  DEFAULT_ENDPOINT_KEY,
