@@ -111,6 +111,7 @@ const LLMMethods = {
         panel.promptPath = promptPath || ''
         if (!promptPath) {
             panel.prompt      = null
+            panel.promptTitle = ''
             panel.description = ''
             if (panel._chat) {
                 panel._chat.options.system = ''
@@ -122,6 +123,7 @@ const LLMMethods = {
             const res  = await fetch(`${PROMPTING_API_BASE}/prompts/${promptPath}`)
             const data = await res.json()
             panel.prompt      = { path: promptPath, content: data.content, title: data.title }
+            panel.promptTitle = data.title || promptPath
             panel.description = data.description || ''
             // Apply immediately if a Chat instance exists
             if (panel._chat) {

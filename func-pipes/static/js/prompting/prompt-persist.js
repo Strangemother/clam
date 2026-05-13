@@ -108,7 +108,7 @@ const PersistMethods = {
                     mode:         p.mode,
                     templated:    p.templated,
                     promptPath:   p.promptPath || p.prompt?.path || null,
-                    promptTitle:  p.prompt?.title || null,
+                    promptTitle:  p.promptTitle || p.prompt?.title || null,
                 }
             } else if (p.type === 'transform') {
                 config = {

@@ -90,6 +90,7 @@ function makeLLMPanel(id, p = {}) {
         templated:   p.templated ?? false,
         _manualInput: '',        // direct-test textarea
         promptPath:  p.promptPath  || '',
+        promptTitle: p.promptTitle || '',
         prompt:      null,       // { path, content, title } — loaded system prompt
         description: '',
         showPrompt:  false,
