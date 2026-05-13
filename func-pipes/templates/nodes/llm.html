@@ -54,6 +54,10 @@
                     v-model="panel.promptPath"
                     @change="selectPrompt(panel, panel.promptPath)">
                 <option value="">— system prompt —</option>
+                    <option v-if="panel.promptPath && !prompts.some(p => p.path === panel.promptPath)"
+                            :value="panel.promptPath">
+                        {{ panel.promptTitle || panel.prompt?.title || panel.promptPath }}
+                    </option>
                 <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
             </select>
             <label class="mode-toggle" title="History or one-shot mode">
