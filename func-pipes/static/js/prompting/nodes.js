@@ -89,6 +89,7 @@ function makeLLMPanel(id, p = {}) {
         mode:        p.mode     || 'chat',     // 'chat' | 'prompt'
         templated:   p.templated ?? false,
         _manualInput: '',        // direct-test textarea
+        promptPath:  p.promptPath  || '',
         prompt:      null,       // { path, content, title } — loaded system prompt
         description: '',
         showPrompt:  false,

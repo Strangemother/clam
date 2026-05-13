@@ -103,7 +103,7 @@ const PersistMethods = {
                     model:        p.model,
                     mode:         p.mode,
                     templated:    p.templated,
-                    promptPath:   p.prompt?.path  || null,
+                    promptPath:   p.promptPath || p.prompt?.path || null,
                     promptTitle:  p.prompt?.title || null,
                 }
             } else if (p.type === 'transform') {
@@ -155,6 +155,7 @@ const PersistMethods = {
             'event-input':  makeEventInputPanel,
         }
         const maxId = Math.max(0, ...layout.nodes.map(n => n.id))
+        const promptLoads = []
 
         for (const node of layout.nodes) {
             _uid = node.id - 1
@@ -166,7 +167,7 @@ const PersistMethods = {
 
             // Re-load prompt content if it was saved
             if (node.type === 'llm' && node.config?.promptPath) {
-                nextTick(() => this.selectPrompt(panel, node.config.promptPath))
+                promptLoads.push(this.selectPrompt(panel, node.config.promptPath))
             }
             // Re-mount event listener
             if (node.type === 'event-input') {
@@ -174,6 +175,10 @@ const PersistMethods = {
             }
         }
         _uid = maxId
+
+        if (promptLoads.length) {
+            await Promise.all(promptLoads)
+        }
 
         await nextTick()
         await nextTick()

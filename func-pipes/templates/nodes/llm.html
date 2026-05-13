@@ -50,7 +50,8 @@
                 <option value="">— model —</option>
                 <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
             </select>
-            <select @change="selectPrompt(panel, $event.target.value)">
+            <select v-model="panel.promptPath"
+                    @change="selectPrompt(panel, panel.promptPath)">
                 <option value="">— system prompt —</option>
                 <option v-for="p in prompts" :key="p.path" :value="p.path">{{ p.name }}</option>
             </select>
