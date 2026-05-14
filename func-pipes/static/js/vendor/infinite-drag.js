@@ -122,8 +122,12 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
         this.options = Object.assign({
             zoomMode: 'resize',   // 'resize' | 'transform'
         }, options)
+        this.panOffsetX = 0
+        this.panOffsetY = 0
         this._onWheel = this._onWheel.bind(this)
+        this._onDragMove = this._onDragMove.bind(this)
         this.element.addEventListener('wheel', this._onWheel, { passive: false })
+        document.addEventListener('dragmove', this._onDragMove)
     }
 
     _onWheel(event) {
@@ -140,6 +144,115 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
 
     dragComplete() {
         this.resetZoomBase()
+    }
+
+    _ensureTransformPersistState(el) {
+        if(this.options.zoomMode !== 'transform') {
+            return
+        }
+
+        if(el.dataset.zoomWorldLeft === undefined) {
+            el.dataset.zoomWorldLeft = `${parseFloat(el.style.left) || 0}`
+        }
+        if(el.dataset.zoomWorldTop === undefined) {
+            el.dataset.zoomWorldTop = `${parseFloat(el.style.top) || 0}`
+        }
+        el.dataset.zoomScreenLeft = `${parseFloat(el.style.left) || 0}`
+        el.dataset.zoomScreenTop = `${parseFloat(el.style.top) || 0}`
+    }
+
+    _onDragMove(event) {
+        if(this.options.zoomMode !== 'transform') {
+            return
+        }
+
+        const node = event?.detail?.node
+        if(!(node instanceof HTMLElement)) {
+            return
+        }
+        if(!this.element.contains(node) || !node.matches(this.itemSelector)) {
+            return
+        }
+
+        this._ensureTransformPersistState(node)
+
+        const scale = this.scale || 1
+        const prevLeft = parseFloat(node.dataset.zoomScreenLeft) || 0
+        const prevTop = parseFloat(node.dataset.zoomScreenTop) || 0
+        const left = parseFloat(node.style.left) || 0
+        const top = parseFloat(node.style.top) || 0
+        const dx = left - prevLeft
+        const dy = top - prevTop
+
+        if(scale !== 1) {
+            node.dataset.zoomWorldLeft = `${(parseFloat(node.dataset.zoomWorldLeft) || 0) + (dx / scale)}`
+            node.dataset.zoomWorldTop = `${(parseFloat(node.dataset.zoomWorldTop) || 0) + (dy / scale)}`
+        } else {
+            node.dataset.zoomWorldLeft = `${left}`
+            node.dataset.zoomWorldTop = `${top}`
+        }
+
+        node.dataset.zoomScreenLeft = `${left}`
+        node.dataset.zoomScreenTop = `${top}`
+    }
+
+    getPersistedBox(el) {
+        const left = parseFloat(el.style.left) || 0
+        const top = parseFloat(el.style.top) || 0
+        const width = Number.isFinite(parseFloat(el.style.width))
+            ? parseFloat(el.style.width)
+            : el.offsetWidth
+        const height = Number.isFinite(parseFloat(el.style.height))
+            ? parseFloat(el.style.height)
+            : el.offsetHeight
+
+        if(this.options.zoomMode !== 'transform') {
+            return {
+                left: `${left}px`,
+                top: `${top}px`,
+                width: `${width}px`,
+                height: `${height}px`,
+            }
+        }
+
+        this._ensureTransformPersistState(el)
+
+        return {
+            left: `${(parseFloat(el.dataset.zoomWorldLeft) || 0) + this.panOffsetX}px`,
+            top: `${(parseFloat(el.dataset.zoomWorldTop) || 0) + this.panOffsetY}px`,
+            width: `${width}px`,
+            height: `${height}px`,
+        }
+    }
+
+    resetViewState() {
+        this.scale = 1
+        this.origin = null
+        this.panOffsetX = 0
+        this.panOffsetY = 0
+        this.resetZoomBase()
+    }
+
+    _applyDelta(dx, dy) {
+        super._applyDelta(dx, dy)
+
+        if(this.options.zoomMode !== 'transform') {
+            return
+        }
+
+        const scale = this.scale || 1
+        if(scale !== 1) {
+            this.panOffsetX += dx
+            this.panOffsetY += dy
+        }
+
+        const nodes = this.element.querySelectorAll(this.itemSelector)
+        nodes.forEach(node => {
+            if(node.classList.contains('no-pan')) {
+                return
+            }
+            this._ensureTransformPersistState(node)
+        })
     }
 
     snapshotNodeBase(el, containerRect) {
@@ -198,6 +311,7 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
             }
 
             this.snapshotNodeBase(el, rect)
+            this._ensureTransformPersistState(el)
 
             // Always derive from the stored base — never from the current scaled value.
             // Use the live mouse position each tick so the pivot follows the cursor.
@@ -251,6 +365,7 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
     destroy() {
         super.destroy()
         this.element.removeEventListener('wheel', this._onWheel)
+        document.removeEventListener('dragmove', this._onDragMove)
     }
 
 }
