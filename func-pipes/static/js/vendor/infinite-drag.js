@@ -130,7 +130,24 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
         document.addEventListener('dragmove', this._onDragMove)
     }
 
+    _isEditableWheelTarget(target) {
+        if(!(target instanceof Element)) {
+            return false
+        }
+
+        return Boolean(target.closest([
+            'input',
+            'textarea',
+            'select',
+            '[contenteditable]:not([contenteditable="false"])',
+        ].join(', ')))
+    }
+
     _onWheel(event) {
+        if(this._isEditableWheelTarget(event.target)) {
+            return
+        }
+
         event.preventDefault()
         this.onWheel(event)
     }
@@ -300,6 +317,7 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
         const mouseX = origin.x - rect.left
         const mouseY = origin.y - rect.top
         const transformMode = this.options.zoomMode === 'transform'
+        const zoomFactor = prevScale ? (scale / prevScale) : scale
 
         const nodes = this.element.querySelectorAll(this.itemSelector)
         for (let winName of nodes) {
@@ -310,26 +328,34 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
                 continue
             }
 
-            this.snapshotNodeBase(el, rect)
             this._ensureTransformPersistState(el)
 
-            // Always derive from the stored base — never from the current scaled value.
-            // Use the live mouse position each tick so the pivot follows the cursor.
-            const baseLeft   = parseFloat(el.dataset.zoomBaseLeft)
-            const baseTop    = parseFloat(el.dataset.zoomBaseTop)
-            const baseWidth  = parseFloat(el.dataset.zoomBaseWidth)
-            const baseHeight = parseFloat(el.dataset.zoomBaseHeight)
+            const nodeRect = el.getBoundingClientRect()
+            const currentLeft = Number.isFinite(parseFloat(el.style.left))
+                ? parseFloat(el.style.left)
+                : nodeRect.left - rect.left
+            const currentTop = Number.isFinite(parseFloat(el.style.top))
+                ? parseFloat(el.style.top)
+                : nodeRect.top - rect.top
+            const currentWidth = Number.isFinite(parseFloat(el.style.width))
+                ? parseFloat(el.style.width)
+                : (transformMode ? el.offsetWidth : nodeRect.width)
+            const currentHeight = Number.isFinite(parseFloat(el.style.height))
+                ? parseFloat(el.style.height)
+                : (transformMode ? el.offsetHeight : nodeRect.height)
 
-            const newLeft   = mouseX + (baseLeft - mouseX) * scale
-            const newTop    = mouseY + (baseTop  - mouseY) * scale
-            const newWidth  = baseWidth  * scale
-            const newHeight = baseHeight * scale
+            const newLeft = mouseX + (currentLeft - mouseX) * zoomFactor
+            const newTop = mouseY + (currentTop - mouseY) * zoomFactor
+            const newWidth = currentWidth * zoomFactor
+            const newHeight = currentHeight * zoomFactor
 
             el.style.left = `${newLeft}px`
             el.style.top = `${newTop}px`
             if(transformMode) {
                 el.style.transformOrigin = 'top left'
                 el.style.transform = `scale(${scale})`
+                el.dataset.zoomScreenLeft = `${newLeft}`
+                el.dataset.zoomScreenTop = `${newTop}`
             } else {
                 el.style.width = `${newWidth}px`
                 el.style.height = `${newHeight}px`
