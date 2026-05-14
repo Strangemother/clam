@@ -121,12 +121,14 @@ const PersistMethods = {
         const nodes = this.panels.map(p => {
             const ref = this.$refs[`panel-${p.id}`]
             const el  = Array.isArray(ref) ? ref[0] : ref
-            const pos = el ? {
-                left:   el.style.left || `${el.offsetLeft}px`,
-                top:    el.style.top  || `${el.offsetTop}px`,
-                width:  el.style.width  || `${el.offsetWidth}px`,
-                height: el.style.height || `${el.offsetHeight}px`,
-            } : null
+            const pos = el
+                ? (window.infiniteDrag?.getPersistedBox?.(el) || {
+                    left:   el.style.left || `${el.offsetLeft}px`,
+                    top:    el.style.top  || `${el.offsetTop}px`,
+                    width:  el.style.width  || `${el.offsetWidth}px`,
+                    height: el.style.height || `${el.offsetHeight}px`,
+                })
+                : null
 
             let config
             if (p.type === 'llm') {
@@ -175,6 +177,10 @@ const PersistMethods = {
 
     async _restoreLayout(layout) {
         if (!layout?.nodes) return
+
+        if (window.infiniteDrag?.resetViewState) {
+            window.infiniteDrag.resetViewState()
+        }
 
         this._clearAll()
         await nextTick()
