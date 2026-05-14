@@ -110,7 +110,11 @@
     <!-- outbound pip (right side) -->
     <div class="named-pips" style="border-left: 1px solid #1e1a3a">
         <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
-            <span class="pip-name">{{ pip.name }}</span>
+            <button class="pip-del" @click="removeLLMOutboundPip(panel, pip.index)">×</button>
+            <input class="pip-name-edit"
+                v-model="pip.name"
+                :title="'Rename: ' + pip.name"
+                style="text-align:right" />
             <div
                 :class="['pip-dot',
                     disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
@@ -125,6 +129,7 @@
                 :title="pip.name">
             </div>
         </div>
+        <button class="pip-add" @click="addLLMOutboundPip(panel)">＋</button>
     </div>
 
 </template>

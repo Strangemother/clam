@@ -79,6 +79,9 @@ function makeTextInputPanel(id, p = {}) {
 }
 
 function makeLLMPanel(id, p = {}) {
+    const outputs = Array.isArray(p.outputs) && p.outputs.length
+        ? p.outputs
+        : [{ name: 'out', index: 0 }]
     return {
         type:         'llm',
         label:        p.label       || 'LLM',
@@ -101,7 +104,11 @@ function makeLLMPanel(id, p = {}) {
             { label: id, index: 0, name: 'in'     },  // message input
             { label: id, index: 1, name: 'system' },  // system-prompt override
         ],
-        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
+        pipsOutbound: outputs.map(output => ({
+            label: id,
+            index: output.index,
+            name: output.name,
+        })),
     }
 }
 

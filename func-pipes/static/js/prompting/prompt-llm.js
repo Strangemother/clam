@@ -12,11 +12,79 @@
 
   Prompt management:
     - selectPrompt(panel, path) loads a prompt file from the server.
-    - renderSystemPrompt(tpl, message) renders a Jinja2 template server-side.
+    - renderSystemPrompt(tpl, message, panel) renders a Jinja2 template server-side.
     - Templated mode re-renders the system prompt with each incoming message.
 */
 
 const LLMMethods = {
+
+    _describePromptNode(panel) {
+        if (!panel) return null
+        return {
+            id: panel.id,
+            name: panel.title || panel.label || `Node ${panel.id}`,
+            type: panel.type,
+        }
+    },
+
+    _collectPromptEdges(panel) {
+        const empty = { inbound: [], outbound: [] }
+        if (!panel || typeof pipesWalker === 'undefined') return empty
+
+        const allConns = pipesWalker.connections || {}
+        const findPanel = (panelId) => this.panels.find(p => String(p.id) === String(panelId)) || null
+        const findConnKey = (conn) => Object.keys(allConns).find(key => allConns[key] === conn) || null
+        const describePip = (pip) => pip ? { index: pip.index, name: pip.name } : null
+        const buildEdge = ({ sourcePanel, sourcePip, destinationPanel, destinationPip, connKey }) => ({
+            key: connKey,
+            source: this._describePromptNode(sourcePanel),
+            sourcePip: describePip(sourcePip),
+            destination: this._describePromptNode(destinationPanel),
+            destinationPip: describePip(destinationPip),
+        })
+
+        const inbound = []
+        pipesWalker.getConnections(String(panel.id)).forEach(conn => {
+            const { sender, receiver } = conn.obj
+            let sourceId = sender.label
+            let destinationId = receiver.label
+            let sourcePipIndex = sender.pipIndex ?? 0
+            let destinationPipIndex = receiver.pipIndex ?? 0
+
+            if (sender.direction === 'inbound') {
+                sourceId = receiver.label
+                destinationId = sender.label
+                sourcePipIndex = receiver.pipIndex ?? 0
+                destinationPipIndex = sender.pipIndex ?? 0
+            }
+
+            if (String(destinationId) !== String(panel.id)) return
+
+            const sourcePanel = findPanel(sourceId)
+            inbound.push(buildEdge({
+                connKey: findConnKey(conn),
+                sourcePanel,
+                sourcePip: sourcePanel?.pipsOutbound?.find(pip => pip.index === sourcePipIndex) || null,
+                destinationPanel: panel,
+                destinationPip: panel.pipsInbound?.find(pip => pip.index === destinationPipIndex) || null,
+            }))
+        })
+
+        const outbound = (panel.pipsOutbound || []).flatMap(pip => {
+            return this._getOutboundConns(panel, pip.index).map(({ inLabel, inPip, connKey }) => {
+                const destinationPanel = findPanel(inLabel)
+                return buildEdge({
+                    connKey,
+                    sourcePanel: panel,
+                    sourcePip: pip,
+                    destinationPanel,
+                    destinationPip: destinationPanel?.pipsInbound?.find(candidate => candidate.index === inPip) || null,
+                })
+            })
+        })
+
+        return { inbound, outbound }
+    },
 
     /* ── Chat instance management ──────────────────────────────────── */
 
@@ -72,7 +140,7 @@ const LLMMethods = {
 
             // Render system prompt as Jinja2 template if templated mode is on
             if (panel.mode === 'prompt' && panel.templated && panel.prompt?.content) {
-                const rendered = await this._renderSystemPrompt(panel.prompt.content, text)
+                const rendered = await this._renderSystemPrompt(panel.prompt.content, text, panel)
                 if (rendered !== null) chat.options.system = rendered
             }
 
@@ -88,7 +156,7 @@ const LLMMethods = {
                 panel.state    = 'idle'
                 const sig      = { text: reply.content, meta: { role: 'assistant', model: panel.model } }
                 panel.lastOutput = sig
-                this._emitFromPip(panel, 0, sig)   // pip index 0 = 'out'
+                this._emitFromNode(panel, sig)
             }
         } catch (e) {
             if (e?.name !== 'AbortError') {
@@ -103,6 +171,20 @@ const LLMMethods = {
     stopLLM(panel) {
         if (panel._chat) panel._chat.abort()
         panel.state = 'idle'
+    },
+
+    addLLMOutboundPip(panel) {
+        const nextIndex = panel.pipsOutbound.length
+            ? Math.max(...panel.pipsOutbound.map(pip => pip.index)) + 1
+            : 0
+        panel.pipsOutbound.push({ label: panel.id, index: nextIndex, name: `out${nextIndex}` })
+    },
+
+    removeLLMOutboundPip(panel, index) {
+        const pipIndex = panel.pipsOutbound.findIndex(pip => pip.index === index)
+        if (pipIndex === -1) return
+        this._emitFromPip(panel, index, null)
+        panel.pipsOutbound.splice(pipIndex, 1)
     },
 
     /* ── prompt file loading ────────────────────────────────────────── */
@@ -135,12 +217,16 @@ const LLMMethods = {
         }
     },
 
-    async _renderSystemPrompt(template, message) {
+    async _renderSystemPrompt(template, message, panel) {
         try {
+            const vars = {
+                message,
+                edges: this._collectPromptEdges(panel),
+            }
             const res = await fetch(`${PROMPTING_API_BASE}/prompts/render`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ template, vars: { message } }),
+                body:    JSON.stringify({ template, vars }),
             })
             const data = await res.json()
             if (data.error) { console.error('[renderSystemPrompt]', data.error); return null }
