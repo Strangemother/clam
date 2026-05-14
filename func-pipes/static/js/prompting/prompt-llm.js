@@ -291,13 +291,15 @@ const LLMMethods = {
     async fetchModels() {
         this.fetching = true
         try {
-            // Only direct (non-proxy) endpoints expose a model list.
             const selectedEp = (this.endpoints || []).find(e => e.key === this.modelsEndpointKey)
-            if (selectedEp?.proxy) {
-                console.warn('[fetchModels] proxy endpoints do not expose a model list')
+            const ep = (selectedEp?.models_url)
+                || (!selectedEp?.proxy ? selectedEp?.url : '')
+                || this.modelsEndpoint
+                || DEFAULT_ENDPOINT
+            if (!ep) {
+                console.warn('[fetchModels] selected endpoint does not expose a model list')
                 return
             }
-            const ep = (selectedEp?.models_url) || this.modelsEndpoint || DEFAULT_ENDPOINT
             const ml = new ModelList({ endpoint: ep })
             ml.onResult = (models) => { this.modelIds = models.map(m => m.id) }
             await ml.getList()

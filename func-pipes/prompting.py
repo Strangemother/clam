@@ -43,13 +43,22 @@ PROMPTS_DIR = pathlib.Path(os.environ.get('PROMPTS_DIR', str(_DEFAULT_PROMPTS)))
 #   headers    — extra request headers sent by the proxy (e.g. Authorization)
 #   models_url — optional base URL used by ModelList for the model dropdown
 #                (leave absent for proxy endpoints that don't expose a models API)
+#   load       — optional LM Studio pre-load config keyed by selected model id
 #
 ENDPOINT_CONFIGS = {
     'lmstudio': {
         'label':      'LM Studio (LAN)',
         'url':        'http://192.168.50.60:1234/api/v1/chat',
-        'proxy':      False,
+        'proxy':      True,
         'models_url': 'http://192.168.50.60:1234/',
+        'load': {
+            # Add exact model ids here when they need an explicit pre-load config.
+            # 'default_config' applies to any model not listed in 'model_configs'.
+            # 'default_config': {'context_length': 16384},
+            'model_configs': {
+                # 'openai/gpt-oss-20b': {'context_length': 16384},
+            },
+        },
     },
     'digital-ocean': {
         'label':      'Digital Ocean Agent',
@@ -179,6 +188,114 @@ def _safe_layout_write_target(layout_name: str):
         return None, (jsonify({'error': 'invalid path'}), 400)
 
     return target, None
+
+
+def _endpoint_base_url(cfg: dict) -> str:
+    """Return the upstream service base URL without chat/models suffixes."""
+    base = (cfg.get('models_url') or cfg.get('url') or '').rstrip('/')
+    for suffix in (
+        '/api/v1/chat/completions',
+        '/api/v1/chat',
+        '/v1/chat/completions',
+        '/v1/models',
+        '/api/v0/models',
+    ):
+        if base.endswith(suffix):
+            return base[: -len(suffix)]
+    return base
+
+
+def _lmstudio_load_config_for_model(cfg: dict, model_name: str):
+    """Return the configured load payload for a model, if any."""
+    load_cfg = cfg.get('load') or {}
+    model_configs = load_cfg.get('model_configs') or {}
+    return model_configs.get(model_name) or load_cfg.get('default_config')
+
+
+def _lmstudio_model_matches(entry: dict, model_name: str) -> bool:
+    """Match a model id against the ids returned by LM Studio's list endpoint."""
+    candidates = {
+        str(entry.get('id') or '').strip(),
+        str(entry.get('model') or '').strip(),
+        str(entry.get('path') or '').strip(),
+    }
+    candidates.discard('')
+    if model_name in candidates:
+        return True
+
+    loaded_instances = entry.get('loaded_instances') or []
+    for instance in loaded_instances:
+        if not isinstance(instance, dict):
+            continue
+        if str(instance.get('id') or '').strip() == model_name:
+            return True
+    return False
+
+
+def _lmstudio_list_models(cfg: dict, headers: dict) -> list:
+    """Fetch the LM Studio REST model list, including loaded_instances."""
+    base_url = _endpoint_base_url(cfg)
+    models_url = f'{base_url}/api/v0/models'
+    request_headers = {k: v for k, v in headers.items() if k.lower() != 'content-type'}
+    resp = _requests.get(models_url, headers=request_headers, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        items = data.get('data')
+        if isinstance(items, list):
+            return items
+    raise ValueError('unexpected LM Studio models payload')
+
+
+def _lmstudio_model_is_loaded(cfg: dict, model_name: str, headers: dict) -> bool:
+    """Return True when LM Studio already has the requested model loaded."""
+    for entry in _lmstudio_list_models(cfg, headers):
+        if not isinstance(entry, dict):
+            continue
+        if not _lmstudio_model_matches(entry, model_name):
+            continue
+        loaded_instances = entry.get('loaded_instances') or []
+        if isinstance(loaded_instances, list) and loaded_instances:
+            return True
+        if str(entry.get('status') or '').lower() == 'loaded':
+            return True
+    return False
+
+
+def _lmstudio_load_model(cfg: dict, model_name: str, load_config: dict, headers: dict):
+    """Explicitly load a model into LM Studio with a caller-supplied config."""
+    base_url = _endpoint_base_url(cfg)
+    load_url = f'{base_url}/api/v0/model/load'
+    payload = {'model': model_name, **dict(load_config or {})}
+    payload.setdefault('echo_load_config', True)
+    request_headers = dict(headers)
+    request_headers['Content-Type'] = 'application/json'
+
+    resp = _requests.post(load_url, json=payload, headers=request_headers, timeout=300)
+    resp.raise_for_status()
+
+
+def _ensure_lmstudio_model_loaded(cfg: dict, payload: dict, headers: dict):
+    """Pre-load configured LM Studio models before the first chat request."""
+    model_name = str(payload.get('model') or '').strip()
+    if not model_name:
+        return
+
+    load_config = _lmstudio_load_config_for_model(cfg, model_name)
+    if not load_config:
+        return
+
+    try:
+        if _lmstudio_model_is_loaded(cfg, model_name, headers):
+            return
+    except (_requests.RequestException, ValueError):
+        # If state inspection fails, still try an explicit load so autoload does
+        # not bypass the requested context configuration.
+        pass
+
+    _lmstudio_load_model(cfg, model_name, load_config, headers)
 
 
 # ── routes ───────────────────────────────────────────────────────────────────
@@ -435,9 +552,14 @@ def proxy_request():
     # The Chat class already sends the correct api_format payload, so the proxy
     # only needs to add auth headers and forward. No translation required.
     try:
+        if cfg.get('load'):
+            _ensure_lmstudio_model_loaded(cfg, payload, headers)
+
         resp = _requests.post(cfg['url'], json=payload, headers=headers, timeout=120)
         return jsonify(resp.json()), resp.status_code
     except _requests.Timeout:
         return jsonify({'error': 'upstream request timed out'}), 504
+    except ValueError as e:
+        return jsonify({'error': f'invalid upstream response: {e}'}), 502
     except _requests.RequestException as e:
         return jsonify({'error': str(e)}), 502
