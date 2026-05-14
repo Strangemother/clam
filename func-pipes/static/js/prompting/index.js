@@ -39,6 +39,7 @@ createApp({
             catalogGroups:    catalogByGroup(),
             disconnectMode:   false,
             disconnectFirst:  null,
+            focusPinState:    { active: false, centerId: null, panelIds: [] },
             transformPresets: TRANSFORM_PRESETS,
             // Layout toolbar state
             layoutName:         '',
@@ -67,6 +68,7 @@ createApp({
 
     methods: {
         ...SpawnMethods,
+        ...FocusMethods,
         ...SignalMethods,
         ...LLMMethods,
         ...WiringMethods,

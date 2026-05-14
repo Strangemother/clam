@@ -210,6 +210,9 @@ const PersistMethods = {
     },
 
     _clearAll() {
+        if (typeof this.resetFocusPinState === 'function') {
+            this.resetFocusPinState()
+        }
         this.panels.forEach(p => {
             if (p.type === 'llm' && p._chat) p._chat.abort()
             if (p.type === 'event-input') this.unmountEventInput(p)

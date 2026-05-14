@@ -188,6 +188,10 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
             // let win = nodes[winName]
             const el = winName
 
+            if(el.classList.contains('no-pan')) {
+                continue
+            }
+
             this.snapshotNodeBase(el, rect)
 
             // Always derive from the stored base — never from the current scaled value.
