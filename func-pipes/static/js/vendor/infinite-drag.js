@@ -117,8 +117,11 @@ class InfiniteDrag {
 
 
 class ZoomableInfiniteDrag extends InfiniteDrag {
-    constructor(selector, childSelector) {
+    constructor(selector, childSelector, options={}) {
         super(selector, childSelector)
+        this.options = Object.assign({
+            zoomMode: 'resize',   // 'resize' | 'transform'
+        }, options)
         this._onWheel = this._onWheel.bind(this)
         this.element.addEventListener('wheel', this._onWheel, { passive: false })
     }
@@ -145,6 +148,7 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
         }
 
         const rect = el.getBoundingClientRect()
+        const transformMode = this.options.zoomMode === 'transform'
         const baseLeft = Number.isFinite(parseFloat(el.style.left))
             ? parseFloat(el.style.left)
             : rect.left - containerRect.left
@@ -153,10 +157,10 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
             : rect.top - containerRect.top
         const baseWidth = Number.isFinite(parseFloat(el.style.width))
             ? parseFloat(el.style.width)
-            : rect.width
+            : transformMode ? el.offsetWidth : rect.width
         const baseHeight = Number.isFinite(parseFloat(el.style.height))
             ? parseFloat(el.style.height)
-            : rect.height
+            : transformMode ? el.offsetHeight : rect.height
 
         el.dataset.zoomBaseLeft = baseLeft
         el.dataset.zoomBaseTop = baseTop
@@ -182,6 +186,7 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
         const rect = this.element.getBoundingClientRect()
         const mouseX = origin.x - rect.left
         const mouseY = origin.y - rect.top
+        const transformMode = this.options.zoomMode === 'transform'
 
         const nodes = this.element.querySelectorAll(this.itemSelector)
         for (let winName of nodes) {
@@ -208,18 +213,26 @@ class ZoomableInfiniteDrag extends InfiniteDrag {
 
             el.style.left = `${newLeft}px`
             el.style.top = `${newTop}px`
-            el.style.width = `${newWidth}px`
-            el.style.height = `${newHeight}px`
+            if(transformMode) {
+                el.style.transformOrigin = 'top left'
+                el.style.transform = `scale(${scale})`
+            } else {
+                el.style.width = `${newWidth}px`
+                el.style.height = `${newHeight}px`
+                el.style.transformOrigin = ''
+                el.style.transform = ''
+            }
 
             const scalePercent = Math.round(scale * 100 / 10) * 10
             el.className = el.className.replace(/\binf-drag-zoom-scale-\d+\b/g, '')
             el.classList.add(`inf-drag-zoom-scale-${scalePercent}`)
 
-            // Note: we could also apply a CSS transform: scale() here instead of resizing, but that would make the content blurry. Resizing keeps it crisp.
-            //Use polyclass for font size management
-            const fontSizeScale = ( Math.round(scale * 100 / 10) * .1).toFixed(1)
             el.className = el.className.replace(/\bfont-size-\d+(\.\d+)?em\b/g, '')
-            el.classList.add(`font-size-${fontSizeScale}em`)
+            if(!transformMode) {
+                // Use polyclass for font size management in resize mode.
+                const fontSizeScale = ( Math.round(scale * 100 / 10) * .1).toFixed(1)
+                el.classList.add(`font-size-${fontSizeScale}em`)
+            }
         }
 
 
