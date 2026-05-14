@@ -43,6 +43,7 @@ createApp({
             transformPresets: TRANSFORM_PRESETS,
             // Layout toolbar state
             layoutName:         '',
+            savingLayout:       false,
             loadingLayout:      false,
             // LLM toolbar state
             endpoints:          [],               // loaded from /prompting/endpoints/

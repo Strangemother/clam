@@ -62,11 +62,15 @@
                 <span class="toolbar-label">Layout</span>
                 <input type="text"
                        v-model.trim="layoutName"
-                       @keyup.enter="loadLayout()"
+                      @keyup.enter="loadLayout()"
                        placeholder="layout name or path"
                        title="Server layout name, e.g. self-2/self-2.prompting-layout"
                        style="width:180px" />
-                <button @click="saveLayout"   title="Save to browser storage">💾 Save</button>
+                  <button @click="saveLayout"
+                       :disabled="savingLayout"
+                       title="If a name is entered, save to the server; otherwise save to browser storage">
+                      {{ savingLayout ? 'Saving…' : '💾 Save' }}
+                  </button>
                 <button @click="loadLayout()"
                         :disabled="loadingLayout"
                         title="If a name is entered, load from the server; otherwise restore from browser storage">
