@@ -27,60 +27,86 @@ const LLMMethods = {
         }
     },
 
+    _describePromptPip(pip, direction = null) {
+        if (!pip) return null
+        return {
+            index: pip.index,
+            name: pip.name,
+            direction,
+        }
+    },
+
     _collectPromptEdges(panel) {
         const empty = { inbound: [], outbound: [] }
-        if (!panel || typeof pipesWalker === 'undefined') return empty
+        if (!panel) return empty
 
-        const allConns = pipesWalker.connections || {}
+        const allConns = typeof pipesWalker !== 'undefined' ? (pipesWalker.connections || {}) : {}
         const findPanel = (panelId) => this.panels.find(p => String(p.id) === String(panelId)) || null
         const findConnKey = (conn) => Object.keys(allConns).find(key => allConns[key] === conn) || null
-        const describePip = (pip) => pip ? { index: pip.index, name: pip.name } : null
-        const buildEdge = ({ sourcePanel, sourcePip, destinationPanel, destinationPip, connKey }) => ({
-            key: connKey,
-            source: this._describePromptNode(sourcePanel),
-            sourcePip: describePip(sourcePip),
-            destination: this._describePromptNode(destinationPanel),
-            destinationPip: describePip(destinationPip),
-        })
+        const inboundConnections = []
 
-        const inbound = []
-        pipesWalker.getConnections(String(panel.id)).forEach(conn => {
-            const { sender, receiver } = conn.obj
-            let sourceId = sender.label
-            let destinationId = receiver.label
-            let sourcePipIndex = sender.pipIndex ?? 0
-            let destinationPipIndex = receiver.pipIndex ?? 0
+        if (typeof pipesWalker !== 'undefined') {
+            pipesWalker.getConnections(String(panel.id)).forEach(conn => {
+                const { sender, receiver } = conn.obj
+                let sourceId = sender.label
+                let destinationId = receiver.label
+                let sourcePipIndex = sender.pipIndex ?? 0
+                let destinationPipIndex = receiver.pipIndex ?? 0
 
-            if (sender.direction === 'inbound') {
-                sourceId = receiver.label
-                destinationId = sender.label
-                sourcePipIndex = receiver.pipIndex ?? 0
-                destinationPipIndex = sender.pipIndex ?? 0
-            }
+                if (sender.direction === 'inbound') {
+                    sourceId = receiver.label
+                    destinationId = sender.label
+                    sourcePipIndex = receiver.pipIndex ?? 0
+                    destinationPipIndex = sender.pipIndex ?? 0
+                }
 
-            if (String(destinationId) !== String(panel.id)) return
+                if (String(destinationId) !== String(panel.id)) return
 
-            const sourcePanel = findPanel(sourceId)
-            inbound.push(buildEdge({
-                connKey: findConnKey(conn),
-                sourcePanel,
-                sourcePip: sourcePanel?.pipsOutbound?.find(pip => pip.index === sourcePipIndex) || null,
-                destinationPanel: panel,
-                destinationPip: panel.pipsInbound?.find(pip => pip.index === destinationPipIndex) || null,
-            }))
-        })
-
-        const outbound = (panel.pipsOutbound || []).flatMap(pip => {
-            return this._getOutboundConns(panel, pip.index).map(({ inLabel, inPip, connKey }) => {
-                const destinationPanel = findPanel(inLabel)
-                return buildEdge({
-                    connKey,
-                    sourcePanel: panel,
-                    sourcePip: pip,
-                    destinationPanel,
-                    destinationPip: destinationPanel?.pipsInbound?.find(candidate => candidate.index === inPip) || null,
+                const sourcePanel = findPanel(sourceId)
+                inboundConnections.push({
+                    key: findConnKey(conn),
+                    node: this._describePromptNode(sourcePanel),
+                    pip: this._describePromptPip(
+                        sourcePanel?.pipsOutbound?.find(pip => pip.index === sourcePipIndex) || null,
+                        'outbound'
+                    ),
+                    receiverPipIndex: destinationPipIndex,
                 })
             })
+        }
+
+        const inbound = (panel.pipsInbound || []).map(pip => ({
+            key: `${panel.id}:inbound:${pip.index}`,
+            source: this._describePromptPip(pip, 'inbound'),
+            sourcePip: this._describePromptPip(pip, 'inbound'),
+            destination: this._describePromptNode(panel),
+            destinationPip: this._describePromptPip(pip, 'inbound'),
+            connections: inboundConnections.filter(conn => conn.receiverPipIndex === pip.index),
+        }))
+
+        const outbound = (panel.pipsOutbound || []).map(pip => {
+            const connections = typeof pipesWalker !== 'undefined'
+                ? this._getOutboundConns(panel, pip.index).map(({ inLabel, inPip, connKey }) => {
+                    const destinationPanel = findPanel(inLabel)
+                    return {
+                        key: connKey,
+                        node: this._describePromptNode(destinationPanel),
+                        pip: this._describePromptPip(
+                            destinationPanel?.pipsInbound?.find(candidate => candidate.index === inPip) || null,
+                            'inbound'
+                        ),
+                    }
+                })
+                : []
+
+            return {
+                key: `${panel.id}:outbound:${pip.index}`,
+                source: this._describePromptNode(panel),
+                sourcePip: this._describePromptPip(pip, 'outbound'),
+                destination: this._describePromptPip(pip, 'outbound'),
+                destinationPip: this._describePromptPip(pip, 'outbound'),
+                connections,
+            }
         })
 
         return { inbound, outbound }
