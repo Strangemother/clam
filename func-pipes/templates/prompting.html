@@ -89,7 +89,14 @@
         {% raw %}
         <div id="panels">
             <div class="panel"
-                :class="['type-' + panel.type, 'state-' + panel.state]"
+                :class="[
+                    'type-' + panel.type,
+                    'state-' + panel.state,
+                    panel._focusPinned ? 'focus-pinned' : '',
+                    panel._focusRole ? 'focus-' + panel._focusRole : '',
+                    focusPinState.active && !panel._focusPinned ? 'focus-dimmed' : '',
+                    panel._focusPinned ? 'no-pan' : ''
+                ]"
                 v-for="(panel, i) in panels"
                 :ref="'panel-' + panel.id"
                 :key="panel.id">
@@ -132,6 +139,7 @@
 <!-- Prompting app modules -->
 <script src="{{ url_for('static', filename='js/prompting/nodes.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-spawn.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-focus.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-signal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-llm.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>

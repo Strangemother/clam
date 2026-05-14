@@ -53,6 +53,9 @@ const SpawnMethods = {
 
     removePanel(i) {
         const p = this.panels[i]
+        if (this.focusPinState?.active && p?._focusPinned) {
+            this.clearFocusedPanels()
+        }
         // Abort any in-flight LLM request
         if (p.type === 'llm' && p._chat) p._chat.abort()
         // Unmount event listeners
