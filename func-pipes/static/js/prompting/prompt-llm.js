@@ -18,6 +18,15 @@
 
 const LLMMethods = {
 
+    _scrollLLMMessages(panel) {
+        nextTick(() => {
+            const ref = this.$refs[`msgs-${panel.id}`]
+            const el = Array.isArray(ref) ? ref[0] : ref
+            if (!el) return
+            el.scrollTop = el.scrollHeight
+        })
+    },
+
     _describePromptNode(panel) {
         if (!panel) return null
         return {
@@ -160,6 +169,7 @@ const LLMMethods = {
 
         panel.messages.push({ role: 'user', content: text })
         panel.state = 'pending'
+        this._scrollLLMMessages(panel)
 
         try {
             const chat = this._getLLMChat(panel)
@@ -182,12 +192,14 @@ const LLMMethods = {
                 panel.state    = 'idle'
                 const sig      = { text: reply.content, meta: { role: 'assistant', model: panel.model } }
                 panel.lastOutput = sig
+                this._scrollLLMMessages(panel)
                 this._emitFromNode(panel, sig)
             }
         } catch (e) {
             if (e?.name !== 'AbortError') {
                 const detail = e.data?.error || e.data?.message || e.message
                 panel.messages.push({ role: 'error', content: `Error: ${detail}` })
+                this._scrollLLMMessages(panel)
                 console.error('[LLM error]', e.message, e.data ?? '')
             }
             panel.state = e?.name === 'AbortError' ? 'idle' : 'error'
