@@ -57,6 +57,9 @@ ENDPOINT_CONFIGS = {
             # 'default_config': {'context_length': 16384},
             'model_configs': {
                 # 'openai/gpt-oss-20b': {'context_length': 16384},
+                'granite-4.1-8b': {
+                    'context_length': 10_000
+                }
             },
         },
     },
@@ -198,7 +201,7 @@ def _endpoint_base_url(cfg: dict) -> str:
         '/api/v1/chat',
         '/v1/chat/completions',
         '/v1/models',
-        '/api/v0/models',
+        '/api/v1/models',
     ):
         if base.endswith(suffix):
             return base[: -len(suffix)]
@@ -235,7 +238,7 @@ def _lmstudio_model_matches(entry: dict, model_name: str) -> bool:
 def _lmstudio_list_models(cfg: dict, headers: dict) -> list:
     """Fetch the LM Studio REST model list, including loaded_instances."""
     base_url = _endpoint_base_url(cfg)
-    models_url = f'{base_url}/api/v0/models'
+    models_url = f'{base_url}/api/v1/models'
     request_headers = {k: v for k, v in headers.items() if k.lower() != 'content-type'}
     resp = _requests.get(models_url, headers=request_headers, timeout=30)
     resp.raise_for_status()
@@ -267,7 +270,7 @@ def _lmstudio_model_is_loaded(cfg: dict, model_name: str, headers: dict) -> bool
 def _lmstudio_load_model(cfg: dict, model_name: str, load_config: dict, headers: dict):
     """Explicitly load a model into LM Studio with a caller-supplied config."""
     base_url = _endpoint_base_url(cfg)
-    load_url = f'{base_url}/api/v0/model/load'
+    load_url = f'{base_url}/api/v1/model/load'
     payload = {'model': model_name, **dict(load_config or {})}
     payload.setdefault('echo_load_config', True)
     request_headers = dict(headers)
