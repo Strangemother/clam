@@ -141,6 +141,7 @@ const PersistMethods = {
                     templated:    p.templated,
                     promptPath:   p.promptPath || p.prompt?.path || null,
                     promptTitle:  p.promptTitle || p.prompt?.title || null,
+                    outputs:      p.pipsOutbound.map(pip => ({ name: pip.name, index: pip.index })),
                 }
             } else if (p.type === 'transform') {
                 config = {
