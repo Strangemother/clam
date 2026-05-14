@@ -9,10 +9,35 @@ const STORAGE_KEY = 'prompting-layout-v1'
 
 const PersistMethods = {
 
-    saveLayout() {
+    async saveLayout() {
         const json = this._toJSON()
+        const name = (this.layoutName || '').trim()
+
+        if (name) {
+            const encodedName = name.split('/').map(part => encodeURIComponent(part)).join('/')
+            this.savingLayout = true
+            try {
+                const res = await fetch(`${PROMPTING_API_BASE}/layouts/${encodedName}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: json,
+                })
+                const data = await res.json().catch(() => ({}))
+                if (!res.ok) {
+                    throw new Error(data.error || String(res.status))
+                }
+                console.info('PromptSave: layout saved to server:', data.path || name)
+                return json
+            } catch (e) {
+                console.warn('PromptSave: server save failed', e)
+            } finally {
+                this.savingLayout = false
+            }
+        }
+
         localStorage.setItem(STORAGE_KEY, json)
         console.info('PromptSave: layout saved (%d nodes)', this.panels.length)
+        return json
     },
 
     exportJSON() {
@@ -96,7 +121,12 @@ const PersistMethods = {
         const nodes = this.panels.map(p => {
             const ref = this.$refs[`panel-${p.id}`]
             const el  = Array.isArray(ref) ? ref[0] : ref
-            const pos = el ? { left: el.style.left, top: el.style.top } : null
+            const pos = el ? {
+                left:   el.style.left || `${el.offsetLeft}px`,
+                top:    el.style.top  || `${el.offsetTop}px`,
+                width:  el.style.width  || `${el.offsetWidth}px`,
+                height: el.style.height || `${el.offsetHeight}px`,
+            } : null
 
             let config
             if (p.type === 'llm') {
@@ -193,6 +223,8 @@ const PersistMethods = {
             if (el && node.pos) {
                 el.style.left = node.pos.left
                 el.style.top  = node.pos.top
+                if (node.pos.width)  el.style.width  = node.pos.width
+                if (node.pos.height) el.style.height = node.pos.height
             }
         })
 

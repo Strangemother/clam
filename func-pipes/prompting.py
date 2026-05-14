@@ -6,6 +6,7 @@ Flask Blueprint for the /prompting sub-app.
 Registers:
   GET  /prompting/               → serves prompting.html
     GET  /prompting/layouts/<path> → returns a saved layout JSON file
+    POST /prompting/layouts/<path> → saves a layout JSON file under PROMPTS_DIR
   GET  /prompting/prompts/       → lists prompt files as JSON
   GET  /prompting/prompts/<path> → returns parsed prompt content/meta
   POST /prompting/prompts/render → renders a Jinja2 prompt template
@@ -164,6 +165,22 @@ def _safe_layout_target(layout_name: str):
     return None, (jsonify({'error': 'layout not found'}), 404)
 
 
+def _safe_layout_write_target(layout_name: str):
+    """Resolve a layout JSON path for writing inside PROMPTS_DIR."""
+    raw_name = (layout_name or '').strip()
+    if not raw_name:
+        return None, (jsonify({'error': 'no layout specified'}), 400)
+
+    layout_path = raw_name if raw_name.lower().endswith('.json') else f'{raw_name}.json'
+    target = (PROMPTS_DIR / layout_path).resolve()
+    root = PROMPTS_DIR.resolve()
+
+    if not str(target).startswith(str(root)):
+        return None, (jsonify({'error': 'invalid path'}), 400)
+
+    return target, None
+
+
 # ── routes ───────────────────────────────────────────────────────────────────
 
 @prompting_bp.route('/', strict_slashes=False)
@@ -180,6 +197,29 @@ def get_layout(layout_name):
     return target.read_text(encoding='utf-8', errors='replace'), 200, {
         'Content-Type': 'application/json'
     }
+
+
+@prompting_bp.route('/layouts/<path:layout_name>', strict_slashes=False, methods=['POST'])
+def save_layout(layout_name):
+    """Save a prompting layout JSON file inside PROMPTS_DIR."""
+    target, err = _safe_layout_write_target(layout_name)
+    if err:
+        return err
+
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return jsonify({'error': 'invalid json payload'}), 400
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        jsonify(payload).get_data(as_text=True) + '\n',
+        encoding='utf-8',
+    )
+
+    return jsonify({
+        'ok': True,
+        'path': str(target.relative_to(PROMPTS_DIR.resolve())),
+    })
 
 
 @prompting_bp.route('/prompts/', strict_slashes=False)

@@ -46,7 +46,7 @@ class InfiniteDrag {
 
     _onContextMenu(event) {
         // Suppress context menu so right-click drag feels clean
-        event.preventDefault()
+        // event.preventDefault()
     }
 
     _onMouseDown(event) {
