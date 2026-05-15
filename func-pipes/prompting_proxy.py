@@ -35,9 +35,6 @@ ENDPOINT_CONFIGS = {
 }
 
 
-_LMSTUDIO_LOAD_CACHE = set()
-
-
 def _endpoint_base_url(cfg):
     """Return the upstream service base URL without chat/models suffixes."""
     base = (cfg.get("models_url") or cfg.get("url") or "").rstrip("/")
@@ -64,11 +61,6 @@ def _lmstudio_models_urls(cfg):
             urls.append(url)
 
     return urls
-
-
-def _lmstudio_cache_key(cfg, model_name):
-    """Return a process-local cache key for an ensured LM Studio model."""
-    return (_endpoint_base_url(cfg), str(model_name or "").strip())
 
 
 def _lmstudio_load_config_for_model(cfg, model_name):
@@ -236,19 +228,13 @@ def _ensure_lmstudio_model_loaded(cfg, payload, headers):
     if not load_config:
         return
 
-    cache_key = _lmstudio_cache_key(cfg, model_name)
-    if cache_key in _LMSTUDIO_LOAD_CACHE:
-        return
-
     try:
         if _lmstudio_model_is_loaded(cfg, model_name, headers):
-            _LMSTUDIO_LOAD_CACHE.add(cache_key)
             return
     except (_requests.RequestException, ValueError):
         pass
 
     _lmstudio_load_model(cfg, model_name, load_config, headers)
-    _LMSTUDIO_LOAD_CACHE.add(cache_key)
 
 
 @prompting_bp.route("/endpoints/", strict_slashes=False)
