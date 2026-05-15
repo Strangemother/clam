@@ -22,6 +22,7 @@ import json
 import pathlib
 import inspect
 import importlib
+import re
 import markdown
 import requests as _requests
 from datetime import datetime, timezone
@@ -435,6 +436,19 @@ def _build_grad_voice_payload(text: str, overrides=None) -> dict:
     return {'data': list(inputs.values())}
 
 
+def _normalize_grad_voice_selection(voice=None, options=None) -> tuple[dict, str]:
+    """Return normalized Grad Voice options and the selected Kokoro voice."""
+    clean_options = dict(options or {})
+    selected_voice = str(voice or '').strip()
+    if selected_voice:
+        clean_options['kokoro_voice'] = selected_voice
+
+    selected_voice = str(
+        clean_options.get('kokoro_voice') or GRAD_VOICE_DEFAULT_INPUTS.get('kokoro_voice') or ''
+    ).strip()
+    return clean_options, selected_voice
+
+
 def _grad_voice_base_url() -> str:
     """Return the base origin for the configured Grad Voice service."""
     marker = '/gradio_api/call/'
@@ -452,6 +466,113 @@ def _grad_voice_event_url(event_id: str) -> str:
 def _grad_voice_file_url(file_path: str) -> str:
     """Return the upstream file URL for a Gradio FileData path."""
     return f"{_grad_voice_base_url()}/gradio_api/file={file_path}"
+
+
+def _grad_voice_upstream_config_urls() -> list[str]:
+    """Return likely config/info endpoints for the upstream Gradio app."""
+    base_url = _grad_voice_base_url().rstrip('/')
+    return [
+        f'{base_url}/gradio_api/info',
+        f'{base_url}/config',
+    ]
+
+
+def _looks_like_grad_voice_id(value) -> bool:
+    """Return True when a value looks like a Kokoro-style voice id."""
+    if not isinstance(value, str):
+        return False
+    return bool(re.fullmatch(r'[ab][fm]_[a-z0-9]+', value.strip().lower()))
+
+
+def _voice_option_label(value: str) -> str:
+    """Turn a voice id like af_bella into a user-friendly label."""
+    voice_id = str(value or '').strip()
+    if not voice_id:
+        return ''
+    parts = voice_id.split('_', 1)
+    name = parts[1] if len(parts) > 1 else voice_id
+    return f'{name.replace("_", " ").title()} ({voice_id})'
+
+
+def _extract_grad_voice_values_from_choices(choices) -> list[str]:
+    """Extract voice ids from a Gradio-style choices payload."""
+    values = []
+
+    if not isinstance(choices, list):
+        return values
+
+    for choice in choices:
+        candidate = None
+        if isinstance(choice, str):
+            candidate = choice
+        elif isinstance(choice, dict):
+            for key in ('value', 'name', 'label', 'id'):
+                value = choice.get(key)
+                if isinstance(value, str) and value:
+                    candidate = value
+                    break
+        elif isinstance(choice, (list, tuple)) and choice:
+            head = choice[0]
+            if isinstance(head, str) and head:
+                candidate = head
+
+        if candidate and _looks_like_grad_voice_id(candidate):
+            values.append(candidate.strip())
+
+    return values
+
+
+def _search_grad_voice_choices(value, found=None):
+    """Recursively search a JSON payload for Kokoro-style voice choice arrays."""
+    if found is None:
+        found = []
+
+    if isinstance(value, dict):
+        direct = _extract_grad_voice_values_from_choices(value.get('choices'))
+        if direct:
+            found.append(direct)
+        for child in value.values():
+            _search_grad_voice_choices(child, found)
+    elif isinstance(value, list):
+        direct = _extract_grad_voice_values_from_choices(value)
+        if len(direct) > 1:
+            found.append(direct)
+        for item in value:
+            _search_grad_voice_choices(item, found)
+
+    return found
+
+
+def _fetch_grad_voice_voices_from_upstream() -> list[dict]:
+    """Best-effort voice discovery from the upstream Gradio app."""
+    best = []
+
+    for url in _grad_voice_upstream_config_urls():
+        try:
+            resp = _requests.get(url, headers={'Accept': 'application/json'}, timeout=(1, 2))
+            resp.raise_for_status()
+            payload = resp.json()
+        except (_requests.RequestException, ValueError):
+            continue
+
+        matches = _search_grad_voice_choices(payload)
+        for values in matches:
+            unique = []
+            seen = set()
+            for value in values:
+                voice_id = str(value or '').strip()
+                if not voice_id or voice_id in seen:
+                    continue
+                seen.add(voice_id)
+                unique.append(voice_id)
+
+            if len(unique) > len(best):
+                best = unique
+
+    return [
+        {'value': voice_id, 'label': _voice_option_label(voice_id)}
+        for voice_id in best
+    ]
 
 
 def _gradio_path_name(file_path: str) -> str:
@@ -537,6 +658,87 @@ def _normalize_gradio_file_entities(payloads) -> list:
         })
 
     return files
+
+
+def _request_grad_voice(text: str, voice=None, options=None):
+    """Submit a Grad Voice request and return a JSON-friendly response body."""
+    clean_options, selected_voice = _normalize_grad_voice_selection(voice, options)
+    payload = _build_grad_voice_payload(text, clean_options)
+
+    try:
+        resp = _requests.post(
+            GRAD_VOICE_URL,
+            data=json.dumps(payload),
+            headers=GRAD_VOICE_HEADERS,
+            timeout=120,
+        )
+        data = resp.json()
+    except _requests.Timeout:
+        return {'error': 'upstream request timed out'}, 504
+    except ValueError as e:
+        return {'error': f'invalid upstream response: {e}'}, 502
+    except _requests.RequestException as e:
+        return {'error': str(e)}, 502
+
+    event_id = data.get('event_id') if isinstance(data, dict) else None
+    response_body = {
+        'ok': resp.ok,
+        'event_id': event_id,
+        'voice': selected_voice,
+        'response': data,
+    }
+    return response_body, resp.status_code
+
+
+def _wait_for_grad_voice_result(event_id: str, timeout=300):
+    """Wait for a Grad Voice event to complete and normalize any files."""
+    try:
+        wait_timeout = max(float(timeout), 1.0)
+    except (TypeError, ValueError):
+        wait_timeout = 300.0
+
+    try:
+        resp = _requests.get(
+            _grad_voice_event_url(event_id),
+            headers={
+                'Accept': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+            },
+            timeout=(10, wait_timeout),
+        )
+        raw = resp.text
+    except _requests.Timeout:
+        return {
+            'ok': False,
+            'done': False,
+            'event_id': event_id,
+            'error': 'upstream event wait timed out',
+        }, 504
+    except _requests.RequestException as e:
+        return {'error': str(e), 'event_id': event_id}, 502
+
+    if not resp.ok:
+        return {
+            'ok': False,
+            'done': False,
+            'event_id': event_id,
+            'error': raw or f'upstream status {resp.status_code}',
+        }, resp.status_code
+
+    entries = _parse_gradio_event_stream(raw)
+    payloads = [entry['data'] for entry in entries]
+    files = _normalize_gradio_file_entities(payloads)
+    first_file_url = files[0]['proxy_url'] if files else None
+
+    return {
+        'ok': True,
+        'done': True,
+        'event_id': event_id,
+        'status_event': entries[-1]['event'] if entries else None,
+        'payloads': payloads,
+        'files': files,
+        'first_file_url': first_file_url,
+    }, 200
 
 
 # ── routes ───────────────────────────────────────────────────────────────────
@@ -816,50 +1018,23 @@ def grad_voice_request():
     if not text.strip():
         return jsonify({'error': 'no text provided'}), 400
 
-    options = dict(body.get('options') or {})
-    selected_voice = str(body.get('voice') or '').strip()
-    if selected_voice:
-        options['kokoro_voice'] = selected_voice
-    selected_voice = str(
-        options.get('kokoro_voice') or GRAD_VOICE_DEFAULT_INPUTS.get('kokoro_voice') or ''
-    ).strip()
-
-    payload = _build_grad_voice_payload(text, options)
-
-    try:
-        resp = _requests.post(
-            GRAD_VOICE_URL,
-            data=json.dumps(payload),
-            headers=GRAD_VOICE_HEADERS,
-            timeout=120,
-        )
-        data = resp.json()
-    except _requests.Timeout:
-        return jsonify({'error': 'upstream request timed out'}), 504
-    except ValueError as e:
-        return jsonify({'error': f'invalid upstream response: {e}'}), 502
-    except _requests.RequestException as e:
-        return jsonify({'error': str(e)}), 502
-
-    event_id = data.get('event_id') if isinstance(data, dict) else None
-    response_body = {
-        'ok': resp.ok,
-        'event_id': event_id,
-        'voice': selected_voice,
-        'response': data,
-    }
-    if not resp.ok:
-        return jsonify(response_body), resp.status_code
-
-    return jsonify(response_body), resp.status_code
+    response_body, status_code = _request_grad_voice(
+        text,
+        voice=body.get('voice'),
+        options=body.get('options'),
+    )
+    return jsonify(response_body), status_code
 
 
 @prompting_bp.route('/grad-voice/voices/', strict_slashes=False)
 def grad_voice_voices():
     """Return the configured voice catalogue for the Grad Voice node."""
+    voices = _fetch_grad_voice_voices_from_upstream() or GRAD_VOICE_VOICES
+    source = 'upstream' if voices and voices != GRAD_VOICE_VOICES else 'fallback'
     return jsonify({
         'default': GRAD_VOICE_DEFAULT_INPUTS.get('kokoro_voice'),
-        'voices': GRAD_VOICE_VOICES,
+        'voices': voices,
+        'source': source,
     })
 
 
@@ -872,54 +1047,39 @@ def grad_voice_result_request():
     if not event_id:
         return jsonify({'error': 'no event_id provided'}), 400
 
-    timeout = body.get('timeout', 300)
-    try:
-        timeout = max(float(timeout), 1.0)
-    except (TypeError, ValueError):
-        timeout = 300.0
+    response_body, status_code = _wait_for_grad_voice_result(event_id, body.get('timeout', 300))
+    return jsonify(response_body), status_code
 
-    try:
-        resp = _requests.get(
-            _grad_voice_event_url(event_id),
-            headers={
-                'Accept': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-            },
-            timeout=(10, timeout),
-        )
-        raw = resp.text
-    except _requests.Timeout:
+
+@prompting_bp.route('/grad-voice/generate/', strict_slashes=False, methods=['POST'])
+def grad_voice_generate_request():
+    """Submit text to Grad Voice and wait for the first audio file result."""
+    body = request.get_json(silent=True) or {}
+    raw_text = body.get('text')
+    text = '' if raw_text is None else str(raw_text)
+
+    if not text.strip():
+        return jsonify({'error': 'no text provided'}), 400
+
+    submit_body, submit_status = _request_grad_voice(
+        text,
+        voice=body.get('voice'),
+        options=body.get('options'),
+    )
+    if submit_status >= 400:
+        return jsonify(submit_body), submit_status
+
+    event_id = str(submit_body.get('event_id') or '').strip()
+    if not event_id:
         return jsonify({
-            'ok': False,
-            'done': False,
-            'event_id': event_id,
-            'error': 'upstream event wait timed out',
-        }), 504
-    except _requests.RequestException as e:
-        return jsonify({'error': str(e), 'event_id': event_id}), 502
+            'error': 'grad voice response did not include an event_id',
+            'submit': submit_body,
+        }), 502
 
-    if not resp.ok:
-        return jsonify({
-            'ok': False,
-            'done': False,
-            'event_id': event_id,
-            'error': raw or f'upstream status {resp.status_code}',
-        }), resp.status_code
-
-    entries = _parse_gradio_event_stream(raw)
-    payloads = [entry['data'] for entry in entries]
-    files = _normalize_gradio_file_entities(payloads)
-    first_file_url = files[0]['proxy_url'] if files else None
-
-    return jsonify({
-        'ok': True,
-        'done': True,
-        'event_id': event_id,
-        'status_event': entries[-1]['event'] if entries else None,
-        'payloads': payloads,
-        'files': files,
-        'first_file_url': first_file_url,
-    })
+    result_body, result_status = _wait_for_grad_voice_result(event_id, body.get('timeout', 300))
+    result_body['voice'] = submit_body.get('voice')
+    result_body['submit'] = submit_body
+    return jsonify(result_body), result_status
 
 
 @prompting_bp.route('/grad-voice/file/', strict_slashes=False)

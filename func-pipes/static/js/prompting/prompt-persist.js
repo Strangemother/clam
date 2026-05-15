@@ -148,6 +148,12 @@ const PersistMethods = {
                     label: p.label,
                     voice: p.voice,
                 }
+            } else if (p.type === 'grad-voice-play') {
+                config = {
+                    label:    p.label,
+                    voice:    p.voice,
+                    autoPlay: p.autoPlay,
+                }
             } else if (p.type === 'transform') {
                 config = {
                     label:       p.label,
@@ -201,6 +207,7 @@ const PersistMethods = {
             'llm':          makeLLMPanel,
             'grad-voice':   makeGradVoicePanel,
             'grad-voice-result': makeGradVoiceResultPanel,
+            'grad-voice-play': makeGradVoicePlayPanel,
             'text-display': makeTextDisplayPanel,
             'transform':    makeTransformPanel,
             'delay':        makeDelayPanel,
@@ -268,6 +275,7 @@ const PersistMethods = {
             if (p.type === 'llm' && p._chat) p._chat.abort()
             if (p.type === 'grad-voice') this.stopGradVoice(p)
             if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
+            if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)
             if (p.type === 'event-input') this.unmountEventInput(p)
         })
         this.panels = []

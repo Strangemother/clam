@@ -17,9 +17,11 @@
                    Named inbound pips: 'in' (message), 'system' (prompt override).
                    Named outbound pip: 'out' (response text).
         grad-voice   — calls the backend Grad Voice proxy with inbound text.
-                                     Named inbound pip: 'in'. Named outbound pip: 'out' (event id).
+                                     Named inbound pips: 'in' and 'voice'. Named outbound pip: 'out' (event id).
     grad-voice-result — waits for a Grad Voice event to complete.
                    Named inbound pip: 'in'. Named outbound pip: 'out' (audio URL).
+        grad-voice-play — submits text, waits for the audio result, and can play it.
+                                     Named inbound pips: 'in' and 'voice'. Named outbound pip: 'out' (audio URL).
     text-display — sink. Renders incoming text as a message log.
                    Has a 'pass' outbound pip for chaining.
     transform    — user-defined JS function applied to text signals.
@@ -39,6 +41,7 @@ const COMPONENT_CATALOG = [
     { key: 'llm',          group: 'LLM',     type: 'llm',          label: 'LLM'          },
     { key: 'grad-voice',   group: 'Audio',   type: 'grad-voice',   label: 'Grad Voice'   },
     { key: 'grad-voice-result', group: 'Audio', type: 'grad-voice-result', label: 'Voice Result' },
+    { key: 'grad-voice-play', group: 'Audio', type: 'grad-voice-play', label: 'Speak & Play' },
     { key: 'text-display', group: 'Display', type: 'text-display', label: 'Text Display' },
     { key: 'transform',    group: 'Process', type: 'transform',    label: 'Transform'    },
 
@@ -157,6 +160,31 @@ function makeGradVoiceResultPanel(id, p = {}) {
         _manualInput: '',
         _controller:  null,
         pipsInbound:  [{ label: id, index: 0, name: 'in' }],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
+    }
+}
+
+function makeGradVoicePlayPanel(id, p = {}) {
+    return {
+        type:         'grad-voice-play',
+        label:        p.label || 'Speak & Play',
+        state:        'idle',
+        voice:        p.voice || DEFAULT_GRAD_VOICE_VOICE,
+        messages:     [],
+        lastOutput:   null,
+        lastError:    null,
+        lastEventId:  '',
+        lastResponse: null,
+        lastFiles:    [],
+        audioUrl:     '',
+        autoPlay:     p.autoPlay ?? true,
+        _voiceOverride: '',
+        _manualInput: '',
+        _controller:  null,
+        pipsInbound:  [
+            { label: id, index: 0, name: 'in' },
+            { label: id, index: 1, name: 'voice' },
+        ],
         pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }
 }

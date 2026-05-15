@@ -23,7 +23,8 @@ const SignalMethods = {
                    _emitFromPip so named-pip nodes can identify which
                    channel changed).
 
-        transform, llm, and grad-voice nodes route by named pip; other nodes use
+        transform, llm, grad-voice, and grad-voice-play nodes route by named pip;
+        other nodes use
       _combineSources first-wins logic.
     */
     receive(panel, signal, sourceId = null, inPipIndex = null) {
@@ -75,6 +76,24 @@ const SignalMethods = {
                     this._emitFromNode(panel, null)
                 } else {
                     this._applyGradVoice(panel, signal.text ?? '', signal.meta)
+                }
+            }
+            return
+        }
+
+        if (panel.type === 'grad-voice-play' && inPipIndex !== null) {
+            const pip = panel.pipsInbound.find(p => p.index === inPipIndex)
+            const pipName = pip?.name ?? String(inPipIndex)
+
+            if (pipName === 'voice') {
+                this.setGradVoiceVoiceOverride(panel, signal?.text ?? '')
+            } else {
+                if (signal === null) {
+                    this.stopGradVoicePlay(panel)
+                    panel.lastOutput = null
+                    this._emitFromNode(panel, null)
+                } else {
+                    this._applyGradVoicePlay(panel, signal.text ?? '', signal.meta)
                 }
             }
             return
