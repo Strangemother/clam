@@ -15,7 +15,7 @@ STATIC_DIR = os.path.join(FLASK_ASSETS_DIR, "static")
 EMBED_TOOL_ASSETS_DIR = os.path.join(BASE_DIR, "embed_tool_assets")
 
 DB_PATH = os.path.join(EMBED_TOOL_ASSETS_DIR, "knowledge.db")
-MODEL_PATH = ""
+MODEL_PATH = "C:/Users/jay/.lmstudio/models/jinaai/jina-embeddings-v5-text-small-retrieval"
 SQLITE_AI_PACKAGE = "sqliteai.binaries.cpu"
 HOST = "0.0.0.0"
 PORT = 5000
