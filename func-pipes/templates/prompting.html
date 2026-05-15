@@ -24,6 +24,7 @@
                 <button class="btn-llm"          @click="addLLM">⬡ LLM</button>
                 <button class="btn-voice"        @click="addGradVoice">🔊 Voice</button>
                 <button class="btn-voice-result" @click="addGradVoiceResult">▷ Voice Result</button>
+                <button class="btn-voice-play"   @click="addGradVoicePlay">▶ Speak</button>
                 <button class="btn-text-display" @click="addTextDisplay">◈ Display</button>
                 <button class="btn-transform"    @click="addTransform">ƒ Transform</button>
                 <button class="btn-delay"        @click="addDelay">⏱ Delay</button>
@@ -112,6 +113,7 @@
         {% include 'nodes/llm.html' %}
         {% include 'nodes/grad-voice.html' %}
         {% include 'nodes/grad-voice-result.html' %}
+        {% include 'nodes/grad-voice-play.html' %}
         {% include 'nodes/text-display.html' %}
         {% include 'nodes/delay.html' %}
         {% include 'nodes/pyfunc.html' %}
@@ -152,6 +154,7 @@
 <script src="{{ url_for('static', filename='js/prompting/prompt-llm.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-result.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-play.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-persist.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-transform.js') }}"></script>
