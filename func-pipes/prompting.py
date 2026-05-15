@@ -26,6 +26,7 @@ import re
 import markdown
 import requests as _requests
 from datetime import datetime, timezone
+from typing import List, Tuple
 from urllib.parse import quote
 
 from jinja2 import Template, TemplateSyntaxError
@@ -436,7 +437,7 @@ def _build_grad_voice_payload(text: str, overrides=None) -> dict:
     return {'data': list(inputs.values())}
 
 
-def _normalize_grad_voice_selection(voice=None, options=None) -> tuple[dict, str]:
+def _normalize_grad_voice_selection(voice=None, options=None) -> Tuple[dict, str]:
     """Return normalized Grad Voice options and the selected Kokoro voice."""
     clean_options = dict(options or {})
     selected_voice = str(voice or '').strip()
@@ -468,7 +469,7 @@ def _grad_voice_file_url(file_path: str) -> str:
     return f"{_grad_voice_base_url()}/gradio_api/file={file_path}"
 
 
-def _grad_voice_upstream_config_urls() -> list[str]:
+def _grad_voice_upstream_config_urls() -> List[str]:
     """Return likely config/info endpoints for the upstream Gradio app."""
     base_url = _grad_voice_base_url().rstrip('/')
     return [
@@ -494,7 +495,7 @@ def _voice_option_label(value: str) -> str:
     return f'{name.replace("_", " ").title()} ({voice_id})'
 
 
-def _extract_grad_voice_values_from_choices(choices) -> list[str]:
+def _extract_grad_voice_values_from_choices(choices) -> List[str]:
     """Extract voice ids from a Gradio-style choices payload."""
     values = []
 
@@ -543,7 +544,7 @@ def _search_grad_voice_choices(value, found=None):
     return found
 
 
-def _fetch_grad_voice_voices_from_upstream() -> list[dict]:
+def _fetch_grad_voice_voices_from_upstream() -> List[dict]:
     """Best-effort voice discovery from the upstream Gradio app."""
     best = []
 
