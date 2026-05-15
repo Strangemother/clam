@@ -14,6 +14,69 @@
 
 const SignalMethods = {
 
+    getPanelMessageText(message) {
+        if (!message || typeof message !== 'object') return ''
+        const value = message.content !== undefined ? message.content : message.text
+        return value == null ? '' : String(value)
+    },
+
+    canReplayPanelMessage(panel, message) {
+        const text = this.getPanelMessageText(message).trim()
+        if (!text) return false
+
+        const role = String(message?.role || '').toLowerCase()
+        return role !== 'error' && role !== 'status'
+    },
+
+    _replayMessageAsInput(panel, text) {
+        if (!text.trim()) return true
+
+        if (panel.type === 'text-input') {
+            panel.input = text
+            this.sendTextInput(panel)
+            return true
+        }
+        if (panel.type === 'llm') {
+            this._applyLLM(panel, text, { role: 'user', replay: true })
+            return true
+        }
+        if (panel.type === 'grad-voice') {
+            this._applyGradVoice(panel, text, { role: 'user', replay: true })
+            return true
+        }
+        if (panel.type === 'grad-voice-result') {
+            this._applyGradVoiceResult(panel, text, { role: 'user', replay: true })
+            return true
+        }
+        if (panel.type === 'grad-voice-play') {
+            this._applyGradVoicePlay(panel, text, { role: 'user', replay: true })
+            return true
+        }
+
+        return false
+    },
+
+    replayPanelMessage(panel, message) {
+        if (!this.canReplayPanelMessage(panel, message)) return
+
+        const text = this.getPanelMessageText(message)
+        const role = String(message?.role || '').toLowerCase()
+
+        if (role === 'user' && this._replayMessageAsInput(panel, text)) {
+            return
+        }
+
+        const signal = {
+            text,
+            meta: {
+                role: role || 'assistant',
+                replay: true,
+            },
+        }
+        panel.lastOutput = signal
+        this._emitFromNode(panel, signal)
+    },
+
     /* ── receive ────────────────────────────────────────────────────── */
 
     /*

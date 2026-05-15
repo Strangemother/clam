@@ -15,8 +15,13 @@
         </div>
 
         <div class="messages" :ref="'msgs-' + panel.id">
-            <div v-for="(m, j) in panel.messages" :key="j"
-                class="msg" :class="m.role">{{ m.text }}</div>
+            <div v-for="(m, j) in panel.messages" :key="j" class="msg-row">
+                <div class="msg" :class="m.role">{{ getPanelMessageText(m) }}</div>
+                <button v-if="canReplayPanelMessage(panel, m)"
+                        class="msg-replay-btn"
+                        @click="replayPanelMessage(panel, m)"
+                        title="Replay this message">↻</button>
+            </div>
         </div>
 
         <div class="panel-input">
