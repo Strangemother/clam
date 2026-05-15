@@ -57,23 +57,54 @@ def _lmstudio_load_config_for_model(cfg, model_name):
     return model_configs.get(model_name) or load_cfg.get("default_config")
 
 
+def _lmstudio_model_aliases(value):
+    """Return normalized aliases for an LM Studio model identifier."""
+    text = str(value or "").strip()
+    if not text:
+        return set()
+
+    aliases = {text}
+    normalized = text.replace("\\", "/").rstrip("/")
+    aliases.add(normalized)
+
+    basename = normalized.rsplit("/", 1)[-1]
+    if basename:
+        aliases.add(basename)
+
+    for alias in tuple(aliases):
+        if ":" not in alias:
+            continue
+
+        base_name, suffix = alias.rsplit(":", 1)
+        if base_name and suffix.isdigit():
+            aliases.add(base_name)
+
+    aliases.discard("")
+    return aliases
+
+
 def _lmstudio_model_matches(entry, model_name):
     """Match a requested model name against LM Studio list entries."""
-    candidates = {
-        str(entry.get("id") or "").strip(),
-        str(entry.get("model") or "").strip(),
-        str(entry.get("path") or "").strip(),
-    }
-    candidates.discard("")
+    requested_aliases = _lmstudio_model_aliases(model_name)
+    entry_aliases = set()
 
-    if model_name in candidates:
+    for key in ("id", "model", "path"):
+        entry_aliases.update(_lmstudio_model_aliases(entry.get(key)))
+
+    if requested_aliases & entry_aliases:
         return True
 
     loaded_instances = entry.get("loaded_instances") or []
     for instance in loaded_instances:
         if not isinstance(instance, dict):
             continue
-        if str(instance.get("id") or "").strip() == model_name:
+
+        instance_aliases = set()
+        for value in instance.values():
+            if isinstance(value, str):
+                instance_aliases.update(_lmstudio_model_aliases(value))
+
+        if requested_aliases & instance_aliases:
             return True
 
     return False
