@@ -24,6 +24,7 @@ import importlib
 import markdown
 import requests as _requests
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 from jinja2 import Template, TemplateSyntaxError
 from flask import Blueprint, render_template, jsonify, request
@@ -422,6 +423,110 @@ def _build_grad_voice_payload(text: str, overrides=None) -> dict:
     return {'data': list(inputs.values())}
 
 
+def _grad_voice_base_url() -> str:
+    """Return the base origin for the configured Grad Voice service."""
+    marker = '/gradio_api/call/'
+    url = GRAD_VOICE_URL.rstrip('/')
+    if marker in url:
+        return url.split(marker, 1)[0]
+    return url
+
+
+def _grad_voice_event_url(event_id: str) -> str:
+    """Return the event-stream URL for a Grad Voice request."""
+    return f"{GRAD_VOICE_URL.rstrip('/')}/{event_id}"
+
+
+def _grad_voice_file_url(file_path: str) -> str:
+    """Return the upstream file URL for a Gradio FileData path."""
+    return f"{_grad_voice_base_url()}/gradio_api/file={file_path}"
+
+
+def _gradio_path_name(file_path: str) -> str:
+    """Return the filename portion of a Gradio file path."""
+    raw = str(file_path or '').replace('\\', '/')
+    return raw.rsplit('/', 1)[-1] if raw else ''
+
+
+def _parse_gradio_event_stream(raw_text: str) -> list:
+    """Parse a Gradio SSE response into a list of event/data pairs."""
+    items = []
+    current_event = None
+
+    for line in raw_text.splitlines():
+        if not line:
+            continue
+        if line.startswith('event: '):
+            current_event = line[len('event: '):].strip() or None
+            continue
+        if not line.startswith('data: '):
+            continue
+
+        raw_data = line[len('data: '):]
+        parsed = raw_data
+        try:
+            parsed = json.loads(raw_data)
+        except ValueError:
+            pass
+
+        items.append({
+            'event': current_event or 'message',
+            'data': parsed,
+        })
+        current_event = None
+
+    return items
+
+
+def _collect_gradio_file_entities(value, found=None):
+    """Collect all nested Gradio FileData dicts from a parsed payload."""
+    if found is None:
+        found = []
+
+    if isinstance(value, dict):
+        meta = value.get('meta') or {}
+        if meta.get('_type') == 'gradio.FileData':
+            found.append(value)
+        for child in value.values():
+            _collect_gradio_file_entities(child, found)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_gradio_file_entities(item, found)
+
+    return found
+
+
+def _normalize_gradio_file_entities(payloads) -> list:
+    """Convert nested Gradio FileData objects into a JSON-friendly list."""
+    files = []
+    seen = set()
+
+    for entity in _collect_gradio_file_entities(payloads):
+        path = str(entity.get('path') or '').strip()
+        url = str(entity.get('url') or '').strip()
+        key = path or url
+        if not key or key in seen:
+            continue
+        seen.add(key)
+
+        name = str(entity.get('orig_name') or '').strip() or _gradio_path_name(path)
+        direct_url = _grad_voice_file_url(path) if path else (url or None)
+        proxy_url = None
+        if path:
+            proxy_url = f"/prompting/grad-voice/file/?path={quote(path, safe='')}"
+
+        files.append({
+            'path': path or None,
+            'orig_name': name or None,
+            'mime_type': entity.get('mime_type'),
+            'size': entity.get('size'),
+            'url': direct_url,
+            'proxy_url': proxy_url,
+        })
+
+    return files
+
+
 # ── routes ───────────────────────────────────────────────────────────────────
 
 @prompting_bp.route('/', strict_slashes=False)
@@ -726,3 +831,95 @@ def grad_voice_request():
         return jsonify(response_body), resp.status_code
 
     return jsonify(response_body), resp.status_code
+
+
+@prompting_bp.route('/grad-voice/result/', strict_slashes=False, methods=['POST'])
+def grad_voice_result_request():
+    """Wait for a Grad Voice event to complete and return any produced files."""
+    body = request.get_json(silent=True) or {}
+    event_id = str(body.get('event_id') or '').strip()
+
+    if not event_id:
+        return jsonify({'error': 'no event_id provided'}), 400
+
+    timeout = body.get('timeout', 300)
+    try:
+        timeout = max(float(timeout), 1.0)
+    except (TypeError, ValueError):
+        timeout = 300.0
+
+    try:
+        resp = _requests.get(
+            _grad_voice_event_url(event_id),
+            headers={
+                'Accept': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+            },
+            timeout=(10, timeout),
+        )
+        raw = resp.text
+    except _requests.Timeout:
+        return jsonify({
+            'ok': False,
+            'done': False,
+            'event_id': event_id,
+            'error': 'upstream event wait timed out',
+        }), 504
+    except _requests.RequestException as e:
+        return jsonify({'error': str(e), 'event_id': event_id}), 502
+
+    if not resp.ok:
+        return jsonify({
+            'ok': False,
+            'done': False,
+            'event_id': event_id,
+            'error': raw or f'upstream status {resp.status_code}',
+        }), resp.status_code
+
+    entries = _parse_gradio_event_stream(raw)
+    payloads = [entry['data'] for entry in entries]
+    files = _normalize_gradio_file_entities(payloads)
+    first_file_url = files[0]['proxy_url'] if files else None
+
+    return jsonify({
+        'ok': True,
+        'done': True,
+        'event_id': event_id,
+        'status_event': entries[-1]['event'] if entries else None,
+        'payloads': payloads,
+        'files': files,
+        'first_file_url': first_file_url,
+    })
+
+
+@prompting_bp.route('/grad-voice/file/', strict_slashes=False)
+def grad_voice_file_proxy():
+    """Proxy a generated Grad Voice file back through Flask."""
+    file_path = str(request.args.get('path') or '').strip()
+    if not file_path:
+        return jsonify({'error': 'no path provided'}), 400
+
+    try:
+        resp = _requests.get(
+            _grad_voice_file_url(file_path),
+            headers={'Accept': '*/*'},
+            timeout=120,
+        )
+    except _requests.Timeout:
+        return jsonify({'error': 'upstream file request timed out'}), 504
+    except _requests.RequestException as e:
+        return jsonify({'error': str(e)}), 502
+
+    headers = {}
+    for key in ('Content-Type', 'Content-Length', 'Content-Disposition', 'Cache-Control'):
+        value = resp.headers.get(key)
+        if value:
+            headers[key] = value
+
+    headers.setdefault('Content-Type', 'application/octet-stream')
+    headers.setdefault(
+        'Content-Disposition',
+        f'inline; filename="{_gradio_path_name(file_path) or "audio.bin"}"',
+    )
+
+    return resp.content, resp.status_code, headers

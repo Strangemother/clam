@@ -18,6 +18,8 @@
                    Named outbound pip: 'out' (response text).
         grad-voice   — calls the backend Grad Voice proxy with inbound text.
                                      Named inbound pip: 'in'. Named outbound pip: 'out' (event id).
+    grad-voice-result — waits for a Grad Voice event to complete.
+                   Named inbound pip: 'in'. Named outbound pip: 'out' (audio URL).
     text-display — sink. Renders incoming text as a message log.
                    Has a 'pass' outbound pip for chaining.
     transform    — user-defined JS function applied to text signals.
@@ -35,6 +37,7 @@ const COMPONENT_CATALOG = [
     { key: 'text-input',   group: 'Input',   type: 'text-input',   label: 'Text Input'   },
     { key: 'llm',          group: 'LLM',     type: 'llm',          label: 'LLM'          },
     { key: 'grad-voice',   group: 'Audio',   type: 'grad-voice',   label: 'Grad Voice'   },
+    { key: 'grad-voice-result', group: 'Audio', type: 'grad-voice-result', label: 'Voice Result' },
     { key: 'text-display', group: 'Display', type: 'text-display', label: 'Text Display' },
     { key: 'transform',    group: 'Process', type: 'transform',    label: 'Transform'    },
 
@@ -125,6 +128,26 @@ function makeGradVoicePanel(id, p = {}) {
         lastError:    null,
         lastEventId:  '',
         lastResponse: null,
+        _manualInput: '',
+        _controller:  null,
+        pipsInbound:  [{ label: id, index: 0, name: 'in' }],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
+    }
+}
+
+function makeGradVoiceResultPanel(id, p = {}) {
+    return {
+        type:         'grad-voice-result',
+        label:        p.label || 'Voice Result',
+        state:        'idle',
+        messages:     [],
+        lastOutput:   null,
+        lastError:    null,
+        lastEventId:  '',
+        lastResponse: null,
+        lastFiles:    [],
+        audioUrl:     '',
+        autoPlay:     p.autoPlay ?? false,
         _manualInput: '',
         _controller:  null,
         pipsInbound:  [{ label: id, index: 0, name: 'in' }],
