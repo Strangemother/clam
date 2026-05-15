@@ -2,6 +2,12 @@
 
 Simple Python scripts for controlling Home Assistant via WebSocket.
 
+Run the websocket UI with:
+
+   (env) .\ha>python monitor_with_ui.py
+
+The open the `index.html`
+
 ## Installation
 
 ```bash

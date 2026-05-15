@@ -38,9 +38,14 @@
             </div>
         </div>
 
+        <label class="mode-toggle display-mode-toggle" title="Show only the most recent message">
+            <input type="checkbox" v-model="panel.latestOnly" />
+            latest only
+        </label>
+
         <div class="messages" :ref="'msgs-' + panel.id">
             <div v-if="!panel.messages.length" class="display-null">— no signal —</div>
-            <div v-for="(m, j) in panel.messages" :key="j" class="msg-row">
+            <div v-for="(m, j) in (panel.latestOnly ? panel.messages.slice(-1) : panel.messages)" :key="j" class="msg-row">
                 <div class="msg" :class="m.role">{{ getPanelMessageText(m) }}</div>
                 <button v-if="canReplayPanelMessage(panel, m)"
                         class="msg-replay-btn"

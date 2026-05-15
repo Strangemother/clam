@@ -160,6 +160,11 @@ const PersistMethods = {
                     voice:    p.voice,
                     autoPlay: p.autoPlay,
                 }
+            } else if (p.type === 'text-display') {
+                config = {
+                    label:      p.label,
+                    latestOnly: p.latestOnly,
+                }
             } else if (p.type === 'transform') {
                 config = {
                     label:       p.label,
