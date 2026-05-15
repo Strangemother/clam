@@ -120,6 +120,7 @@ const SpawnMethods = {
         if (panel.type === 'grad-voice-play') {
             this.stopGradVoicePlay(panel)
             panel.messages       = []
+            panel.lastText       = ''
             panel.lastOutput     = null
             panel.lastError      = null
             panel.lastEventId    = ''

@@ -27,6 +27,7 @@ const GradVoicePlayMethods = {
 
         const selectedVoice = this.getGradVoiceEffectiveVoice(panel)
 
+        panel.lastText = spokenText
         panel.messages.push({ role: meta?.role || 'user', content: spokenText })
         panel.state = 'pending'
         panel.lastError = null
@@ -132,5 +133,11 @@ const GradVoicePlayMethods = {
         if (!text.trim() || panel.state === 'pending') return
         panel._manualInput = ''
         this._applyGradVoicePlay(panel, text)
+    },
+
+    regenerateGradVoicePlay(panel) {
+        const text = String(panel.lastText || '').trim()
+        if (!text || panel.state === 'pending') return
+        this._applyGradVoicePlay(panel, text, { role: 'user' })
     },
 }

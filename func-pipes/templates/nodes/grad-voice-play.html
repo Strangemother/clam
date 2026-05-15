@@ -57,6 +57,12 @@
                 Auto play
             </label>
             <button class="pyfunc-call-btn"
+                    @click="regenerateGradVoicePlay(panel)"
+                    :disabled="!panel.lastText || panel.state === 'pending'"
+                    title="Repeat the last text with the current voice selection">
+                ↻ Regenerate
+            </button>
+            <button class="pyfunc-call-btn"
                     @click="playGradVoicePlay(panel)"
                     :disabled="!panel.audioUrl">
                 ▶ Play
