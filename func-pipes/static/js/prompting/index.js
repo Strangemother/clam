@@ -77,6 +77,7 @@ createApp({
         ...FocusMethods,
         ...SignalMethods,
         ...LLMMethods,
+        ...AudioRecordMethods,
         ...GradVoiceMethods,
         ...GradVoiceResultMethods,
         ...GradVoicePlayMethods,

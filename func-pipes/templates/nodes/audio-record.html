@@ -1,0 +1,95 @@
+{% raw %}
+<!-- ── AUDIO RECORD node ── -->
+<template v-else-if="panel.type === 'audio-record'">
+
+    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+        <div class="panel-head" @dblclick.stop="togglePanelFocus(panel)" title="Double-click to focus this node and its direct connections">
+            <span class="panel-title">{{ panel.title }}</span>
+            <div class="panel-btns">
+                <button v-if="focusPinState.active && focusPinState.centerId === panel.id"
+                        @click.stop="clearFocusedPanels()"
+                        title="Restore focused nodes to their original positions">Unpin</button>
+                <button @click="stopAudioRecord(panel)" :disabled="panel.state !== 'recording'" title="Stop and save">■</button>
+                <button @click="resetPanel(panel)" title="Cancel any active recording and clear the node">↺</button>
+                <button @click="removePanel(i)">✕</button>
+            </div>
+        </div>
+
+        <div v-if="panel.state !== 'idle'" class="state-badge" :class="panel.state">
+            {{ panel.state === 'connecting' ? '● Connecting…' : panel.state === 'recording' ? '● Recording…' : panel.state === 'saving' ? '● Saving…' : panel.state === 'error' ? '✕ Error' : '' }}
+        </div>
+
+        <div class="field-row" style="margin-bottom:6px">
+            <label>WS</label>
+            <input v-model.trim="panel.wsUrl"
+                   placeholder="ws://localhost:8766"
+                   title="Standalone websocket audio recorder service" />
+        </div>
+
+        <div class="field-row" style="margin-bottom:6px">
+            <label>Prefix</label>
+            <input v-model.trim="panel.filePrefix"
+                   placeholder="mic-record"
+                   title="Filename prefix for saved WAV recordings" />
+        </div>
+
+        <div class="audio-record-actions">
+            <button class="audio-record-btn"
+                    @click="startAudioRecord(panel)"
+                    :disabled="panel.state !== 'idle' && panel.state !== 'error'"
+                    title="Start capturing microphone audio and stream it to the recorder service">
+                ● Record
+            </button>
+            <span class="audio-record-live" v-if="panel.sampleRate">
+                {{ panel.sampleRate }} Hz mono
+            </span>
+            <span class="audio-record-live" v-if="panel.state === 'recording' || panel.state === 'saving'">
+                {{ panel.recordedSeconds.toFixed(1) }} s
+            </span>
+        </div>
+
+        <div v-if="panel.lastSavedPath" class="audio-record-summary">
+            saved: {{ panel.lastSavedPath }}
+        </div>
+        <div v-if="panel.lastError" class="pyfunc-error">⚠ {{ panel.lastError }}</div>
+
+        <audio v-if="panel.audioUrl"
+               :ref="'audio-' + panel.id"
+               :src="panel.audioUrl"
+               controls
+               preload="none"
+               style="width:100%; margin:8px 0"></audio>
+
+        <div class="messages" :ref="'msgs-' + panel.id">
+            <div v-if="!panel.messages.length" class="display-null">— no recordings yet —</div>
+            <div v-for="(m, j) in panel.messages" :key="j" class="msg-row">
+                <div class="msg" :class="m.role">{{ getPanelMessageText(m) }}</div>
+                <button v-if="canReplayPanelMessage(panel, m)"
+                        class="msg-replay-btn"
+                        @click="replayPanelMessage(panel, m)"
+                        title="Replay this message">↻</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+            <span class="pip-name">{{ pip.name }}</span>
+            <div
+                :class="['pip-dot',
+                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                    disconnectMode ? 'disconnect-ready' : '']"
+                :draggable="!disconnectMode"
+                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                @dragend="pipEndDrag($event)"
+                @dragover="pipOverDrag($event)"
+                @drop="pipDrop($event, 'outbound', pip)"
+                :id="`${pip.label}-outbound-${pip.index}`"
+                :title="pip.name">
+            </div>
+        </div>
+    </div>
+
+</template>
+{% endraw %}

@@ -25,6 +25,7 @@ const SpawnMethods = {
         const id = _uid + 1
         if (preset.type === 'text-input')   this._makeAndSpawn(makeTextInputPanel,   id, preset)
         if (preset.type === 'llm')          this._makeAndSpawn(makeLLMPanel,         id, preset)
+        if (preset.type === 'audio-record') this._makeAndSpawn(makeAudioRecordPanel, id, preset)
         if (preset.type === 'grad-voice')   this._makeAndSpawn(makeGradVoicePanel,   id, preset)
         if (preset.type === 'grad-voice-result') this._makeAndSpawn(makeGradVoiceResultPanel, id, preset)
         if (preset.type === 'grad-voice-play') this._makeAndSpawn(makeGradVoicePlayPanel, id, preset)
@@ -37,6 +38,7 @@ const SpawnMethods = {
 
     addTextInput()   { const id = _uid + 1; this._makeAndSpawn(makeTextInputPanel,   id) },
     addLLM()         { const id = _uid + 1; this._makeAndSpawn(makeLLMPanel,         id) },
+    addAudioRecord() { const id = _uid + 1; this._makeAndSpawn(makeAudioRecordPanel, id) },
     addGradVoice()   { const id = _uid + 1; this._makeAndSpawn(makeGradVoicePanel,   id) },
     addGradVoiceResult() { const id = _uid + 1; this._makeAndSpawn(makeGradVoiceResultPanel, id) },
     addGradVoicePlay() { const id = _uid + 1; this._makeAndSpawn(makeGradVoicePlayPanel, id) },
@@ -64,6 +66,7 @@ const SpawnMethods = {
         }
         // Abort any in-flight LLM request
         if (p.type === 'llm' && p._chat) p._chat.abort()
+        if (p.type === 'audio-record') this.cancelAudioRecord(p)
         if (p.type === 'grad-voice') this.stopGradVoice(p)
         if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
         if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)
@@ -90,6 +93,21 @@ const SpawnMethods = {
             panel.messages   = []
             panel.lastOutput = null
             panel.state      = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+        }
+        if (panel.type === 'audio-record') {
+            this.cancelAudioRecord(panel)
+            panel.messages         = []
+            panel.lastOutput       = null
+            panel.lastError        = null
+            panel.lastSavedPath    = ''
+            panel.lastResponse     = null
+            panel.lastSessionId    = ''
+            panel.audioUrl         = ''
+            panel.recordedSeconds  = 0
+            panel.sampleRate       = 0
+            panel._samplesSent     = 0
+            panel.state            = 'idle'
             panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
         }
         if (panel.type === 'grad-voice') {

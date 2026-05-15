@@ -33,12 +33,14 @@ const DEFAULT_ENDPOINT     = 'http://192.168.50.60:1234/api/v1/chat/'
 const DEFAULT_ENDPOINT_KEY = 'lmstudio'   // must match a key in ENDPOINT_CONFIGS (prompting.py)
 const DEFAULT_MODEL        = ''
 const DEFAULT_GRAD_VOICE_VOICE = 'af_bella'
+const DEFAULT_AUDIO_RECORD_WS = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname || 'localhost'}:8766`
 
 // ── component catalogue ──────────────────────────────────────────────────────
 
 const COMPONENT_CATALOG = [
     { key: 'text-input',   group: 'Input',   type: 'text-input',   label: 'Text Input'   },
     { key: 'llm',          group: 'LLM',     type: 'llm',          label: 'LLM'          },
+    { key: 'audio-record', group: 'Audio',   type: 'audio-record', label: 'Mic Record'   },
     { key: 'grad-voice',   group: 'Audio',   type: 'grad-voice',   label: 'Grad Voice'   },
     { key: 'grad-voice-result', group: 'Audio', type: 'grad-voice-result', label: 'Voice Result' },
     { key: 'grad-voice-play', group: 'Audio', type: 'grad-voice-play', label: 'Speak & Play' },
@@ -119,6 +121,36 @@ function makeLLMPanel(id, p = {}) {
             index: output.index,
             name: output.name,
         })),
+    }
+}
+
+function makeAudioRecordPanel(id, p = {}) {
+    return {
+        type:         'audio-record',
+        label:        p.label || 'Mic Record',
+        state:        'idle',
+        wsUrl:        p.wsUrl || DEFAULT_AUDIO_RECORD_WS,
+        filePrefix:   p.filePrefix || 'mic-record',
+        messages:     [],
+        lastOutput:   null,
+        lastError:    null,
+        lastSavedPath: '',
+        lastResponse: null,
+        lastSessionId: '',
+        audioUrl:     '',
+        recordedSeconds: 0,
+        sampleRate:   0,
+        _socket:      null,
+        _socketToken: '',
+        _expectedSocketClose: false,
+        _stream:      null,
+        _audioContext: null,
+        _sourceNode:  null,
+        _processorNode: null,
+        _monitorGain: null,
+        _samplesSent: 0,
+        pipsInbound:  [],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }
 }
 
