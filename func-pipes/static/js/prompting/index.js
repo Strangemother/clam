@@ -79,6 +79,7 @@ createApp({
     methods: {
         ...SpawnMethods,
         ...FocusMethods,
+        ...InputHistoryMethods,
         ...SignalMethods,
         ...LLMMethods,
         ...AudioRecordMethods,

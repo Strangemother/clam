@@ -149,6 +149,7 @@ const GradVoiceResultMethods = {
     sendGradVoiceResultManual(panel) {
         const text = panel._manualInput || ''
         if (!text.trim()) return
+        this.rememberPanelInput(panel, '_manualInput', text)
         panel._manualInput = ''
         this._applyGradVoiceResult(panel, text)
     },

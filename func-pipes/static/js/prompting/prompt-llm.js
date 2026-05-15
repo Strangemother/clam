@@ -164,10 +164,35 @@ const LLMMethods = {
 
     /* ── core processor called by prompt-signal.js ──────────────────── */
 
-    async _applyLLM(panel, text, meta = {}) {
-        if (!text || panel.state === 'pending') return
+    _normalizeLLMInputTexts(text) {
+        const values = Array.isArray(text) ? text : [text]
 
-        panel.messages.push({ role: 'user', content: text })
+        return values
+            .map(value => {
+                if (value == null) return ''
+                if (typeof value === 'string') return value
+                if (typeof value === 'object') {
+                    try {
+                        return JSON.stringify(value)
+                    } catch (e) {
+                        return String(value)
+                    }
+                }
+                return String(value)
+            })
+            .filter(value => value !== '')
+    },
+
+    async _applyLLM(panel, text, meta = {}) {
+        const userTexts = this._normalizeLLMInputTexts(text)
+        if (!userTexts.length || panel.state === 'pending') return
+
+        const promptInput = userTexts.length === 1 ? userTexts[0] : userTexts
+        const renderText = userTexts.join('\n\n')
+
+        userTexts.forEach(content => {
+            panel.messages.push({ role: 'user', content })
+        })
         panel.state = 'pending'
         this._scrollLLMMessages(panel)
 
@@ -176,15 +201,15 @@ const LLMMethods = {
 
             // Render system prompt as Jinja2 template if templated mode is on
             if (panel.mode === 'prompt' && panel.templated && panel.prompt?.content) {
-                const rendered = await this._renderSystemPrompt(panel.prompt.content, text, panel)
+                const rendered = await this._renderSystemPrompt(panel.prompt.content, renderText, panel)
                 if (rendered !== null) chat.options.system = rendered
             }
 
             let reply
             if (panel.mode === 'prompt') {
-                reply = await chat.prompt(text)
+                reply = await chat.prompt(promptInput)
             } else {
-                reply = await chat.send(text)
+                reply = await chat.send(promptInput)
             }
 
             if (reply) {
@@ -325,6 +350,7 @@ const LLMMethods = {
     sendTextInput(panel) {
         const text = (panel.input || '').trim()
         if (!text) return
+        this.rememberPanelInput(panel, 'input', text)
         panel.input = ''
         panel.messages.push({ role: 'user', text })
         const sig = { text, meta: { role: 'user' } }
@@ -336,6 +362,7 @@ const LLMMethods = {
     sendLLMManual(panel) {
         const text = (panel._manualInput || '').trim()
         if (!text || panel.state === 'pending') return
+        this.rememberPanelInput(panel, '_manualInput', text)
         panel._manualInput = ''
         this._applyLLM(panel, text)
     },

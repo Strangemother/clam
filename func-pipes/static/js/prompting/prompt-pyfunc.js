@@ -62,6 +62,12 @@ const PyFuncMethods = {
 
     // Called from the panel's "Call" button (no leading underscore — Vue 3)
     async callPyFunc(panel) {
+        if (!panel.fnName || panel.state === 'running') return
+
+        Object.entries(panel.values || {}).forEach(([name, value]) => {
+            this.rememberPanelInput(panel, `values:${name}`, value)
+        })
+
         return this._callPyFunc(panel)
     },
 

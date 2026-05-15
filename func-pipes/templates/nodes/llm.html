@@ -110,6 +110,9 @@
             <textarea
                 v-model="panel._manualInput"
                 placeholder="Manual test input (Enter to send)…"
+                @input="touchPanelInputHistory(panel, '_manualInput')"
+                @keydown.up="handlePanelInputHistoryKeydown(panel, '_manualInput', $event)"
+                @keydown.down="handlePanelInputHistoryKeydown(panel, '_manualInput', $event)"
                 @keydown.enter.exact.prevent="sendLLMManual(panel)"
             ></textarea>
             <button @click="sendLLMManual(panel)" :disabled="panel.state === 'pending'">Send</button>

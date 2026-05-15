@@ -49,11 +49,14 @@ class Chat {
      * Returns the assistant message { role, content }.
      */
     async send(text) {
-        this.messages.push({ role: 'user', content: text })
+        const userMessages = this._normalizeUserMessages(text)
+        if (!userMessages.length) return null
+
+        this.messages.push(...userMessages)
 
         // For openai format, buildPayload reads this.messages directly,
         // so the new user turn is already included above.
-        const payload = this.buildPayload(text, { chain: true })
+        const payload = this.buildPayload(userMessages, { chain: true })
         const reply   = await this._post(payload)
 
         this.messages.push(reply)
@@ -65,7 +68,9 @@ class Chat {
      * Returns the assistant message { role, content }.
      */
     async prompt(text) {
-        const payload = this.buildPayload(text, { chain: false, oneshot: true })
+        const userMessages = this._normalizeUserMessages(text)
+        if (!userMessages.length) return null
+        const payload = this.buildPayload(userMessages, { chain: false, oneshot: true })
         return this._post(payload)
     }
 
@@ -81,14 +86,16 @@ class Chat {
      *   oneshot:true → sends only system + current user message, no history
      */
     buildPayload(text, { chain = false, oneshot = false } = {}) {
+        const userMessages = this._normalizeUserMessages(text)
+
         if (this.options.format === 'openai') {
             const messages = []
             if (this.options.system) {
                 messages.push({ role: 'system', content: this.options.system })
             }
             if (oneshot || !chain) {
-                // One-shot: just this message, no accumulated history
-                messages.push({ role: 'user', content: text })
+                // One-shot: just this message batch, no accumulated history
+                messages.push(...userMessages)
             } else {
                 // Full history — this.messages already has the new user turn
                 // pushed by send() before buildPayload is called
@@ -102,7 +109,7 @@ class Chat {
         // LM Studio native format
         const payload = {
             model:  this.options.model,
-            input:  text,
+            input:  userMessages.length === 1 ? userMessages[0].content : userMessages,
             stream: this.options.stream,
             ...this.options.metadata,
         }
@@ -113,6 +120,28 @@ class Chat {
             payload.previous_response_id = this._responseId
         }
         return payload
+    }
+
+    _normalizeUserMessages(text) {
+        const values = Array.isArray(text) ? text : [text]
+
+        return values
+            .map(value => this._coerceMessageContent(value))
+            .filter(value => value !== '')
+            .map(content => ({ role: 'user', content }))
+    }
+
+    _coerceMessageContent(value) {
+        if (value == null) return ''
+        if (typeof value === 'string') return value
+        if (typeof value === 'object') {
+            try {
+                return JSON.stringify(value)
+            } catch (e) {
+                return String(value)
+            }
+        }
+        return String(value)
     }
 
     /** Cancel any in-flight request. Resets state to idle. */
