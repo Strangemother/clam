@@ -62,8 +62,13 @@
 
         <div class="messages" :ref="'msgs-' + panel.id">
             <div v-if="!panel.messages.length" class="display-null">— no result yet —</div>
-            <div v-for="(m, j) in panel.messages" :key="j"
-                class="msg" :class="m.role">{{ m.content }}</div>
+            <div v-for="(m, j) in panel.messages" :key="j" class="msg-row">
+                <div class="msg" :class="m.role">{{ getPanelMessageText(m) }}</div>
+                <button v-if="canReplayPanelMessage(panel, m)"
+                        class="msg-replay-btn"
+                        @click="replayPanelMessage(panel, m)"
+                        title="Replay this message">↻</button>
+            </div>
             <div v-if="panel.state === 'pending'" class="msg status">waiting for grad voice result…</div>
         </div>
 
