@@ -35,6 +35,9 @@ ENDPOINT_CONFIGS = {
 }
 
 
+_LMSTUDIO_LOAD_CACHE = set()
+
+
 def _endpoint_base_url(cfg):
     """Return the upstream service base URL without chat/models suffixes."""
     base = (cfg.get("models_url") or cfg.get("url") or "").rstrip("/")
@@ -48,6 +51,24 @@ def _endpoint_base_url(cfg):
         if base.endswith(suffix):
             return base[: -len(suffix)]
     return base
+
+
+def _lmstudio_models_urls(cfg):
+    """Return candidate LM Studio model-list endpoints in preference order."""
+    base_url = _endpoint_base_url(cfg)
+    urls = []
+
+    for suffix in ("/api/v1/models", "/v1/models"):
+        url = f"{base_url}{suffix}"
+        if url not in urls:
+            urls.append(url)
+
+    return urls
+
+
+def _lmstudio_cache_key(cfg, model_name):
+    """Return a process-local cache key for an ensured LM Studio model."""
+    return (_endpoint_base_url(cfg), str(model_name or "").strip())
 
 
 def _lmstudio_load_config_for_model(cfg, model_name):
@@ -88,8 +109,11 @@ def _lmstudio_model_matches(entry, model_name):
     requested_aliases = _lmstudio_model_aliases(model_name)
     entry_aliases = set()
 
-    for key in ("id", "model", "path"):
+    for key in ("id", "key", "model", "path", "selected_variant"):
         entry_aliases.update(_lmstudio_model_aliases(entry.get(key)))
+
+    for value in entry.get("variants") or []:
+        entry_aliases.update(_lmstudio_model_aliases(value))
 
     if requested_aliases & entry_aliases:
         return True
@@ -110,43 +134,75 @@ def _lmstudio_model_matches(entry, model_name):
     return False
 
 
+def _lmstudio_entry_has_loaded_state(entry):
+    """Return True when an entry exposes explicit loaded-state metadata."""
+    return "loaded_instances" in entry or "status" in entry
+
+
 def _lmstudio_list_models(cfg, headers):
-    """Fetch the LM Studio REST model list, including loaded_instances."""
-    base_url = _endpoint_base_url(cfg)
-    models_url = f"{base_url}/api/v1/models"
+    """Fetch the LM Studio model list from the first working endpoint."""
     request_headers = {
         key: value
         for key, value in headers.items()
         if key.lower() != "content-type"
     }
 
-    resp = _requests.get(models_url, headers=request_headers, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
+    last_error = None
+    for models_url in _lmstudio_models_urls(cfg):
+        try:
+            resp = _requests.get(models_url, headers=request_headers, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+        except (_requests.RequestException, ValueError) as exc:
+            last_error = exc
+            continue
 
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        items = data.get("data")
-        if isinstance(items, list):
-            return items
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            items = data.get("data")
+            if isinstance(items, list):
+                return items
+            items = data.get("models")
+            if isinstance(items, list):
+                return items
 
-    raise ValueError("unexpected LM Studio models payload")
+        raise ValueError("unexpected LM Studio models payload")
+
+    if last_error is not None:
+        raise last_error
+
+    raise ValueError("unable to fetch LM Studio models")
 
 
 def _lmstudio_model_is_loaded(cfg, model_name, headers):
     """Return True when LM Studio already has the requested model loaded."""
+    matching_entries = []
+
     for entry in _lmstudio_list_models(cfg, headers):
         if not isinstance(entry, dict):
             continue
         if not _lmstudio_model_matches(entry, model_name):
             continue
 
+        matching_entries.append(entry)
+
         loaded_instances = entry.get("loaded_instances") or []
         if isinstance(loaded_instances, list) and loaded_instances:
             return True
         if str(entry.get("status") or "").lower() == "loaded":
             return True
+
+    if not matching_entries:
+        return False
+
+    if not any(_lmstudio_entry_has_loaded_state(entry) for entry in matching_entries):
+        # Some LM Studio installs expose only a flat OpenAI-style model catalog
+        # here, e.g. {id, object, owned_by}. That payload cannot distinguish
+        # available vs loaded, and repeatedly calling /models/load creates :N
+        # duplicate instances. In that flat-catalog mode, treat a matching model
+        # id as sufficient evidence to skip explicit re-loading.
+        return True
 
     return False
 
@@ -180,13 +236,19 @@ def _ensure_lmstudio_model_loaded(cfg, payload, headers):
     if not load_config:
         return
 
+    cache_key = _lmstudio_cache_key(cfg, model_name)
+    if cache_key in _LMSTUDIO_LOAD_CACHE:
+        return
+
     try:
         if _lmstudio_model_is_loaded(cfg, model_name, headers):
+            _LMSTUDIO_LOAD_CACHE.add(cache_key)
             return
     except (_requests.RequestException, ValueError):
         pass
 
     _lmstudio_load_model(cfg, model_name, load_config, headers)
+    _LMSTUDIO_LOAD_CACHE.add(cache_key)
 
 
 @prompting_bp.route("/endpoints/", strict_slashes=False)
