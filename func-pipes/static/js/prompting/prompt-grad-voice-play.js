@@ -131,6 +131,7 @@ const GradVoicePlayMethods = {
     sendGradVoicePlayManual(panel) {
         const text = panel._manualInput || ''
         if (!text.trim() || panel.state === 'pending') return
+        this.rememberPanelInput(panel, '_manualInput', text)
         panel._manualInput = ''
         this._applyGradVoicePlay(panel, text)
     },

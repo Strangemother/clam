@@ -56,6 +56,9 @@
                 <input class="pyfunc-param-input"
                        :type="pip.ptype === 'int' || pip.ptype === 'float' ? 'number' : 'text'"
                        v-model="panel.values[pip.name]"
+                      @input="touchPanelInputHistory(panel, 'values:' + pip.name)"
+                      @keydown.up="handlePanelInputHistoryKeydown(panel, 'values:' + pip.name, $event)"
+                      @keydown.down="handlePanelInputHistoryKeydown(panel, 'values:' + pip.name, $event)"
                        :placeholder="pip.ptype" />
             </div>
         </div>

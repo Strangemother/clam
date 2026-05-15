@@ -28,6 +28,9 @@
             <textarea
                 v-model="panel.input"
                 placeholder="Type a message… (Enter to send)"
+                @input="touchPanelInputHistory(panel, 'input')"
+                @keydown.up="handlePanelInputHistoryKeydown(panel, 'input', $event)"
+                @keydown.down="handlePanelInputHistoryKeydown(panel, 'input', $event)"
                 @keydown.enter.exact.prevent="sendTextInput(panel)"
             ></textarea>
             <button @click="sendTextInput(panel)">Send</button>

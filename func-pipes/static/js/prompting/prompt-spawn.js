@@ -84,6 +84,8 @@ const SpawnMethods = {
     },
 
     resetPanel(panel) {
+        this.resetPanelInputHistoryNavigation(panel)
+
         if (panel.type === 'text-input') {
             panel.input      = ''
             panel.messages   = []

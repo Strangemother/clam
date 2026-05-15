@@ -102,6 +102,9 @@
             <textarea
                 v-model="panel._manualInput"
                 placeholder="Manual test input (Enter to speak and play)…"
+                @input="touchPanelInputHistory(panel, '_manualInput')"
+                @keydown.up="handlePanelInputHistoryKeydown(panel, '_manualInput', $event)"
+                @keydown.down="handlePanelInputHistoryKeydown(panel, '_manualInput', $event)"
                 @keydown.enter.exact.prevent="sendGradVoicePlayManual(panel)"
             ></textarea>
             <button @click="sendGradVoicePlayManual(panel)" :disabled="panel.state === 'pending'">Speak</button>

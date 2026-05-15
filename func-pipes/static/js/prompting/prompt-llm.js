@@ -325,6 +325,7 @@ const LLMMethods = {
     sendTextInput(panel) {
         const text = (panel.input || '').trim()
         if (!text) return
+        this.rememberPanelInput(panel, 'input', text)
         panel.input = ''
         panel.messages.push({ role: 'user', text })
         const sig = { text, meta: { role: 'user' } }
@@ -336,6 +337,7 @@ const LLMMethods = {
     sendLLMManual(panel) {
         const text = (panel._manualInput || '').trim()
         if (!text || panel.state === 'pending') return
+        this.rememberPanelInput(panel, '_manualInput', text)
         panel._manualInput = ''
         this._applyLLM(panel, text)
     },
