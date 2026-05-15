@@ -20,6 +20,12 @@ ENDPOINT_CONFIGS = {
             }
         },
     },
+    "dev-null": {
+        "label": "Dev Null",
+        "proxy": True,
+        "api_format": "openai",
+        "response_text": "Dev said... Urm okay.",
+    },
     "digital-ocean": {
         "label": "Digital Ocean Agent",
         "url": (
@@ -33,6 +39,38 @@ ENDPOINT_CONFIGS = {
         },
     },
 }
+
+
+def _mock_proxy_response(cfg):
+    """Return a canned assistant response in the configured wire format."""
+    text = str(cfg.get("response_text") or "Dev said... Urm okay.")
+    api_format = cfg.get("api_format", "lmstudio")
+
+    if api_format == "openai":
+        return {
+            "id": "dev-null",
+            "object": "chat.completion",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": text,
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+
+    return {
+        "output": [
+            {
+                "type": "message",
+                "content": text,
+            }
+        ],
+        "response_id": "dev-null",
+    }
 
 
 def _endpoint_base_url(cfg):
@@ -281,6 +319,9 @@ def proxy_request():
     payload = request.get_json(silent=True) or {}
     headers = dict(cfg.get("headers", {}))
     headers["Content-Type"] = "application/json"
+
+    if "response_text" in cfg:
+        return jsonify(_mock_proxy_response(cfg)), 200
 
     try:
         if cfg.get("load"):

@@ -102,7 +102,8 @@ const SignalMethods = {
             return
         }
 
-        // LLM: route 'in' pip → send to model; 'system' pip → update system prompt
+        // LLM: route 'in' pip → send to model; 'system' pip → update system prompt;
+        // 'reset' pip → reset the node like the panel reset button.
         if (panel.type === 'llm' && inPipIndex !== null) {
             const pip     = panel.pipsInbound.find(p => p.index === inPipIndex)
             const pipName = pip?.name ?? String(inPipIndex)
@@ -118,6 +119,8 @@ const SignalMethods = {
                 } else {
                     panel._pendingSystem = panel._systemOverride
                 }
+            } else if (pipName === 'reset') {
+                if (signal !== null) this.resetPanel(panel)
             } else {
                 // 'in' or any unnamed inbound — treat as a message to send
                 if (signal !== null) this._applyLLM(panel, signal.text ?? '', signal.meta)
@@ -170,6 +173,18 @@ const SignalMethods = {
             } else {
                 this._applyGradVoiceResult(panel, signal.text ?? '', signal.meta)
             }
+            return
+        }
+
+        // delay: queue signal, emit after delayMs (or hold if paused)
+        if (panel.type === 'wait') {
+            this._receiveWait(panel, signal, inPipIndex)
+            return
+        }
+
+        // delay: queue signal, emit after delayMs (or hold if paused)
+        if (panel.type === 'sync' && inPipIndex !== null) {
+            this._receiveSync(panel, signal, inPipIndex)
             return
         }
 
@@ -324,7 +339,11 @@ const SignalMethods = {
     // Re-emit last known output on all outbound pips — called after wiring changes.
     _repropagateAll() {
         this.panels.forEach(p => {
-            if (p.lastOutput !== undefined) {
+            if (p.lastOutputByPip && typeof p.lastOutputByPip === 'object') {
+                Object.entries(p.lastOutputByPip).forEach(([pipIndex, sig]) => {
+                    this._emitFromPip(p, Number(pipIndex), sig ?? null)
+                })
+            } else if (p.lastOutput !== undefined) {
                 p.pipsOutbound?.forEach(pip => {
                     const sig = p.lastOutput ?? null
                     this._emitFromPip(p, pip.index, sig)

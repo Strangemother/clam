@@ -12,6 +12,7 @@ const SpawnMethods = {
 
     _spawn(panel) {
         this.panels.push(panel)
+        if (panel.type === 'wait') this.armWaitTimer(panel)
         nextTick(() => {
             const el = this.$refs[`panel-${panel.id}`][0]
             stickAll(el)
@@ -35,6 +36,8 @@ const SpawnMethods = {
         if (preset.type === 'grad-voice-play') this._makeAndSpawn(makeGradVoicePlayPanel, id, preset)
         if (preset.type === 'text-display') this._makeAndSpawn(makeTextDisplayPanel, id, preset)
         if (preset.type === 'transform')    this._makeAndSpawn(makeTransformPanel,   id, preset)
+        if (preset.type === 'wait')         this._makeAndSpawn(makeWaitPanel,        id, preset)
+        if (preset.type === 'sync')         this._makeAndSpawn(makeSyncPanel,        id, preset)
         if (preset.type === 'delay')        this._makeAndSpawn(makeDelayPanel,       id, preset)
         if (preset.type === 'pyfunc')       this._makeAndSpawn(makePyFuncPanel,      id, preset)
         if (preset.type === 'event-input')  this.addEventInput(preset)
@@ -48,6 +51,8 @@ const SpawnMethods = {
     addGradVoicePlay() { const id = _uid + 1; this._makeAndSpawn(makeGradVoicePlayPanel, id) },
     addTextDisplay() { const id = _uid + 1; this._makeAndSpawn(makeTextDisplayPanel, id) },
     addTransform()   { const id = _uid + 1; this._makeAndSpawn(makeTransformPanel,   id) },
+    addWait()        { const id = _uid + 1; this._makeAndSpawn(makeWaitPanel,        id) },
+    addSync()        { const id = _uid + 1; this._makeAndSpawn(makeSyncPanel,        id) },
     addDelay()       { const id = _uid + 1; this._makeAndSpawn(makeDelayPanel,       id) },
     addPyFunc()      { const id = _uid + 1; this._makeAndSpawn(makePyFuncPanel,      id) },
 
@@ -74,6 +79,8 @@ const SpawnMethods = {
         if (p.type === 'grad-voice') this.stopGradVoice(p)
         if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
         if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)
+        if (p.type === 'wait') this.stopWait(p)
+        if (p.type === 'sync') this.stopSync(p)
         // Unmount event listeners
         if (p.type === 'event-input') this.unmountEventInput(p)
         // Emit null from all outbound pips so downstream nodes clear
@@ -165,6 +172,22 @@ const SpawnMethods = {
             panel.values   = {}
             panel.fnError  = null
             panel.state    = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+        }
+        if (panel.type === 'wait') {
+            this.stopWait(panel)
+            panel.lastReceivedText = ''
+            panel.lastReceivedAt   = ''
+            panel.lastTimeoutText  = ''
+            panel.lastTimeoutAt    = ''
+            panel.lastOutputByPip  = { 0: null, 1: null }
+            panel.state            = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+            this.armWaitTimer(panel)
+        }
+        if (panel.type === 'sync') {
+            this.emptySync(panel)
+            panel.lastOutput = null
             panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
         }
         if (panel.type === 'delay') {
