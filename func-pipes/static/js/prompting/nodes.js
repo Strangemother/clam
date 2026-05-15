@@ -170,6 +170,7 @@ function makeGradVoicePlayPanel(id, p = {}) {
         label:        p.label || 'Speak & Play',
         state:        'idle',
         voice:        p.voice || DEFAULT_GRAD_VOICE_VOICE,
+        lastText:     '',
         messages:     [],
         lastOutput:   null,
         lastError:    null,
