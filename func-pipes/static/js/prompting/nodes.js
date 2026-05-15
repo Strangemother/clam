@@ -227,6 +227,7 @@ function makeTextDisplayPanel(id, p = {}) {
         type:         'text-display',
         label:        p.label || 'Display',
         state:        'idle',
+        latestOnly:   Boolean(p.latestOnly),
         messages:     [],        // displayed history [{ role, text }]
         sources:      {},
         pipsInbound:  [{ label: id, index: 0, name: 'in'   }],

@@ -160,6 +160,11 @@ const PersistMethods = {
                     voice:    p.voice,
                     autoPlay: p.autoPlay,
                 }
+            } else if (p.type === 'text-display') {
+                config = {
+                    label:      p.label,
+                    latestOnly: p.latestOnly,
+                }
             } else if (p.type === 'transform') {
                 config = {
                     label:       p.label,
@@ -183,6 +188,10 @@ const PersistMethods = {
                 }
             } else {
                 config = { label: p.label }
+            }
+
+            if (p.flipped) {
+                config.flipped = true
             }
 
             return { id: p.id, type: p.type, title: p.title || p.label, config, pos }
@@ -230,6 +239,7 @@ const PersistMethods = {
             if (!factory) continue
             const panel = makePanel(factory(node.id, node.config || {}))
             if (node.title) panel.title = node.title
+            panel.flipped = Boolean(node.config?.flipped)
             this._spawn(panel)
 
             // Re-load prompt content if it was saved

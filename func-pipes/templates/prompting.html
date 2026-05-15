@@ -100,6 +100,7 @@
                 :class="[
                     'type-' + panel.type,
                     'state-' + panel.state,
+                    panel.flipped ? 'panel-flipped' : '',
                     panel._focusPinned ? 'focus-pinned' : '',
                     panel._focusRole ? 'focus-' + panel._focusRole : '',
                     focusPinState.active && !panel._focusPinned ? 'focus-dimmed' : '',

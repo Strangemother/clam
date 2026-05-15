@@ -6,6 +6,10 @@
 
 const SpawnMethods = {
 
+    togglePanelFlip(panel) {
+        panel.flipped = !panel.flipped
+    },
+
     _spawn(panel) {
         this.panels.push(panel)
         nextTick(() => {
