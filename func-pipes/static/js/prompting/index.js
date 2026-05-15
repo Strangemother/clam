@@ -75,6 +75,7 @@ createApp({
         ...SignalMethods,
         ...LLMMethods,
         ...GradVoiceMethods,
+        ...GradVoiceResultMethods,
         ...WiringMethods,
         ...PersistMethods,
         ...TransformMethods,

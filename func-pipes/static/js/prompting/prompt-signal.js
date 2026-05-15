@@ -74,6 +74,17 @@ const SignalMethods = {
             return
         }
 
+        if (panel.type === 'grad-voice-result') {
+            if (signal === null) {
+                this.stopGradVoiceResult(panel)
+                panel.lastOutput = null
+                this._emitFromNode(panel, null)
+            } else {
+                this._applyGradVoiceResult(panel, signal.text ?? '', signal.meta)
+            }
+            return
+        }
+
         // delay: queue signal, emit after delayMs (or hold if paused)
         if (panel.type === 'delay') {
             if (signal === null) {

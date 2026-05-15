@@ -159,6 +159,11 @@ const PersistMethods = {
                     eventName: p.eventName,
                     outputs:   p.pipsOutbound.map(pip => ({ name: pip.name, index: pip.index })),
                 }
+            } else if (p.type === 'grad-voice-result') {
+                config = {
+                    label:    p.label,
+                    autoPlay: p.autoPlay,
+                }
             } else {
                 config = { label: p.label }
             }
@@ -190,6 +195,7 @@ const PersistMethods = {
             'text-input':   makeTextInputPanel,
             'llm':          makeLLMPanel,
             'grad-voice':   makeGradVoicePanel,
+            'grad-voice-result': makeGradVoiceResultPanel,
             'text-display': makeTextDisplayPanel,
             'transform':    makeTransformPanel,
             'delay':        makeDelayPanel,
@@ -255,6 +261,8 @@ const PersistMethods = {
         }
         this.panels.forEach(p => {
             if (p.type === 'llm' && p._chat) p._chat.abort()
+            if (p.type === 'grad-voice') this.stopGradVoice(p)
+            if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
             if (p.type === 'event-input') this.unmountEventInput(p)
         })
         this.panels = []
