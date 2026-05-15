@@ -29,6 +29,10 @@
                 <button v-if="focusPinState.active && focusPinState.centerId === panel.id"
                         @click.stop="clearFocusedPanels()"
                         title="Restore focused nodes to their original positions">Unpin</button>
+                <button class="panel-btn-flip"
+                        :class="panel.flipped ? 'flip-active' : ''"
+                        @click="togglePanelFlip(panel)"
+                        :title="panel.flipped ? 'Restore default left/right layout' : 'Flip left/right layout'">⇆</button>
                 <button @click="resetPanel(panel)" title="Clear">↺</button>
                 <button @click="removePanel(i)">✕</button>
             </div>

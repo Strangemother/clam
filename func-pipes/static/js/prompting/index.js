@@ -16,7 +16,11 @@ let _uid = 0
 // ── panel factory ─────────────────────────────────────────────────────────────
 function makePanel(overrides = {}) {
     const id = ++_uid
-    return Object.assign({ id, title: overrides.label || `Node ${id}` }, overrides)
+    return Object.assign({
+        id,
+        title: overrides.label || `Node ${id}`,
+        flipped: false,
+    }, overrides)
 }
 
 // ── group catalogue helper ────────────────────────────────────────────────────
