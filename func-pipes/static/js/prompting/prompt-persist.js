@@ -143,6 +143,12 @@ const PersistMethods = {
                     promptTitle:  p.promptTitle || p.prompt?.title || null,
                     outputs:      p.pipsOutbound.map(pip => ({ name: pip.name, index: pip.index })),
                 }
+            } else if (p.type === 'audio-record') {
+                config = {
+                    label:      p.label,
+                    wsUrl:      p.wsUrl,
+                    filePrefix: p.filePrefix,
+                }
             } else if (p.type === 'grad-voice') {
                 config = {
                     label: p.label,
@@ -205,6 +211,7 @@ const PersistMethods = {
         const factoryMap = {
             'text-input':   makeTextInputPanel,
             'llm':          makeLLMPanel,
+            'audio-record': makeAudioRecordPanel,
             'grad-voice':   makeGradVoicePanel,
             'grad-voice-result': makeGradVoiceResultPanel,
             'grad-voice-play': makeGradVoicePlayPanel,
@@ -273,6 +280,7 @@ const PersistMethods = {
         }
         this.panels.forEach(p => {
             if (p.type === 'llm' && p._chat) p._chat.abort()
+            if (p.type === 'audio-record') this.cancelAudioRecord(p)
             if (p.type === 'grad-voice') this.stopGradVoice(p)
             if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
             if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)

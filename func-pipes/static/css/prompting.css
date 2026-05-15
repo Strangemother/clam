@@ -83,6 +83,7 @@ canvas { display: block; width: 100%; height: 100%; }
 
 .btn-text-input   { color: #aaffdd; border-color: #224433; }
 .btn-llm          { color: #cc88ff; border-color: #441166; }
+.btn-audio-record { color: #ffaaa0; border-color: #553022; }
 .btn-text-display { color: #ffcc88; border-color: #443311; }
 .btn-transform    { color: #88ccff; border-color: #112244; }
 .btn-delay        { color: #ffdd88; border-color: #443300; }
@@ -496,8 +497,40 @@ canvas { display: block; width: 100%; height: 100%; }
     border-bottom:  1px solid #1e1a3a;
 }
 .state-badge.pending { color: #cc88ff; }
+.state-badge.connecting,
+.state-badge.saving   { color: #88ccff; }
+.state-badge.recording { color: #ff8888; }
 .state-badge.error   { color: #ff5555; }
 .state-badge.idle    { color: #443355; }
+
+.panel.state-connecting { border-color: #88ccff66; }
+.panel.state-recording  { border-color: #ff888866; }
+.panel.state-saving     { border-color: #88ccff66; }
+
+.audio-record-actions {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+}
+
+.audio-record-btn {
+    color:        #ffaaa0;
+    border-color: #553022;
+}
+
+.audio-record-live {
+    font-size:  11px;
+    color:      #886666;
+}
+
+.audio-record-summary {
+    padding:     4px 8px 0;
+    font-size:   11px;
+    color:       #886666;
+    word-break:  break-word;
+}
 
 /* ── text-input node ── */
 

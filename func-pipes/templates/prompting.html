@@ -22,6 +22,7 @@
                 <span class="toolbar-label">Add</span>
                 <button class="btn-text-input"   @click="addTextInput">✎ Text Input</button>
                 <button class="btn-llm"          @click="addLLM">⬡ LLM</button>
+                <button class="btn-audio-record" @click="addAudioRecord">● Record</button>
                 <button class="btn-voice"        @click="addGradVoice">🔊 Voice</button>
                 <button class="btn-voice-result" @click="addGradVoiceResult">▷ Voice Result</button>
                 <button class="btn-voice-play"   @click="addGradVoicePlay">▶ Speak</button>
@@ -111,6 +112,7 @@
 
         {% include 'nodes/text-input.html' %}
         {% include 'nodes/llm.html' %}
+    {% include 'nodes/audio-record.html' %}
         {% include 'nodes/grad-voice.html' %}
         {% include 'nodes/grad-voice-result.html' %}
         {% include 'nodes/grad-voice-play.html' %}
@@ -152,6 +154,7 @@
 <script src="{{ url_for('static', filename='js/prompting/prompt-focus.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-signal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-llm.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-audio-record.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-result.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-play.js') }}"></script>
