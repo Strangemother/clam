@@ -10,6 +10,7 @@ Registers:
   GET  /prompting/prompts/       → lists prompt files as JSON
   GET  /prompting/prompts/<path> → returns parsed prompt content/meta
   POST /prompting/prompts/render → renders a Jinja2 prompt template
+    GET  /prompting/grad-voice/voices/ → lists known Grad Voice voices
     POST /prompting/grad-voice/    → sends text to the backend Grad Voice service
 
 PROMPTS_DIR defaults to v5_2/prompts/ relative to this file's parent,
@@ -182,6 +183,17 @@ GRAD_VOICE_DEFAULT_INPUTS = {
     'enable_pitch': False,
     'pitch_semitones': 0,
 }
+
+GRAD_VOICE_VOICES = [
+    {
+        'value': 'af_bella',
+        'label': 'Bella (af_bella)',
+    },
+    {
+        'value': 'bf_emma',
+        'label': 'Emma (bf_emma)',
+    },
+]
 
 # ── Blueprint ────────────────────────────────────────────────────────────────
 
@@ -804,7 +816,15 @@ def grad_voice_request():
     if not text.strip():
         return jsonify({'error': 'no text provided'}), 400
 
-    payload = _build_grad_voice_payload(text, body.get('options'))
+    options = dict(body.get('options') or {})
+    selected_voice = str(body.get('voice') or '').strip()
+    if selected_voice:
+        options['kokoro_voice'] = selected_voice
+    selected_voice = str(
+        options.get('kokoro_voice') or GRAD_VOICE_DEFAULT_INPUTS.get('kokoro_voice') or ''
+    ).strip()
+
+    payload = _build_grad_voice_payload(text, options)
 
     try:
         resp = _requests.post(
@@ -825,12 +845,22 @@ def grad_voice_request():
     response_body = {
         'ok': resp.ok,
         'event_id': event_id,
+        'voice': selected_voice,
         'response': data,
     }
     if not resp.ok:
         return jsonify(response_body), resp.status_code
 
     return jsonify(response_body), resp.status_code
+
+
+@prompting_bp.route('/grad-voice/voices/', strict_slashes=False)
+def grad_voice_voices():
+    """Return the configured voice catalogue for the Grad Voice node."""
+    return jsonify({
+        'default': GRAD_VOICE_DEFAULT_INPUTS.get('kokoro_voice'),
+        'voices': GRAD_VOICE_VOICES,
+    })
 
 
 @prompting_bp.route('/grad-voice/result/', strict_slashes=False, methods=['POST'])

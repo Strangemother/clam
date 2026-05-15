@@ -52,6 +52,8 @@ createApp({
             modelIds:           [],
             prompts:            [],
             fetching:           false,
+            gradVoiceVoices:    [],
+            fetchingGradVoiceVoices: false,
             // PyFunc toolbar state
             pyFunctions:        [],
             fetchingFunctions:  false,
@@ -61,6 +63,7 @@ createApp({
     async mounted() {
         await this.fetchEndpoints()
         await this.fetchPrompts()
+        await this.fetchGradVoiceVoices()
         await this.fetchFunctions()
         // Models must be fetched manually via the toolbar after setting the endpoint.
         // Prompting uses transform-based zoom so node contents scale without reflow.

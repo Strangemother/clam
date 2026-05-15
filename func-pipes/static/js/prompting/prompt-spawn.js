@@ -96,6 +96,7 @@ const SpawnMethods = {
             panel.lastError    = null
             panel.lastEventId  = ''
             panel.lastResponse = null
+            panel._voiceOverride = ''
             panel._manualInput = ''
             panel.state        = 'idle'
             panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))

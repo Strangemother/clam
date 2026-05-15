@@ -23,8 +23,7 @@ const SignalMethods = {
                    _emitFromPip so named-pip nodes can identify which
                    channel changed).
 
-    transform and llm nodes route by named pip; grad-voice dispatches
-    directly on receipt; other nodes use
+        transform, llm, and grad-voice nodes route by named pip; other nodes use
       _combineSources first-wins logic.
     */
     receive(panel, signal, sourceId = null, inPipIndex = null) {
@@ -62,14 +61,21 @@ const SignalMethods = {
             return
         }
 
-        // Grad Voice: send inbound text to the backend TTS proxy.
-        if (panel.type === 'grad-voice') {
-            if (signal === null) {
-                this.stopGradVoice(panel)
-                panel.lastOutput = null
-                this._emitFromNode(panel, null)
+        // Grad Voice: route 'voice' pip to the selected voice; 'in' sends text.
+        if (panel.type === 'grad-voice' && inPipIndex !== null) {
+            const pip = panel.pipsInbound.find(p => p.index === inPipIndex)
+            const pipName = pip?.name ?? String(inPipIndex)
+
+            if (pipName === 'voice') {
+                this.setGradVoiceVoiceOverride(panel, signal?.text ?? '')
             } else {
-                this._applyGradVoice(panel, signal.text ?? '', signal.meta)
+                if (signal === null) {
+                    this.stopGradVoice(panel)
+                    panel.lastOutput = null
+                    this._emitFromNode(panel, null)
+                } else {
+                    this._applyGradVoice(panel, signal.text ?? '', signal.meta)
+                }
             }
             return
         }
