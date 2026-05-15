@@ -10,12 +10,14 @@ Registers:
   GET  /prompting/prompts/       → lists prompt files as JSON
   GET  /prompting/prompts/<path> → returns parsed prompt content/meta
   POST /prompting/prompts/render → renders a Jinja2 prompt template
+    POST /prompting/grad-voice/    → sends text to the backend Grad Voice service
 
 PROMPTS_DIR defaults to v5_2/prompts/ relative to this file's parent,
 but can be overridden with the PROMPTS_DIR environment variable.
 """
 
 import os
+import json
 import pathlib
 import inspect
 import importlib
@@ -72,6 +74,112 @@ ENDPOINT_CONFIGS = {
             'Authorization': 'Bearer qlKu-6agODOFr0s8vbYizlulxIN71ypG',
         },
     },
+}
+
+# ── grad voice configuration ────────────────────────────────────────────────
+
+_DEFAULT_GRAD_VOICE_URL = 'http://192.168.50.60:42004/gradio_api/call/generate_unified_tts'
+GRAD_VOICE_URL = os.environ.get('GRAD_VOICE_URL', _DEFAULT_GRAD_VOICE_URL)
+GRAD_VOICE_HEADERS = {
+    'Content-Type': 'application/json',
+    'Accept': '*/*',
+    'Cache-Control': 'no-cache',
+}
+
+# Order matters here: the Gradio API expects the inputs as a positional array.
+GRAD_VOICE_DEFAULT_INPUTS = {
+    'text_input': 'Hello from prompting.',
+    'tts_engine': 'Kokoro TTS',
+    'audio_format': 'wav',
+    'chatterbox_ref_audio': None,
+    'chatterbox_exaggeration': 0.5,
+    'chatterbox_temperature': 0.8,
+    'chatterbox_cfg_weight': 0.5,
+    'chatterbox_chunk_size': 300,
+    'chatterbox_seed': 0,
+    'chatterbox_mtl_ref_audio': None,
+    'chatterbox_mtl_language': 'en',
+    'chatterbox_mtl_exaggeration': 0.5,
+    'chatterbox_mtl_temperature': 0.8,
+    'chatterbox_mtl_cfg_weight': 0.5,
+    'chatterbox_mtl_repetition_penalty': 2,
+    'chatterbox_mtl_min_p': 0.05,
+    'chatterbox_mtl_top_p': 1,
+    'chatterbox_mtl_chunk_size': 300,
+    'chatterbox_mtl_seed': 0,
+    'kokoro_voice': 'af_bella',
+    'kokoro_speed': 1,
+    'fish_ref_audio': None,
+    'fish_ref_text': '',
+    'fish_temperature': 0.8,
+    'fish_top_p': 0.8,
+    'fish_repetition_penalty': 1.1,
+    'fish_max_tokens': 1024,
+    'fish_seed': 0,
+    'indextts_ref_audio': None,
+    'indextts_temperature': 0.8,
+    'indextts_seed': 0,
+    'indextts2_ref_audio': None,
+    'indextts2_emotion_mode': 'audio_reference',
+    'indextts2_emotion_audio': None,
+    'indextts2_emotion_description': '',
+    'indextts2_emo_alpha': 1,
+    'indextts2_happy': 0,
+    'indextts2_angry': 0,
+    'indextts2_sad': 0,
+    'indextts2_afraid': 0,
+    'indextts2_disgusted': 0,
+    'indextts2_melancholic': 0,
+    'indextts2_surprised': 0,
+    'indextts2_calm': 1,
+    'indextts2_temperature': 0.8,
+    'indextts2_top_p': 0.9,
+    'indextts2_top_k': 50,
+    'indextts2_repetition_penalty': 1.1,
+    'indextts2_max_mel_tokens': 1500,
+    'indextts2_seed': 0,
+    'indextts2_use_random': False,
+    'f5_ref_audio': None,
+    'f5_ref_text': '',
+    'f5_speed': 1,
+    'f5_cross_fade': 0.15,
+    'f5_remove_silence': False,
+    'f5_seed': 0,
+    'higgs_ref_audio': None,
+    'higgs_ref_text': '',
+    'higgs_voice_preset': 'EMPTY',
+    'higgs_system_prompt': '',
+    'higgs_temperature': 1,
+    'higgs_top_p': 0.95,
+    'higgs_top_k': 50,
+    'higgs_max_tokens': 1024,
+    'higgs_ras_win_len': 7,
+    'higgs_ras_win_max_num_repeat': 2,
+    'kitten_voice': 'expr-voice-2-f',
+    'voxcpm_ref_audio': None,
+    'voxcpm_ref_text': '',
+    'voxcpm_cfg_value': 2,
+    'voxcpm_inference_timesteps': 10,
+    'voxcpm_normalize': True,
+    'voxcpm_denoise': True,
+    'voxcpm_retry_badcase': True,
+    'voxcpm_retry_badcase_max_times': 3,
+    'voxcpm_retry_badcase_ratio_threshold': 6,
+    'voxcpm_seed': -1,
+    'gain_db': 0,
+    'enable_eq': False,
+    'eq_bass': 0,
+    'eq_mid': 0,
+    'eq_treble': 0,
+    'enable_reverb': False,
+    'reverb_room': 0.3,
+    'reverb_damping': 0.5,
+    'reverb_wet': 0.3,
+    'enable_echo': False,
+    'echo_delay': 0.3,
+    'echo_decay': 0.5,
+    'enable_pitch': False,
+    'pitch_semitones': 0,
 }
 
 # ── Blueprint ────────────────────────────────────────────────────────────────
@@ -270,7 +378,7 @@ def _lmstudio_model_is_loaded(cfg: dict, model_name: str, headers: dict) -> bool
 def _lmstudio_load_model(cfg: dict, model_name: str, load_config: dict, headers: dict):
     """Explicitly load a model into LM Studio with a caller-supplied config."""
     base_url = _endpoint_base_url(cfg)
-    load_url = f'{base_url}/api/v1/model/load'
+    load_url = f'{base_url}/api/v1/models/load'
     payload = {'model': model_name, **dict(load_config or {})}
     payload.setdefault('echo_load_config', True)
     request_headers = dict(headers)
@@ -299,6 +407,19 @@ def _ensure_lmstudio_model_loaded(cfg: dict, payload: dict, headers: dict):
         pass
 
     _lmstudio_load_model(cfg, model_name, load_config, headers)
+
+
+def _build_grad_voice_payload(text: str, overrides=None) -> dict:
+    """Build the positional Gradio request payload for the Grad Voice service."""
+    inputs = dict(GRAD_VOICE_DEFAULT_INPUTS)
+    inputs['text_input'] = text
+
+    if isinstance(overrides, dict):
+        for key, value in overrides.items():
+            if key in inputs:
+                inputs[key] = value
+
+    return {'data': list(inputs.values())}
 
 
 # ── routes ───────────────────────────────────────────────────────────────────
@@ -566,3 +687,42 @@ def proxy_request():
         return jsonify({'error': f'invalid upstream response: {e}'}), 502
     except _requests.RequestException as e:
         return jsonify({'error': str(e)}), 502
+
+
+@prompting_bp.route('/grad-voice/', strict_slashes=False, methods=['POST'])
+def grad_voice_request():
+    """Send text to the configured Grad Voice Gradio endpoint."""
+    body = request.get_json(silent=True) or {}
+    raw_text = body.get('text')
+    text = '' if raw_text is None else str(raw_text)
+
+    if not text.strip():
+        return jsonify({'error': 'no text provided'}), 400
+
+    payload = _build_grad_voice_payload(text, body.get('options'))
+
+    try:
+        resp = _requests.post(
+            GRAD_VOICE_URL,
+            data=json.dumps(payload),
+            headers=GRAD_VOICE_HEADERS,
+            timeout=120,
+        )
+        data = resp.json()
+    except _requests.Timeout:
+        return jsonify({'error': 'upstream request timed out'}), 504
+    except ValueError as e:
+        return jsonify({'error': f'invalid upstream response: {e}'}), 502
+    except _requests.RequestException as e:
+        return jsonify({'error': str(e)}), 502
+
+    event_id = data.get('event_id') if isinstance(data, dict) else None
+    response_body = {
+        'ok': resp.ok,
+        'event_id': event_id,
+        'response': data,
+    }
+    if not resp.ok:
+        return jsonify(response_body), resp.status_code
+
+    return jsonify(response_body), resp.status_code

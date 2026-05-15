@@ -25,6 +25,7 @@ const SpawnMethods = {
         const id = _uid + 1
         if (preset.type === 'text-input')   this._makeAndSpawn(makeTextInputPanel,   id, preset)
         if (preset.type === 'llm')          this._makeAndSpawn(makeLLMPanel,         id, preset)
+        if (preset.type === 'grad-voice')   this._makeAndSpawn(makeGradVoicePanel,   id, preset)
         if (preset.type === 'text-display') this._makeAndSpawn(makeTextDisplayPanel, id, preset)
         if (preset.type === 'transform')    this._makeAndSpawn(makeTransformPanel,   id, preset)
         if (preset.type === 'delay')        this._makeAndSpawn(makeDelayPanel,       id, preset)
@@ -34,6 +35,7 @@ const SpawnMethods = {
 
     addTextInput()   { const id = _uid + 1; this._makeAndSpawn(makeTextInputPanel,   id) },
     addLLM()         { const id = _uid + 1; this._makeAndSpawn(makeLLMPanel,         id) },
+    addGradVoice()   { const id = _uid + 1; this._makeAndSpawn(makeGradVoicePanel,   id) },
     addTextDisplay() { const id = _uid + 1; this._makeAndSpawn(makeTextDisplayPanel, id) },
     addTransform()   { const id = _uid + 1; this._makeAndSpawn(makeTransformPanel,   id) },
     addDelay()       { const id = _uid + 1; this._makeAndSpawn(makeDelayPanel,       id) },
@@ -58,6 +60,7 @@ const SpawnMethods = {
         }
         // Abort any in-flight LLM request
         if (p.type === 'llm' && p._chat) p._chat.abort()
+        if (p.type === 'grad-voice') this.stopGradVoice(p)
         // Unmount event listeners
         if (p.type === 'event-input') this.unmountEventInput(p)
         // Emit null from all outbound pips so downstream nodes clear
@@ -81,6 +84,17 @@ const SpawnMethods = {
             panel.messages   = []
             panel.lastOutput = null
             panel.state      = 'idle'
+            panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
+        }
+        if (panel.type === 'grad-voice') {
+            this.stopGradVoice(panel)
+            panel.messages     = []
+            panel.lastOutput   = null
+            panel.lastError    = null
+            panel.lastEventId  = ''
+            panel.lastResponse = null
+            panel._manualInput = ''
+            panel.state        = 'idle'
             panel.pipsOutbound.forEach(pip => this._emitFromPip(panel, pip.index, null))
         }
         if (panel.type === 'text-display') {

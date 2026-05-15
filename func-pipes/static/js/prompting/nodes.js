@@ -16,6 +16,8 @@
     llm          — calls an LLM via the Chat class.
                    Named inbound pips: 'in' (message), 'system' (prompt override).
                    Named outbound pip: 'out' (response text).
+        grad-voice   — calls the backend Grad Voice proxy with inbound text.
+                                     Named inbound pip: 'in'. Named outbound pip: 'out' (event id).
     text-display — sink. Renders incoming text as a message log.
                    Has a 'pass' outbound pip for chaining.
     transform    — user-defined JS function applied to text signals.
@@ -32,6 +34,7 @@ const DEFAULT_MODEL        = ''
 const COMPONENT_CATALOG = [
     { key: 'text-input',   group: 'Input',   type: 'text-input',   label: 'Text Input'   },
     { key: 'llm',          group: 'LLM',     type: 'llm',          label: 'LLM'          },
+    { key: 'grad-voice',   group: 'Audio',   type: 'grad-voice',   label: 'Grad Voice'   },
     { key: 'text-display', group: 'Display', type: 'text-display', label: 'Text Display' },
     { key: 'transform',    group: 'Process', type: 'transform',    label: 'Transform'    },
 
@@ -109,6 +112,23 @@ function makeLLMPanel(id, p = {}) {
             index: output.index,
             name: output.name,
         })),
+    }
+}
+
+function makeGradVoicePanel(id, p = {}) {
+    return {
+        type:         'grad-voice',
+        label:        p.label || 'Grad Voice',
+        state:        'idle',
+        messages:     [],
+        lastOutput:   null,
+        lastError:    null,
+        lastEventId:  '',
+        lastResponse: null,
+        _manualInput: '',
+        _controller:  null,
+        pipsInbound:  [{ label: id, index: 0, name: 'in' }],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }
 }
 

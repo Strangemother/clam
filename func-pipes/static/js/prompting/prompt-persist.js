@@ -189,6 +189,7 @@ const PersistMethods = {
         const factoryMap = {
             'text-input':   makeTextInputPanel,
             'llm':          makeLLMPanel,
+            'grad-voice':   makeGradVoicePanel,
             'text-display': makeTextDisplayPanel,
             'transform':    makeTransformPanel,
             'delay':        makeDelayPanel,
