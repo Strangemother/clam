@@ -143,6 +143,11 @@ const PersistMethods = {
                     promptTitle:  p.promptTitle || p.prompt?.title || null,
                     outputs:      p.pipsOutbound.map(pip => ({ name: pip.name, index: pip.index })),
                 }
+            } else if (p.type === 'grad-voice') {
+                config = {
+                    label: p.label,
+                    voice: p.voice,
+                }
             } else if (p.type === 'transform') {
                 config = {
                     label:       p.label,

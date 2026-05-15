@@ -41,6 +41,23 @@
         <div v-if="panel.lastEventId" class="pyfunc-result">event_id: {{ panel.lastEventId }}</div>
         <div v-if="panel.lastError" class="pyfunc-error">⚠ {{ panel.lastError }}</div>
 
+        <div class="field-row" style="margin-bottom:6px">
+            <label>Voice</label>
+            <select v-model="panel.voice">
+                <option v-if="panel.voice && !gradVoiceVoices.some(v => v.value === panel.voice)"
+                        :value="panel.voice">
+                    {{ panel.voice }}
+                </option>
+                <option v-for="voice in gradVoiceVoices" :key="voice.value" :value="voice.value">
+                    {{ voice.label }}
+                </option>
+            </select>
+        </div>
+
+        <div v-if="panel._voiceOverride" class="prompt-description" style="margin-bottom:6px">
+            pip override: {{ panel._voiceOverride }}
+        </div>
+
         <div class="messages" :ref="'msgs-' + panel.id">
             <div v-if="!panel.messages.length" class="display-null">— no request yet —</div>
             <div v-for="(m, j) in panel.messages" :key="j"

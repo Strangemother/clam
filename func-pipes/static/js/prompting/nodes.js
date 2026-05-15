@@ -30,6 +30,7 @@ const PROMPTING_API_BASE   = '/prompting'
 const DEFAULT_ENDPOINT     = 'http://192.168.50.60:1234/api/v1/chat/'
 const DEFAULT_ENDPOINT_KEY = 'lmstudio'   // must match a key in ENDPOINT_CONFIGS (prompting.py)
 const DEFAULT_MODEL        = ''
+const DEFAULT_GRAD_VOICE_VOICE = 'af_bella'
 
 // ── component catalogue ──────────────────────────────────────────────────────
 
@@ -123,14 +124,19 @@ function makeGradVoicePanel(id, p = {}) {
         type:         'grad-voice',
         label:        p.label || 'Grad Voice',
         state:        'idle',
+        voice:        p.voice || DEFAULT_GRAD_VOICE_VOICE,
         messages:     [],
         lastOutput:   null,
         lastError:    null,
         lastEventId:  '',
         lastResponse: null,
+        _voiceOverride: '',
         _manualInput: '',
         _controller:  null,
-        pipsInbound:  [{ label: id, index: 0, name: 'in' }],
+        pipsInbound:  [
+            { label: id, index: 0, name: 'in' },
+            { label: id, index: 1, name: 'voice' },
+        ],
         pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }
 }
