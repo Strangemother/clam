@@ -24,7 +24,11 @@ Minimal dependencies.
 
 Files:
 
-- `app.py` - one-page Flask UI + `/embed` and `/request` endpoints
+- `app.py` - minimal Flask bootstrap only
+- `routes.py` - Flask endpoints and request handling
+- `embed_tool.py` - SQLite-AI loading, storage, and similarity lookup
+- `flask_assets/templates/index.html` - page template
+- `flask_assets/static/app.css` - page styles
 - `requirements.txt` - minimal install list
 
 Run:
@@ -34,15 +38,15 @@ cd /workspaces/clam/text-embed-tool
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export SQLITE_AI_MODEL_PATH=/absolute/path/to/your-embedding-model.gguf
 python app.py
 ```
 
 Notes:
 
+- Set `MODEL_PATH` near the top of `app.py`.
 - SQLite-AI is loaded as a SQLite extension in Python; this PoC exposes simple Flask endpoints around it.
 - The server binds to `0.0.0.0`, so you can hit it from another machine.
-- Stored data goes into `knowledge.db` in this folder.
+- Flask files live under `flask_assets/`; stored data goes into `embed_tool_assets/knowledge.db`.
 
 Quick JSON test:
 
