@@ -24,11 +24,10 @@ Minimal dependencies.
 
 Files:
 
-- `app.py` - minimal Flask bootstrap only
-- `routes.py` - Flask endpoints and request handling
+- `app.py` - minimal Flask UI with one route and one handoff function
 - `embed_tool.py` - SQLite-AI loading, storage, and similarity lookup
-- `flask_assets/templates/index.html` - page template
-- `flask_assets/static/app.css` - page styles
+- `templates/index.html` - page template
+- `static/app.css` - page styles
 - `requirements.txt` - minimal install list
 
 Run:
