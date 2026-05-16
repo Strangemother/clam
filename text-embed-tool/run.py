@@ -8,6 +8,8 @@ from embed_tool import Embed
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "embed_tool_assets", "run_example.db")
 MIN_SCORE = 0.95
+EMBED_PREFIX = "memory: "
+RETRIEVE_PREFIX = "query: "
 
 INITIAL_SENTENCES = [
     "The bakery opens early for the breakfast crowd.",
@@ -42,6 +44,8 @@ embed = Embed(
     sqlite_ai_package="sqliteai.binaries.cpu",
     embed_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
     retrieve_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
+    embed_prefix=EMBED_PREFIX,
+    retrieve_prefix=RETRIEVE_PREFIX,
 )
 
 embedded_ids = []

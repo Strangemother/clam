@@ -16,6 +16,8 @@ class Embed:
         sqlite_ai_package: str,
         embed_context: str,
         retrieve_context: str,
+        embed_prefix: str = "",
+        retrieve_prefix: str = "",
     ):
         if not db_path:
             raise ValueError("db_path is required")
@@ -33,6 +35,8 @@ class Embed:
         self.sqlite_ai_package = sqlite_ai_package
         self.embed_context = embed_context
         self.retrieve_context = retrieve_context
+        self.embed_prefix = embed_prefix
+        self.retrieve_prefix = retrieve_prefix
         self.context_created = False
         self.connection = self._connect()
         self._init_schema()
@@ -124,7 +128,7 @@ class Embed:
         if existing is not None:
             return int(existing["id"])
 
-        embedding = self._embedding(clean_text, self.embed_context)
+        embedding = self._embedding(f"{self.embed_prefix}{clean_text}", self.embed_context)
         cursor = self.connection.execute(
             "INSERT INTO entries (content, embedding_json, crc) VALUES (?, ?, ?)",
             (clean_text, json.dumps(embedding), crc),
@@ -144,7 +148,10 @@ class Embed:
         if top_k < 1:
             raise ValueError("top_k must be at least 1")
 
-        query_embedding = self._embedding(clean_text, self.retrieve_context)
+        query_embedding = self._embedding(
+            f"{self.retrieve_prefix}{clean_text}",
+            self.retrieve_context,
+        )
         rows = self.connection.execute(
             "SELECT id, content, embedding_json, crc FROM entries ORDER BY id ASC"
         ).fetchall()

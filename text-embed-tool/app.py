@@ -12,6 +12,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "embed_tool_assets", "run_example.db")
 MIN_SCORE = 0.6
 TOP_K = 5
+EMBED_PREFIX = "memory: "
+RETRIEVE_PREFIX = "query: "
 
 embed = Embed(
     db_path=DB_PATH,
@@ -19,6 +21,8 @@ embed = Embed(
     sqlite_ai_package="sqliteai.binaries.cpu",
     embed_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
     retrieve_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
+    embed_prefix=EMBED_PREFIX,
+    retrieve_prefix=RETRIEVE_PREFIX,
 )
 
 app = Flask(__name__)
