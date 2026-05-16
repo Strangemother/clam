@@ -116,8 +116,15 @@ class Embed:
         if not clean_text:
             raise ValueError("text is required")
 
-        embedding = self._embedding(clean_text, self.embed_context)
         crc = self._crc(clean_text)
+        existing = self.connection.execute(
+            "SELECT id FROM entries WHERE crc = ? AND content = ? LIMIT 1",
+            (crc, clean_text),
+        ).fetchone()
+        if existing is not None:
+            return int(existing["id"])
+
+        embedding = self._embedding(clean_text, self.embed_context)
         cursor = self.connection.execute(
             "INSERT INTO entries (content, embedding_json, crc) VALUES (?, ?, ?)",
             (clean_text, json.dumps(embedding), crc),

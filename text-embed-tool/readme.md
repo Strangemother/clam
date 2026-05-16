@@ -3,6 +3,9 @@ Single-class version.
 Files:
 
 - `embed_tool.py` - the only code file; contains class `Embed`
+- `app.py` - minimal Flask app using the same settings as `run.py`
+- `templates/index.html` - Flask template
+- `static/app.css` - stylesheet
 - `run.py` - minimal example of loading and calling `Embed`
 - `requirements.txt` - minimal install list
 
@@ -13,6 +16,13 @@ cd /workspaces/clam/text-embed-tool
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+Run Flask:
+
+```bash
+cd /workspaces/clam/text-embed-tool
+python app.py
 ```
 
 Usage:
