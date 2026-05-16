@@ -118,7 +118,7 @@ class Embed:
         self.connection.commit()
         return int(cursor.lastrowid)
 
-    def retrieve(self, text: str) -> dict[str, object] | None:
+    def retrieve(self, text: str, min_score: float | None = None) -> dict[str, object] | None:
         clean_text = text.strip()
         if not clean_text:
             raise ValueError("text is required")
@@ -144,5 +144,11 @@ class Embed:
                     "text": row["content"],
                     "score": round(score, 6),
                 }
+
+        if best_match is None:
+            return None
+
+        if min_score is not None and best_score < min_score:
+            return None
 
         return best_match
