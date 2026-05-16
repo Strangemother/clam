@@ -132,18 +132,24 @@ class Embed:
         self.connection.commit()
         return int(cursor.lastrowid)
 
-    def retrieve(self, text: str, min_score: float | None = None) -> dict[str, object] | None:
+    def retrieve_many(
+        self,
+        text: str,
+        min_score: float | None = None,
+        top_k: int = 5,
+    ) -> list[dict[str, object]]:
         clean_text = text.strip()
         if not clean_text:
             raise ValueError("text is required")
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
 
         query_embedding = self._embedding(clean_text, self.retrieve_context)
         rows = self.connection.execute(
             "SELECT id, content, embedding_json, crc FROM entries ORDER BY id ASC"
         ).fetchall()
 
-        best_match = None
-        best_score = float("-inf")
+        matches = []
 
         for row in rows:
             stored_embedding = [float(value) for value in json.loads(row["embedding_json"])]
@@ -151,19 +157,23 @@ class Embed:
                 continue
 
             score = self._cosine_similarity(query_embedding, stored_embedding)
-            if score > best_score:
-                best_score = score
-                best_match = {
+            if min_score is not None and score < min_score:
+                continue
+
+            matches.append(
+                {
                     "id": row["id"],
                     "text": row["content"],
                     "crc": row["crc"],
                     "score": round(score, 6),
                 }
+            )
 
-        if best_match is None:
+        matches.sort(key=lambda item: item["score"], reverse=True)
+        return matches[:top_k]
+
+    def retrieve(self, text: str, min_score: float | None = None) -> dict[str, object] | None:
+        matches = self.retrieve_many(text, min_score=min_score, top_k=1)
+        if not matches:
             return None
-
-        if min_score is not None and best_score < min_score:
-            return None
-
-        return best_match
+        return matches[0]
