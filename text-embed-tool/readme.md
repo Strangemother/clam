@@ -1,61 +1,49 @@
-goal:
-
-A simple UI to read and write text to the vector DB. The result should be a simple UI that allows users to input text.
-A user can "embed" or "request". On "embed", the text will be embedded and stored in the vector DB. 
-On "request", the result will be the most similar text in the vector DB - as actual text, not the embedding vector.
-
-The result text will be stored vector knowledge, and can be given in a prompt as additional context to the LLM.
-
-Using the SQLite AI. Python version
-
-- Tool: https://github.com/sqliteai/sqlite-ai
-- Python: https://github.com/sqliteai/sqlite-ai/blob/main/packages/python/README.md
-- API: https://github.com/sqliteai/sqlite-ai/blob/main/API.md
-
-Build:
-
-1. A flask UI
-2. one page
-3. the sqlite AI.
-
-Minimal dependencies.
-
-## Minimal PoC
+Single-class version.
 
 Files:
 
-- `app.py` - minimal Flask UI with one route and one handoff function
-- `embed_tool.py` - SQLite-AI loading, storage, and similarity lookup
-- `templates/index.html` - page template
-- `static/app.css` - page styles
+- `embed_tool.py` - the only code file; contains class `Embed`
+- `run.py` - minimal example of loading and calling `Embed`
 - `requirements.txt` - minimal install list
 
-Run:
+Install:
 
 ```bash
 cd /workspaces/clam/text-embed-tool
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python app.py
+```
+
+Usage:
+
+```python
+from embed_tool import Embed
+
+embed = Embed(
+	db_path="embed_tool_assets/knowledge.db",
+	model_path="/absolute/path/to/model.gguf",
+	sqlite_ai_package="sqliteai.binaries.cpu",
+	embed_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
+	retrieve_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
+)
+
+entry_id = embed.embed("Cats like warm windows.")
+match = embed.retrieve("Tell me about cats.")
+print(entry_id)
+print(match)
+```
+
+Run example:
+
+```bash
+cd /workspaces/clam/text-embed-tool
+python run.py
 ```
 
 Notes:
 
-- Set `MODEL_PATH` near the top of `app.py`.
-- SQLite-AI is loaded as a SQLite extension in Python; this PoC exposes simple Flask endpoints around it.
-- The server binds to `0.0.0.0`, so you can hit it from another machine.
-- Flask files live under `flask_assets/`; stored data goes into `embed_tool_assets/knowledge.db`.
-
-Quick JSON test:
-
-```bash
-curl -X POST http://YOUR_HOST:5000/embed \
-	-H 'Content-Type: application/json' \
-	-d '{"text":"Cats like warm windows."}'
-
-curl -X POST http://YOUR_HOST:5000/request \
-	-H 'Content-Type: application/json' \
-	-d '{"text":"Tell me about cats."}'
-```
+- There is no Flask code left.
+- The constructor now requires the context strings for `llm_context_create_embedding(...)`.
+- If your model needs a different `embedding_type`, set it in both context strings.
 
