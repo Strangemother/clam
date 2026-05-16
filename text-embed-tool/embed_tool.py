@@ -5,6 +5,7 @@ import json
 import math
 import os
 import sqlite3
+import zlib
 
 
 class Embed:
@@ -57,10 +58,12 @@ class Embed:
             CREATE TABLE IF NOT EXISTS entries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 content TEXT NOT NULL,
-                embedding_json TEXT NOT NULL
+                embedding_json TEXT NOT NULL,
+                crc INTEGER NOT NULL
             )
             """
         )
+        
         self.connection.commit()
 
     def _set_context(self, context_settings: str) -> None:
@@ -105,15 +108,19 @@ class Embed:
             return 0.0
         return dot / (left_norm * right_norm)
 
+    def _crc(self, text: str) -> int:
+        return zlib.crc32(text.encode("utf-8")) & 0xFFFFFFFF
+
     def embed(self, text: str) -> int:
         clean_text = text.strip()
         if not clean_text:
             raise ValueError("text is required")
 
         embedding = self._embedding(clean_text, self.embed_context)
+        crc = self._crc(clean_text)
         cursor = self.connection.execute(
-            "INSERT INTO entries (content, embedding_json) VALUES (?, ?)",
-            (clean_text, json.dumps(embedding)),
+            "INSERT INTO entries (content, embedding_json, crc) VALUES (?, ?, ?)",
+            (clean_text, json.dumps(embedding), crc),
         )
         self.connection.commit()
         return int(cursor.lastrowid)
@@ -125,7 +132,7 @@ class Embed:
 
         query_embedding = self._embedding(clean_text, self.retrieve_context)
         rows = self.connection.execute(
-            "SELECT id, content, embedding_json FROM entries ORDER BY id ASC"
+            "SELECT id, content, embedding_json, crc FROM entries ORDER BY id ASC"
         ).fetchall()
 
         best_match = None
@@ -142,6 +149,7 @@ class Embed:
                 best_match = {
                     "id": row["id"],
                     "text": row["content"],
+                    "crc": row["crc"],
                     "score": round(score, 6),
                 }
 
