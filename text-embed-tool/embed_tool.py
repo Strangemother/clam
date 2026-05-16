@@ -4,8 +4,73 @@ import importlib.resources
 import json
 import math
 import os
+import re
 import sqlite3
 import zlib
+
+
+STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "about",
+    "as",
+    "at",
+    "be",
+    "for",
+    "from",
+    "how",
+    "i",
+    "in",
+    "is",
+    "it",
+    "me",
+    "my",
+    "of",
+    "on",
+    "or",
+    "please",
+    "tell",
+    "that",
+    "the",
+    "this",
+    "to",
+    "what",
+    "with",
+}
+
+
+def _tokens(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _lexical_score(query_text: str, content_text: str) -> float:
+    query_lower = query_text.lower().strip()
+    content_lower = content_text.lower().strip()
+
+    if not query_lower or not content_lower:
+        return 0.0
+
+    if query_lower == content_lower:
+        return 1.0
+
+    if query_lower in content_lower:
+        return 0.98
+
+    query_tokens = [token for token in _tokens(query_text) if token not in STOPWORDS]
+    if not query_tokens:
+        query_tokens = _tokens(query_text)
+
+    if not query_tokens:
+        return 0.0
+
+    content_tokens = set(_tokens(content_text))
+    shared = len(set(query_tokens) & content_tokens)
+    if shared == 0:
+        return 0.0
+
+    return shared / len(set(query_tokens))
 
 
 class Embed:
@@ -163,7 +228,10 @@ class Embed:
             if len(stored_embedding) != len(query_embedding):
                 continue
 
-            score = self._cosine_similarity(query_embedding, stored_embedding)
+            vector_score = self._cosine_similarity(query_embedding, stored_embedding)
+            lexical_score = _lexical_score(clean_text, row["content"])
+            score = max(vector_score, lexical_score)
+
             if min_score is not None and score < min_score:
                 continue
 
@@ -172,6 +240,8 @@ class Embed:
                     "id": row["id"],
                     "text": row["content"],
                     "crc": row["crc"],
+                    "vector_score": round(vector_score, 6),
+                    "lexical_score": round(lexical_score, 6),
                     "score": round(score, 6),
                 }
             )
