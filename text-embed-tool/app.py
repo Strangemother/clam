@@ -10,7 +10,7 @@ from embed_tool import Embed
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "embed_tool_assets", "run_example.db")
-MIN_SCORE = 0.95
+MIN_SCORE = 0.6
 
 embed = Embed(
     db_path=DB_PATH,
