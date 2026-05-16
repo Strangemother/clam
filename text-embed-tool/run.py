@@ -40,7 +40,9 @@ FAIL_QUERY = "Young puppies learn best with short, calm training sessions."
 
 embed = Embed(
     db_path=DB_PATH,
-    model_path="C:/Users/jay/.lmstudio/models/jinaai/jina-embeddings-v5-text-small-retrieval/v5-small-retrieval-Q8_0.gguf",
+    #model_path="C:/Users/jay/.lmstudio/models/jinaai/jina-embeddings-v5-text-small-retrieval/v5-small-retrieval-Q8_0.gguf",
+    model_path="C:/Users/jay/.lmstudio/models/Abiray/zembed-1-Q4_K_M-GGUF/zembed-1-Q4_K_M-GGUF.gguf",
+    
     sqlite_ai_package="sqliteai.binaries.cpu",
     embed_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
     retrieve_context="embedding_type=FLOAT32,normalize_embedding=1,pooling_type=mean",
