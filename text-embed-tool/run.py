@@ -33,8 +33,8 @@ SUCCESS_QUERY = "The library stays quiet in the afternoon for focused reading."
 FAIL_QUERY = "Young puppies learn best with short, calm training sessions."
 
 
-if os.path.exists(DB_PATH):
-    os.remove(DB_PATH)
+# if os.path.exists(DB_PATH):
+#     os.remove(DB_PATH)
 
 embed = Embed(
     db_path=DB_PATH,
