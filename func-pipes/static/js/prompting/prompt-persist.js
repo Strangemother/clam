@@ -165,6 +165,20 @@ const PersistMethods = {
                     label:      p.label,
                     latestOnly: p.latestOnly,
                 }
+            } else if (p.type === 'wait') {
+                config = {
+                    label:       p.label,
+                    delayMs:     p.delayMs,
+                    waitMessage: p.waitMessage,
+                }
+            } else if (p.type === 'sync') {
+                config = {
+                    label:          p.label,
+                    countWatermark: p.countWatermark,
+                    delayMs:        p.delayMs,
+                    emitList:       p.emitList,
+                    inputs:         p.pipsInbound.map(pip => ({ name: pip.name, index: pip.index })),
+                }
             } else if (p.type === 'transform') {
                 config = {
                     label:       p.label,
@@ -225,6 +239,8 @@ const PersistMethods = {
             'grad-voice-result': makeGradVoiceResultPanel,
             'grad-voice-play': makeGradVoicePlayPanel,
             'text-display': makeTextDisplayPanel,
+            'wait':         makeWaitPanel,
+            'sync':         makeSyncPanel,
             'transform':    makeTransformPanel,
             'delay':        makeDelayPanel,
             'pyfunc':       makePyFuncPanel,
@@ -294,6 +310,8 @@ const PersistMethods = {
             if (p.type === 'grad-voice') this.stopGradVoice(p)
             if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
             if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)
+            if (p.type === 'wait') this.stopWait(p)
+            if (p.type === 'sync') this.stopSync(p)
             if (p.type === 'event-input') this.unmountEventInput(p)
         })
         this.panels = []

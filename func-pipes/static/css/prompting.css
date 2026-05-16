@@ -86,6 +86,8 @@ canvas { display: block; width: 100%; height: 100%; }
 .btn-audio-record { color: #ffaaa0; border-color: #553022; }
 .btn-text-display { color: #ffcc88; border-color: #443311; }
 .btn-transform    { color: #88ccff; border-color: #112244; }
+.btn-wait         { color: #ffddaa; border-color: #554422; }
+.btn-sync         { color: #ffd6a6; border-color: #553b22; }
 .btn-delay        { color: #ffdd88; border-color: #443300; }
 .btn-pyfunc       { color: #aaffaa; border-color: #224422; }
 .btn-event-input  { color: #88eeff; border-color: #113344; }
@@ -527,12 +529,16 @@ canvas { display: block; width: 100%; height: 100%; }
 .state-badge.connecting,
 .state-badge.saving   { color: #88ccff; }
 .state-badge.recording { color: #ff8888; }
+.state-badge.waiting  { color: #ffdd88; }
+.state-badge.timeout  { color: #ffbb88; }
 .state-badge.error   { color: #ff5555; }
 .state-badge.idle    { color: #443355; }
 
 .panel.state-connecting { border-color: #88ccff66; }
 .panel.state-recording  { border-color: #ff888866; }
 .panel.state-saving     { border-color: #88ccff66; }
+.panel.state-waiting    { border-color: #ffdd8866; }
+.panel.state-timeout    { border-color: #ffbb8866; }
 
 .audio-record-actions {
     display:       flex;
@@ -570,6 +576,85 @@ canvas { display: block; width: 100%; height: 100%; }
 .display-mode-toggle { padding: 6px 8px 0; }
 
 .display-null { padding: 6px 8px; color: #443355; font-style: italic; }
+
+/* ── wait node ── */
+
+.type-wait .panel-body { min-width: 240px; }
+
+.wait-status {
+    padding:       6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+    display:       flex;
+    flex-direction: column;
+    gap:           4px;
+}
+
+.wait-line {
+    font-size: 11px;
+    color:     #887766;
+    word-break: break-word;
+}
+
+.wait-line strong {
+    color: #ccb28a;
+}
+
+.wait-message-input {
+    width:      calc(100% - 16px);
+    margin:     4px 8px 8px;
+    min-height: 64px;
+    resize:     vertical;
+}
+
+/* ── sync node ── */
+
+.type-sync .panel-body { min-width: 240px; }
+
+.sync-controls {
+    display:       flex;
+    flex-wrap:     wrap;
+    gap:           8px;
+    padding:       6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+}
+
+.sync-controls .delay-ms-input {
+    width: 64px;
+}
+
+.sync-actions {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       6px 8px;
+    border-bottom: 1px solid #1e1a3a;
+}
+
+.sync-summary {
+    font-size:  12px;
+    color:      #886655;
+}
+
+.sync-empty-btn {
+    font-size: 11px;
+    padding:   2px 8px;
+    color:     #ffbb88;
+    border-color: #553322;
+}
+
+.sync-empty-btn:disabled {
+    opacity: 0.35;
+    cursor:  default;
+}
+
+.sync-buffer-meta {
+    flex-shrink:   0;
+    font-size:     10px;
+    color:         #aa8b66;
+    border:        1px solid #2a1c12;
+    padding:       2px 6px;
+    white-space:   nowrap;
+}
 
 /* ── transform node ── */
 

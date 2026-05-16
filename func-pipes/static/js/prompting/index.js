@@ -80,6 +80,8 @@ createApp({
         ...SpawnMethods,
         ...FocusMethods,
         ...InputHistoryMethods,
+        ...WaitMethods,
+        ...SyncMethods,
         ...SignalMethods,
         ...LLMMethods,
         ...AudioRecordMethods,

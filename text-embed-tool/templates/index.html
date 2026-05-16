@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Text Embed Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  </head>
+  <body>
+    <main>
+      <h1>Text Embed Tool</h1>
+
+      <section>
+        <h2>Embed</h2>
+        <form id="embed-form" action="/embed" method="post">
+          <textarea name="text" required></textarea>
+          <button type="submit">Embed</button>
+        </form>
+        <pre id="embed-result"></pre>
+      </section>
+
+      <section>
+        <h2>Request</h2>
+        <form id="request-form" action="/request" method="post">
+          <textarea name="text" required></textarea>
+          <button type="submit">Request</button>
+        </form>
+        <pre id="request-result"></pre>
+      </section>
+    </main>
+
+    <script>
+      const bindForm = (formId, resultId) => {
+        const form = document.getElementById(formId);
+        const result = document.getElementById(resultId);
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+          });
+
+          const data = await response.json();
+          result.textContent = JSON.stringify(data, null, 2);
+        });
+      };
+
+      bindForm("embed-form", "embed-result");
+      bindForm("request-form", "request-result");
+    </script>
+  </body>
+</html>

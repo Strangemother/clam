@@ -28,6 +28,8 @@
                 <button class="btn-voice-play"   @click="addGradVoicePlay">▶ Speak</button>
                 <button class="btn-text-display" @click="addTextDisplay">◈ Display</button>
                 <button class="btn-transform"    @click="addTransform">ƒ Transform</button>
+                <button class="btn-wait"         @click="addWait">⌛ Wait</button>
+                <button class="btn-sync"         @click="addSync">≋ Sync</button>
                 <button class="btn-delay"        @click="addDelay">⏱ Delay</button>
                 <button class="btn-pyfunc"       @click="addPyFunc">λ Python</button>
                 <button class="btn-event-input"   @click="addEventInput()">⦿ Event</button>
@@ -100,6 +102,7 @@
                 :class="[
                     'type-' + panel.type,
                     'state-' + panel.state,
+                    panel.state === 'pending' ? 'thinking' : '',
                     panel.flipped ? 'panel-flipped' : '',
                     panel._focusPinned ? 'focus-pinned' : '',
                     panel._focusRole ? 'focus-' + panel._focusRole : '',
@@ -118,6 +121,8 @@
         {% include 'nodes/grad-voice-result.html' %}
         {% include 'nodes/grad-voice-play.html' %}
         {% include 'nodes/text-display.html' %}
+        {% include 'nodes/wait.html' %}
+        {% include 'nodes/sync.html' %}
         {% include 'nodes/delay.html' %}
         {% include 'nodes/pyfunc.html' %}
         {% include 'nodes/event-input.html' %}
@@ -163,6 +168,8 @@
 <script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-persist.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-transform.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-wait.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-sync.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-pyfunc.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-event.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
