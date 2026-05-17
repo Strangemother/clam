@@ -12,6 +12,55 @@
 
 const GradVoiceIndexTTS2Methods = {
 
+    _coerceGradVoiceIndexTTS2EmotionValue(signal, key) {
+        const candidateKeys = [key, `indextts2_${key}`, 'value']
+        const sources = [signal?.meta, signal?.text]
+
+        for (const source of sources) {
+            if (source == null) continue
+
+            if (typeof source === 'string') {
+                const raw = source.trim()
+                if (!raw) continue
+
+                const direct = Number(raw)
+                if (Number.isFinite(direct)) {
+                    return Math.max(0, Math.min(1, direct))
+                }
+
+                try {
+                    const parsed = JSON.parse(raw)
+                    const value = this._coerceGradVoiceIndexTTS2EmotionValue(
+                        { meta: parsed },
+                        key,
+                    )
+                    if (value !== null) return value
+                } catch (e) {
+                    // ignore non-JSON strings; plain numeric strings were handled above
+                }
+                continue
+            }
+
+            if (typeof source !== 'object' || Array.isArray(source)) continue
+
+            for (const candidateKey of candidateKeys) {
+                const numeric = Number(source[candidateKey])
+                if (Number.isFinite(numeric)) {
+                    return Math.max(0, Math.min(1, numeric))
+                }
+            }
+        }
+
+        return null
+    },
+
+    setGradVoiceIndexTTS2EmotionValue(panel, key, signal) {
+        const value = this._coerceGradVoiceIndexTTS2EmotionValue(signal, key)
+        if (value === null) return false
+        panel[key] = value
+        return true
+    },
+
     _getGradVoiceIndexTTS2UploadInput(panel, kind) {
         const refName = kind === 'emotion'
             ? `indextts2-emotion-upload-${panel.id}`
