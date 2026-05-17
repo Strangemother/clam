@@ -44,6 +44,10 @@ const SignalMethods = {
             this._applyGradVoice(panel, text, { role: 'user', replay: true })
             return true
         }
+        if (panel.type === 'grad-voice-indextts2') {
+            this._applyGradVoiceIndexTTS2(panel, text, { role: 'user', replay: true })
+            return true
+        }
         if (panel.type === 'grad-voice-result') {
             this._applyGradVoiceResult(panel, text, { role: 'user', replay: true })
             return true
@@ -86,7 +90,7 @@ const SignalMethods = {
                    _emitFromPip so named-pip nodes can identify which
                    channel changed).
 
-        transform, llm, grad-voice, and grad-voice-play nodes route by named pip;
+                transform, llm, grad-voice, grad-voice-indextts2, and grad-voice-play nodes route by named pip;
         other nodes use
       _combineSources first-wins logic.
     */
@@ -142,6 +146,26 @@ const SignalMethods = {
                     this._emitFromNode(panel, null)
                 } else {
                     this._applyGradVoice(panel, signal.text ?? '', signal.meta)
+                }
+            }
+            return
+        }
+
+        if (panel.type === 'grad-voice-indextts2' && inPipIndex !== null) {
+            const pip = panel.pipsInbound.find(p => p.index === inPipIndex)
+            const pipName = pip?.name ?? String(inPipIndex)
+
+            if (pipName === 'ref_audio') {
+                this.setGradVoiceIndexTTS2Reference(panel, 'refAudioValue', signal)
+            } else if (pipName === 'emotion_audio') {
+                this.setGradVoiceIndexTTS2Reference(panel, 'emotionAudioValue', signal)
+            } else {
+                if (signal === null) {
+                    this.stopGradVoiceIndexTTS2(panel)
+                    panel.lastOutput = null
+                    this._emitFromNode(panel, null)
+                } else {
+                    this._applyGradVoiceIndexTTS2(panel, signal.text ?? '', signal.meta)
                 }
             }
             return

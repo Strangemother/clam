@@ -36,6 +36,27 @@ const DEFAULT_ENDPOINT     = 'http://192.168.50.60:1234/api/v1/chat/'
 const DEFAULT_ENDPOINT_KEY = 'lmstudio'   // must match a key in ENDPOINT_CONFIGS (prompting.py)
 const DEFAULT_MODEL        = ''
 const DEFAULT_GRAD_VOICE_VOICE = 'af_bella'
+const DEFAULT_GRAD_VOICE_INDEXTTS2_REF_AUDIO_PATH = 'G:\\pinokio\\api\\Ultimate-TTS-Studio.git\\cache\\GRADIO_TEMP_DIR\\05265ae741fc0e2066789758495c59ab2c5568bfd330336912ff5c098930ce0b\\tara_20250620_010154.wav'
+const DEFAULT_GRAD_VOICE_INDEXTTS2 = {
+    emotionMode: 'vector_control',
+    emotionDescription: 'excited and churlish',
+    emoAlpha: 1,
+    happy: 0,
+    angry: 0,
+    sad: 0.6,
+    afraid: 0,
+    disgusted: 0,
+    melancholic: 1,
+    surprised: 0,
+    calm: 0.2,
+    temperature: 0.8,
+    topP: 0.9,
+    topK: 50,
+    repetitionPenalty: 1.1,
+    maxMelTokens: 1500,
+    seed: 0,
+    useRandom: false,
+}
 const DEFAULT_AUDIO_RECORD_WS = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname || 'localhost'}:8766`
 
 // ── component catalogue ──────────────────────────────────────────────────────
@@ -45,6 +66,7 @@ const COMPONENT_CATALOG = [
     { key: 'llm',          group: 'LLM',     type: 'llm',          label: 'LLM'          },
     { key: 'audio-record', group: 'Audio',   type: 'audio-record', label: 'Mic Record'   },
     { key: 'grad-voice',   group: 'Audio',   type: 'grad-voice',   label: 'Grad Voice'   },
+    { key: 'grad-voice-indextts2', group: 'Audio', type: 'grad-voice-indextts2', label: 'IndexTTS2 Voice' },
     { key: 'grad-voice-result', group: 'Audio', type: 'grad-voice-result', label: 'Voice Result' },
     { key: 'grad-voice-play', group: 'Audio', type: 'grad-voice-play', label: 'Speak & Play' },
     { key: 'text-display', group: 'Display', type: 'text-display', label: 'Text Display' },
@@ -177,6 +199,51 @@ function makeGradVoicePanel(id, p = {}) {
         pipsInbound:  [
             { label: id, index: 0, name: 'in' },
             { label: id, index: 1, name: 'voice' },
+        ],
+        pipsOutbound: [{ label: id, index: 0, name: 'out' }],
+    }
+}
+
+function makeGradVoiceIndexTTS2Panel(id, p = {}) {
+    return {
+        type:         'grad-voice-indextts2',
+        label:        p.label || 'IndexTTS2 Voice',
+        state:        'idle',
+        refAudioValue: p.refAudioValue || DEFAULT_GRAD_VOICE_INDEXTTS2_REF_AUDIO_PATH,
+        emotionAudioValue: p.emotionAudioValue || '',
+        emotionMode:  p.emotionMode || DEFAULT_GRAD_VOICE_INDEXTTS2.emotionMode,
+        emotionDescription: p.emotionDescription ?? DEFAULT_GRAD_VOICE_INDEXTTS2.emotionDescription,
+        emoAlpha:     p.emoAlpha ?? DEFAULT_GRAD_VOICE_INDEXTTS2.emoAlpha,
+        happy:        p.happy ?? DEFAULT_GRAD_VOICE_INDEXTTS2.happy,
+        angry:        p.angry ?? DEFAULT_GRAD_VOICE_INDEXTTS2.angry,
+        sad:          p.sad ?? DEFAULT_GRAD_VOICE_INDEXTTS2.sad,
+        afraid:       p.afraid ?? DEFAULT_GRAD_VOICE_INDEXTTS2.afraid,
+        disgusted:    p.disgusted ?? DEFAULT_GRAD_VOICE_INDEXTTS2.disgusted,
+        melancholic:  p.melancholic ?? DEFAULT_GRAD_VOICE_INDEXTTS2.melancholic,
+        surprised:    p.surprised ?? DEFAULT_GRAD_VOICE_INDEXTTS2.surprised,
+        calm:         p.calm ?? DEFAULT_GRAD_VOICE_INDEXTTS2.calm,
+        temperature:  p.temperature ?? DEFAULT_GRAD_VOICE_INDEXTTS2.temperature,
+        topP:         p.topP ?? DEFAULT_GRAD_VOICE_INDEXTTS2.topP,
+        topK:         p.topK ?? DEFAULT_GRAD_VOICE_INDEXTTS2.topK,
+        repetitionPenalty: p.repetitionPenalty ?? DEFAULT_GRAD_VOICE_INDEXTTS2.repetitionPenalty,
+        maxMelTokens: p.maxMelTokens ?? DEFAULT_GRAD_VOICE_INDEXTTS2.maxMelTokens,
+        seed:         p.seed ?? DEFAULT_GRAD_VOICE_INDEXTTS2.seed,
+        useRandom:    p.useRandom ?? DEFAULT_GRAD_VOICE_INDEXTTS2.useRandom,
+        messages:     [],
+        lastOutput:   null,
+        lastError:    null,
+        lastEventId:  '',
+        lastResponse: null,
+        _refAudioFile: null,
+        _refAudioUploadName: '',
+        _emotionAudioFile: null,
+        _emotionAudioUploadName: '',
+        _manualInput: '',
+        _controller:  null,
+        pipsInbound:  [
+            { label: id, index: 0, name: 'in' },
+            { label: id, index: 1, name: 'ref_audio' },
+            { label: id, index: 2, name: 'emotion_audio' },
         ],
         pipsOutbound: [{ label: id, index: 0, name: 'out' }],
     }

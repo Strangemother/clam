@@ -154,6 +154,30 @@ const PersistMethods = {
                     label: p.label,
                     voice: p.voice,
                 }
+            } else if (p.type === 'grad-voice-indextts2') {
+                config = {
+                    label: p.label,
+                    refAudioValue: p.refAudioValue,
+                    emotionAudioValue: p.emotionAudioValue,
+                    emotionMode: p.emotionMode,
+                    emotionDescription: p.emotionDescription,
+                    emoAlpha: p.emoAlpha,
+                    happy: p.happy,
+                    angry: p.angry,
+                    sad: p.sad,
+                    afraid: p.afraid,
+                    disgusted: p.disgusted,
+                    melancholic: p.melancholic,
+                    surprised: p.surprised,
+                    calm: p.calm,
+                    temperature: p.temperature,
+                    topP: p.topP,
+                    topK: p.topK,
+                    repetitionPenalty: p.repetitionPenalty,
+                    maxMelTokens: p.maxMelTokens,
+                    seed: p.seed,
+                    useRandom: p.useRandom,
+                }
             } else if (p.type === 'grad-voice-play') {
                 config = {
                     label:    p.label,
@@ -236,6 +260,7 @@ const PersistMethods = {
             'llm':          makeLLMPanel,
             'audio-record': makeAudioRecordPanel,
             'grad-voice':   makeGradVoicePanel,
+            'grad-voice-indextts2': makeGradVoiceIndexTTS2Panel,
             'grad-voice-result': makeGradVoiceResultPanel,
             'grad-voice-play': makeGradVoicePlayPanel,
             'text-display': makeTextDisplayPanel,
@@ -308,6 +333,7 @@ const PersistMethods = {
             if (p.type === 'llm' && p._chat) p._chat.abort()
             if (p.type === 'audio-record') this.cancelAudioRecord(p)
             if (p.type === 'grad-voice') this.stopGradVoice(p)
+            if (p.type === 'grad-voice-indextts2') this.stopGradVoiceIndexTTS2(p)
             if (p.type === 'grad-voice-result') this.stopGradVoiceResult(p)
             if (p.type === 'grad-voice-play') this.stopGradVoicePlay(p)
             if (p.type === 'wait') this.stopWait(p)

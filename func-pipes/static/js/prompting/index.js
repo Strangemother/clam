@@ -86,6 +86,7 @@ createApp({
         ...LLMMethods,
         ...AudioRecordMethods,
         ...GradVoiceMethods,
+        ...GradVoiceIndexTTS2Methods,
         ...GradVoiceResultMethods,
         ...GradVoicePlayMethods,
         ...WiringMethods,
