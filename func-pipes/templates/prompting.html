@@ -24,6 +24,7 @@
                 <button class="btn-llm"          @click="addLLM">⬡ LLM</button>
                 <button class="btn-audio-record" @click="addAudioRecord">● Record</button>
                 <button class="btn-voice"        @click="addGradVoice">🔊 Voice</button>
+                <button class="btn-voice"        @click="addGradVoiceIndexTTS2">◎ IndexTTS2</button>
                 <button class="btn-voice-result" @click="addGradVoiceResult">▷ Voice Result</button>
                 <button class="btn-voice-play"   @click="addGradVoicePlay">▶ Speak</button>
                 <button class="btn-text-display" @click="addTextDisplay">◈ Display</button>
@@ -118,6 +119,7 @@
         {% include 'nodes/llm.html' %}
     {% include 'nodes/audio-record.html' %}
         {% include 'nodes/grad-voice.html' %}
+        {% include 'nodes/grad-voice-indextts2.html' %}
         {% include 'nodes/grad-voice-result.html' %}
         {% include 'nodes/grad-voice-play.html' %}
         {% include 'nodes/text-display.html' %}
@@ -163,6 +165,7 @@
 <script src="{{ url_for('static', filename='js/prompting/prompt-llm.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-audio-record.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-indextts2.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-result.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-grad-voice-play.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-wiring.js') }}"></script>

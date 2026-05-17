@@ -1,6 +1,7 @@
 """Grad Voice helpers and routes for the prompting app."""
 
 import json
+import mimetypes
 import os
 import re
 from urllib.parse import quote
@@ -121,6 +122,37 @@ GRAD_VOICE_VOICES = [
     {"value": "bf_emma", "label": "Emma (bf_emma)"},
 ]
 
+GRAD_VOICE_INDEXTTS2_DEFAULT_REF_AUDIO_PATH = (
+    "G:\\pinokio\\api\\Ultimate-TTS-Studio.git\\cache\\GRADIO_TEMP_DIR"
+    "\\05265ae741fc0e2066789758495c59ab2c5568bfd330336912ff5c098930ce0b"
+    "\\tara_20250620_010154.wav"
+)
+
+GRAD_VOICE_INDEXTTS2_DEFAULTS = {
+    "tts_engine": "IndexTTS2",
+    "audio_format": "wav",
+    "indextts2_ref_audio": GRAD_VOICE_INDEXTTS2_DEFAULT_REF_AUDIO_PATH,
+    "indextts2_emotion_mode": "vector_control",
+    "indextts2_emotion_audio": None,
+    "indextts2_emotion_description": "excited and churlish",
+    "indextts2_emo_alpha": 1,
+    "indextts2_happy": 0,
+    "indextts2_angry": 0,
+    "indextts2_sad": 0.6,
+    "indextts2_afraid": 0,
+    "indextts2_disgusted": 0,
+    "indextts2_melancholic": 1,
+    "indextts2_surprised": 0,
+    "indextts2_calm": 0.2,
+    "indextts2_temperature": 0.8,
+    "indextts2_top_p": 0.9,
+    "indextts2_top_k": 50,
+    "indextts2_repetition_penalty": 1.1,
+    "indextts2_max_mel_tokens": 1500,
+    "indextts2_seed": 0,
+    "indextts2_use_random": False,
+}
+
 
 def _build_grad_voice_payload(text, overrides=None):
     """Build the positional request payload for the Grad Voice service."""
@@ -173,6 +205,12 @@ def _grad_voice_upstream_config_urls():
     """Return likely config/info endpoints for the upstream Gradio app."""
     base_url = _grad_voice_base_url().rstrip("/")
     return [f"{base_url}/gradio_api/info", f"{base_url}/config"]
+
+
+def _grad_voice_upload_urls():
+    """Return likely upload endpoints for the upstream Gradio app."""
+    base_url = _grad_voice_base_url().rstrip("/")
+    return [f"{base_url}/gradio_api/upload", f"{base_url}/upload"]
 
 
 def _looks_like_grad_voice_id(value):
@@ -281,6 +319,187 @@ def _gradio_path_name(file_path):
     """Return the filename portion of a Gradio file path."""
     raw = str(file_path or "").replace("\\", "/")
     return raw.rsplit("/", 1)[-1] if raw else ""
+
+
+def _coerce_gradio_file_data(value):
+    """Normalize a path, JSON string, or dict into Gradio FileData."""
+    if value is None:
+        return None
+
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+
+        if raw.startswith("{"):
+            try:
+                return _coerce_gradio_file_data(json.loads(raw))
+            except ValueError:
+                pass
+
+        guessed_mime, _ = mimetypes.guess_type(raw)
+        is_url = raw.startswith(("http://", "https://"))
+        return {
+            "path": None if is_url else raw,
+            "url": raw if is_url else _grad_voice_file_url(raw),
+            "orig_name": _gradio_path_name(raw) or None,
+            "mime_type": guessed_mime,
+            "meta": {"_type": "gradio.FileData"},
+        }
+
+    if not isinstance(value, dict):
+        return None
+
+    raw_path = str(value.get("path") or "").strip()
+    raw_url = str(value.get("url") or "").strip()
+    if not raw_path and not raw_url:
+        return None
+
+    result = dict(value)
+    guessed_mime, _ = mimetypes.guess_type(raw_path or raw_url)
+    result["path"] = raw_path or None
+    result["url"] = raw_url or (_grad_voice_file_url(raw_path) if raw_path else None)
+    result["orig_name"] = (
+        str(value.get("orig_name") or "").strip()
+        or _gradio_path_name(raw_path or raw_url)
+        or None
+    )
+    result["mime_type"] = value.get("mime_type") or guessed_mime
+    meta = value.get("meta") or {}
+    result["meta"] = {**meta, "_type": "gradio.FileData"}
+    return result
+
+
+def _extract_gradio_upload_paths(payload):
+    """Extract uploaded server paths from a Gradio upload response."""
+    if isinstance(payload, list):
+        items = payload
+    elif isinstance(payload, dict):
+        items = payload.get("files") or payload.get("data") or payload.get(
+            "paths"
+        ) or []
+    else:
+        items = []
+
+    paths = []
+    for item in items:
+        if isinstance(item, str):
+            path = item.strip()
+        elif isinstance(item, dict):
+            path = str(item.get("path") or item.get("name") or "").strip()
+        else:
+            path = ""
+
+        if path:
+            paths.append(path)
+
+    return paths
+
+
+def _upload_grad_voice_file_storage(file_storage):
+    """Upload a Flask FileStorage object to the upstream Gradio app."""
+    if file_storage is None or not str(file_storage.filename or "").strip():
+        return None, None
+
+    file_name = _gradio_path_name(file_storage.filename) or "upload.bin"
+    mime_type = (
+        str(getattr(file_storage, "mimetype", "") or "").strip()
+        or "application/octet-stream"
+    )
+
+    try:
+        file_bytes = file_storage.read()
+    except Exception as exc:  # pragma: no cover - framework-dependent failure
+        return None, ({"error": f"could not read upload: {exc}"}, 400)
+
+    if not file_bytes:
+        return None, ({"error": f"upload '{file_name}' was empty"}, 400)
+
+    last_error = None
+    for url in _grad_voice_upload_urls():
+        try:
+            resp = _requests.post(
+                url,
+                files=[("files", (file_name, file_bytes, mime_type))],
+                timeout=120,
+            )
+            payload = resp.json()
+        except _requests.Timeout:
+            last_error = ({"error": "upstream upload timed out"}, 504)
+            continue
+        except ValueError as exc:
+            last_error = (
+                {"error": f"invalid upload response: {exc}", "endpoint": url},
+                502,
+            )
+            continue
+        except _requests.RequestException as exc:
+            last_error = ({"error": str(exc), "endpoint": url}, 502)
+            continue
+
+        if not resp.ok:
+            last_error = (
+                {
+                    "error": f"upload failed with status {resp.status_code}",
+                    "endpoint": url,
+                    "response": payload,
+                },
+                resp.status_code,
+            )
+            continue
+
+        uploaded_paths = _extract_gradio_upload_paths(payload)
+        if not uploaded_paths:
+            last_error = (
+                {
+                    "error": "upload response did not include file paths",
+                    "endpoint": url,
+                    "response": payload,
+                },
+                502,
+            )
+            continue
+
+        return (
+            _coerce_gradio_file_data(
+                {
+                    "path": uploaded_paths[0],
+                    "orig_name": file_name,
+                    "mime_type": mime_type,
+                    "meta": {"_type": "gradio.FileData"},
+                }
+            ),
+            None,
+        )
+
+    return None, last_error or ({"error": "upload failed"}, 502)
+
+
+def _build_grad_voice_indextts2_overrides(
+    ref_audio=None,
+    emotion_audio=None,
+    options=None,
+):
+    """Build dedicated IndexTTS2 overrides for the shared Grad Voice route."""
+    overrides = dict(GRAD_VOICE_INDEXTTS2_DEFAULTS)
+
+    if isinstance(options, dict):
+        for key, value in options.items():
+            if key in GRAD_VOICE_DEFAULT_INPUTS:
+                overrides[key] = value
+
+    if ref_audio is not None:
+        overrides["indextts2_ref_audio"] = ref_audio
+    if emotion_audio is not None:
+        overrides["indextts2_emotion_audio"] = emotion_audio
+
+    overrides["indextts2_ref_audio"] = _coerce_gradio_file_data(
+        overrides.get("indextts2_ref_audio")
+    )
+    overrides["indextts2_emotion_audio"] = _coerce_gradio_file_data(
+        overrides.get("indextts2_emotion_audio")
+    )
+    return overrides
 
 
 def _parse_gradio_event_stream(raw_text):
@@ -474,6 +693,63 @@ def grad_voice_request():
         voice=body.get("voice"),
         options=body.get("options"),
     )
+    return jsonify(response_body), status_code
+
+
+@prompting_bp.route(
+    "/grad-voice/indextts2/", strict_slashes=False, methods=["POST"]
+)
+def grad_voice_indextts2_request():
+    """Send text to Grad Voice using dedicated IndexTTS2 defaults."""
+    if request.files or request.form:
+        raw_options = str(request.form.get("options") or "").strip()
+        try:
+            options = json.loads(raw_options) if raw_options else {}
+        except ValueError:
+            return jsonify({"error": "invalid options payload"}), 400
+
+        body = {
+            "text": request.form.get("text"),
+            "ref_audio": request.form.get("ref_audio"),
+            "emotion_audio": request.form.get("emotion_audio"),
+            "options": options,
+        }
+    else:
+        body = request.get_json(silent=True) or {}
+
+    raw_text = body.get("text")
+    text = "" if raw_text is None else str(raw_text)
+
+    if not text.strip():
+        return jsonify({"error": "no text provided"}), 400
+
+    ref_audio = body.get("ref_audio")
+    emotion_audio = body.get("emotion_audio")
+
+    uploaded_ref_audio, upload_error = _upload_grad_voice_file_storage(
+        request.files.get("ref_audio_upload")
+    )
+    if upload_error:
+        return jsonify(upload_error[0]), upload_error[1]
+    if uploaded_ref_audio is not None:
+        ref_audio = uploaded_ref_audio
+
+    uploaded_emotion_audio, upload_error = _upload_grad_voice_file_storage(
+        request.files.get("emotion_audio_upload")
+    )
+    if upload_error:
+        return jsonify(upload_error[0]), upload_error[1]
+    if uploaded_emotion_audio is not None:
+        emotion_audio = uploaded_emotion_audio
+
+    overrides = _build_grad_voice_indextts2_overrides(
+        ref_audio=ref_audio,
+        emotion_audio=emotion_audio,
+        options=body.get("options"),
+    )
+    response_body, status_code = _request_grad_voice(text, options=overrides)
+    response_body["engine"] = "IndexTTS2"
+    response_body["voice"] = None
     return jsonify(response_body), status_code
 
 

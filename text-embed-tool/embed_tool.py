@@ -4,8 +4,73 @@ import importlib.resources
 import json
 import math
 import os
+import re
 import sqlite3
 import zlib
+
+
+STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "about",
+    "as",
+    "at",
+    "be",
+    "for",
+    "from",
+    "how",
+    "i",
+    "in",
+    "is",
+    "it",
+    "me",
+    "my",
+    "of",
+    "on",
+    "or",
+    "please",
+    "tell",
+    "that",
+    "the",
+    "this",
+    "to",
+    "what",
+    "with",
+}
+
+
+def _tokens(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _lexical_score(query_text: str, content_text: str) -> float:
+    query_lower = query_text.lower().strip()
+    content_lower = content_text.lower().strip()
+
+    if not query_lower or not content_lower:
+        return 0.0
+
+    if query_lower == content_lower:
+        return 1.0
+
+    if query_lower in content_lower:
+        return 0.98
+
+    query_tokens = [token for token in _tokens(query_text) if token not in STOPWORDS]
+    if not query_tokens:
+        query_tokens = _tokens(query_text)
+
+    if not query_tokens:
+        return 0.0
+
+    content_tokens = set(_tokens(content_text))
+    shared = len(set(query_tokens) & content_tokens)
+    if shared == 0:
+        return 0.0
+
+    return shared / len(set(query_tokens))
 
 
 class Embed:
@@ -16,6 +81,8 @@ class Embed:
         sqlite_ai_package: str,
         embed_context: str,
         retrieve_context: str,
+        embed_prefix: str = "",
+        retrieve_prefix: str = "",
     ):
         if not db_path:
             raise ValueError("db_path is required")
@@ -33,6 +100,8 @@ class Embed:
         self.sqlite_ai_package = sqlite_ai_package
         self.embed_context = embed_context
         self.retrieve_context = retrieve_context
+        self.embed_prefix = embed_prefix
+        self.retrieve_prefix = retrieve_prefix
         self.context_created = False
         self.connection = self._connect()
         self._init_schema()
@@ -124,7 +193,7 @@ class Embed:
         if existing is not None:
             return int(existing["id"])
 
-        embedding = self._embedding(clean_text, self.embed_context)
+        embedding = self._embedding(f"{self.embed_prefix}{clean_text}", self.embed_context)
         cursor = self.connection.execute(
             "INSERT INTO entries (content, embedding_json, crc) VALUES (?, ?, ?)",
             (clean_text, json.dumps(embedding), crc),
@@ -132,38 +201,56 @@ class Embed:
         self.connection.commit()
         return int(cursor.lastrowid)
 
-    def retrieve(self, text: str, min_score: float | None = None) -> dict[str, object] | None:
+    def retrieve_many(
+        self,
+        text: str,
+        min_score: float | None = None,
+        top_k: int = 5,
+    ) -> list[dict[str, object]]:
         clean_text = text.strip()
         if not clean_text:
             raise ValueError("text is required")
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
 
-        query_embedding = self._embedding(clean_text, self.retrieve_context)
+        query_embedding = self._embedding(
+            f"{self.retrieve_prefix}{clean_text}",
+            self.retrieve_context,
+        )
         rows = self.connection.execute(
             "SELECT id, content, embedding_json, crc FROM entries ORDER BY id ASC"
         ).fetchall()
 
-        best_match = None
-        best_score = float("-inf")
+        matches = []
 
         for row in rows:
             stored_embedding = [float(value) for value in json.loads(row["embedding_json"])]
             if len(stored_embedding) != len(query_embedding):
                 continue
 
-            score = self._cosine_similarity(query_embedding, stored_embedding)
-            if score > best_score:
-                best_score = score
-                best_match = {
+            vector_score = self._cosine_similarity(query_embedding, stored_embedding)
+            lexical_score = _lexical_score(clean_text, row["content"])
+            score = max(vector_score, lexical_score)
+
+            if min_score is not None and score < min_score:
+                continue
+
+            matches.append(
+                {
                     "id": row["id"],
                     "text": row["content"],
                     "crc": row["crc"],
+                    "vector_score": round(vector_score, 6),
+                    "lexical_score": round(lexical_score, 6),
                     "score": round(score, 6),
                 }
+            )
 
-        if best_match is None:
+        matches.sort(key=lambda item: item["score"], reverse=True)
+        return matches[:top_k]
+
+    def retrieve(self, text: str, min_score: float | None = None) -> dict[str, object] | None:
+        matches = self.retrieve_many(text, min_score=min_score, top_k=1)
+        if not matches:
             return None
-
-        if min_score is not None and best_score < min_score:
-            return None
-
-        return best_match
+        return matches[0]
