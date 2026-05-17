@@ -154,11 +154,23 @@ const SignalMethods = {
         if (panel.type === 'grad-voice-indextts2' && inPipIndex !== null) {
             const pip = panel.pipsInbound.find(p => p.index === inPipIndex)
             const pipName = pip?.name ?? String(inPipIndex)
+            const emotionPipNames = [
+                'happy',
+                'angry',
+                'sad',
+                'afraid',
+                'disgusted',
+                'melancholic',
+                'surprised',
+                'calm',
+            ]
 
             if (pipName === 'ref_audio') {
                 this.setGradVoiceIndexTTS2Reference(panel, 'refAudioValue', signal)
             } else if (pipName === 'emotion_audio') {
                 this.setGradVoiceIndexTTS2Reference(panel, 'emotionAudioValue', signal)
+            } else if (emotionPipNames.includes(pipName)) {
+                this.setGradVoiceIndexTTS2EmotionValue(panel, pipName, signal)
             } else {
                 if (signal === null) {
                     this.stopGradVoiceIndexTTS2(panel)
