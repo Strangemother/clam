@@ -1,0 +1,1 @@
+..\v5_2\env\Scripts\python app.py

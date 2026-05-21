@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prompting</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/prompting.css') }}">
+</head>
+<body>
+
+<div class="layer-space">
+
+    <div class="canvas-container back">
+        <canvas id="back_canvas"></canvas>
+    </div>
+
+    <div id="app">
+        {% raw %}
+
+        <div id="toolbar">
+            <!-- Quick-add node buttons -->
+            <div class="toolbar-group">
+                <span class="toolbar-label">Add</span>
+                <div>
+                    <select v-model='selected'>
+                        <option>---</option>
+                        <option :value="item" v-for='item in available'>{{ item }}</option>
+                    </select>
+                </div>
+                <button class="btn-text-input"
+                    @click="spawnButton">Spawn</button>
+
+            </div>
+        </div>
+
+        {% endraw %}
+
+        {% raw %}
+        <div id="panels">
+            <div class="panel"
+                :class="[
+                    'type-' + panel.type,
+                ]"
+                v-for="(panel, i) in panels"
+                :ref="'panel-' + panel.id"
+                :key="panel.id">
+        {% endraw %}
+            <!-- kebab-case in HTML -->
+            <component :is='panel.type'
+                    :post-title="panel.id"
+                    :panel=panel
+                    @update-post="onUpdatePost"></component>
+            <!--
+            <blog-post
+                :post-title=panel.id
+                @update-post="onUpdatePost">
+            </blog-post>
+            -->
+        {% raw %}
+            </div>
+        </div>
+        {% endraw %}
+    </div>
+
+    <div class="canvas-container fore">
+        <canvas id="fore_canvas"></canvas>
+    </div>
+
+    {% raw %}
+    <div class="templates">
+        <div class="panel-template">
+            <ul class="pips inbound">
+                <li v-for='(pip, i) in panel.pipsInbound' class="pip-container">
+                    <div class="pip" :id="panel.id + '-' + pip">{{ i }}</div>
+                    <span class="pip-label">{{ pip }}</span>
+                </li>
+            </ul>
+            <div class="panel-content">
+                <div>{{ postTitle }}</div>
+                <div>{{ panel.funcName }}</div>
+            </div>
+            <ul class="pips outbound">
+                <li v-for='pip in panel.pipsOutbound'>
+                    {{ pip }}
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endraw %}
+
+</div>
+
+<!-- Vendors -->
+<script src="{{ url_for('static', filename='js/vendor/vue.global.prod.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vendor/model-list.js') }}"></script>
+
+<!-- Space panning / zoom -->
+<script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
+
+</body>
+</html>

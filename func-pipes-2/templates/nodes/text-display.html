@@ -1,0 +1,79 @@
+{% raw %}
+<!-- ── TEXT DISPLAY node ── -->
+<template v-else-if="panel.type === 'text-display'">
+
+    <!-- inbound pip (left) -->
+    <div class="named-pips" style="border-right: 1px solid #1e1a3a">
+        <div v-for="pip in panel.pipsInbound" :key="pip.index" class="named-pip-row">
+            <div
+                :class="['pip-dot',
+                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                    disconnectMode ? 'disconnect-ready' : '']"
+                :draggable="!disconnectMode"
+                @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+                @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+                @dragend="pipEndDrag($event)"
+                @dragover="pipOverDrag($event)"
+                @drop="pipDrop($event, 'inbound', pip)"
+                :id="`${pip.label}-inbound-${pip.index}`"
+                :title="pip.name">
+            </div>
+            <span class="pip-name">{{ pip.name }}</span>
+        </div>
+    </div>
+
+    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+        <div class="panel-head" @dblclick.stop="togglePanelFocus(panel)" title="Double-click to focus this node and its direct connections">
+            <span class="panel-title">{{ panel.title }}</span>
+            <div class="panel-btns">
+                <button v-if="focusPinState.active && focusPinState.centerId === panel.id"
+                        @click.stop="clearFocusedPanels()"
+                        title="Restore focused nodes to their original positions">Unpin</button>
+                <button class="panel-btn-flip"
+                        :class="panel.flipped ? 'flip-active' : ''"
+                        @click="togglePanelFlip(panel)"
+                        :title="panel.flipped ? 'Restore default left/right layout' : 'Flip left/right layout'">⇆</button>
+                <button @click="resetPanel(panel)" title="Clear">↺</button>
+                <button @click="removePanel(i)">✕</button>
+            </div>
+        </div>
+
+        <label class="mode-toggle display-mode-toggle" title="Show only the most recent message">
+            <input type="checkbox" v-model="panel.latestOnly" />
+            latest only
+        </label>
+
+        <div class="messages" :ref="'msgs-' + panel.id">
+            <div v-if="!panel.messages.length" class="display-null">— no signal —</div>
+            <div v-for="(m, j) in (panel.latestOnly ? panel.messages.slice(-1) : panel.messages)" :key="j" class="msg-row">
+                <div class="msg" :class="m.role">{{ getPanelMessageText(m) }}</div>
+                <button v-if="canReplayPanelMessage(panel, m)"
+                        class="msg-replay-btn"
+                        @click="replayPanelMessage(panel, m)"
+                        title="Replay this message">↻</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- pass-through outbound pip (right) -->
+    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+            <span class="pip-name">{{ pip.name }}</span>
+            <div
+                :class="['pip-dot',
+                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                    disconnectMode ? 'disconnect-ready' : '']"
+                :draggable="!disconnectMode"
+                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                @dragend="pipEndDrag($event)"
+                @dragover="pipOverDrag($event)"
+                @drop="pipDrop($event, 'outbound', pip)"
+                :id="`${pip.label}-outbound-${pip.index}`"
+                :title="pip.name">
+            </div>
+        </div>
+    </div>
+
+</template>
+{% endraw %}

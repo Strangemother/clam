@@ -1,0 +1,80 @@
+{% raw %}
+<!-- ── DELAY node ── -->
+<template v-else-if="panel.type === 'delay'">
+
+    <!-- inbound pip -->
+    <div class="pips inbound">
+        <div v-for="pip in panel.pipsInbound" :key="pip.index"
+            :class="['pip-dot',
+                disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                disconnectMode ? 'disconnect-ready' : '']"
+            :draggable="!disconnectMode"
+            @click="disconnectMode ? disconnectPip(pip, 'inbound') : null"
+            @dragstart="!disconnectMode && pipStartDrag($event, 'inbound', pip)"
+            @dragend="pipEndDrag($event)"
+            @dragover="pipOverDrag($event)"
+            @drop="pipDrop($event, 'inbound', pip)"
+            :id="`${pip.label}-inbound-${pip.index}`"
+            :title="pip.name">
+        </div>
+    </div>
+
+    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+        <div class="panel-head" @dblclick.stop="togglePanelFocus(panel)" title="Double-click to focus this node and its direct connections">
+            <span class="panel-title">{{ panel.title }}</span>
+            <div class="panel-btns">
+                <button v-if="focusPinState.active && focusPinState.centerId === panel.id"
+                        @click.stop="clearFocusedPanels()"
+                        title="Restore focused nodes to their original positions">Unpin</button>
+                <button class="panel-btn-flip"
+                        :class="panel.flipped ? 'flip-active' : ''"
+                        @click="togglePanelFlip(panel)"
+                        :title="panel.flipped ? 'Restore default left/right layout' : 'Flip left/right layout'">⇆</button>
+                <button @click="resetPanel(panel)" title="Clear queue">↺</button>
+                <button @click="removePanel(i)">✕</button>
+            </div>
+        </div>
+
+        <div class="delay-controls">
+            <label class="delay-label">Delay (ms)</label>
+            <input type="number" min="0" step="100"
+                   v-model.number="panel.delayMs"
+                   class="delay-ms-input" />
+            <label class="delay-label" title="Hold all signals until released manually">
+                <input type="checkbox" v-model="panel.paused" />
+                Pause
+            </label>
+        </div>
+
+        <div class="delay-queue">
+            <span class="delay-queue-count" :class="'state-' + panel.state">
+                {{ panel.queue.length ? panel.queue.length + ' waiting' : 'idle' }}
+            </span>
+            <button class="delay-release-btn"
+                    @click="releaseDelay(panel)"
+                    :disabled="!panel.queue.length"
+                    :title="panel.paused ? 'Release one signal' : 'Flush all now'">
+                {{ panel.paused ? '▶ Release one' : '⏩ Flush' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- outbound pip -->
+    <div class="pips outbound">
+        <div v-for="pip in panel.pipsOutbound" :key="pip.index"
+            :class="['pip-dot',
+                disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                disconnectMode ? 'disconnect-ready' : '']"
+            :draggable="!disconnectMode"
+            @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+            @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+            @dragend="pipEndDrag($event)"
+            @dragover="pipOverDrag($event)"
+            @drop="pipDrop($event, 'outbound', pip)"
+            :id="`${pip.label}-outbound-${pip.index}`"
+            :title="pip.name">
+        </div>
+    </div>
+
+</template>
+{% endraw %}

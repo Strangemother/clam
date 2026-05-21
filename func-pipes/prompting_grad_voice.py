@@ -13,7 +13,7 @@ from prompting_core import prompting_bp
 
 
 _DEFAULT_GRAD_VOICE_URL = (
-    "http://192.168.50.60:42004/gradio_api/call/generate_unified_tts"
+    "http://192.168.50.60:42003/gradio_api/call/generate_unified_tts"
 )
 GRAD_VOICE_URL = os.environ.get("GRAD_VOICE_URL", _DEFAULT_GRAD_VOICE_URL)
 GRAD_VOICE_HEADERS = {

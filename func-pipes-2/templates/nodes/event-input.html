@@ -1,0 +1,67 @@
+{% raw %}
+<!-- ── EVENT INPUT node ── -->
+<template v-else-if="panel.type === 'event-input'">
+
+    <div class="panel-body" @mousedown="e => ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) && e.stopPropagation()">
+        <div class="panel-head" @dblclick.stop="togglePanelFocus(panel)" title="Double-click to focus this node and its direct connections">
+            <span class="panel-title">{{ panel.title }}</span>
+            <div class="panel-btns">
+                <button v-if="focusPinState.active && focusPinState.centerId === panel.id"
+                        @click.stop="clearFocusedPanels()"
+                        title="Restore focused nodes to their original positions">Unpin</button>
+                <button class="panel-btn-flip"
+                        :class="panel.flipped ? 'flip-active' : ''"
+                        @click="togglePanelFlip(panel)"
+                        :title="panel.flipped ? 'Restore default left/right layout' : 'Flip left/right layout'">⇆</button>
+                <button @click="resetPanel(panel)" title="Clear last event">↺</button>
+                <button @click="removePanel(i)">✕</button>
+            </div>
+        </div>
+
+        <!-- event name config -->
+        <div class="field-row">
+            <label>Event</label>
+            <input v-model="panel.eventName"
+                   @change="remountEventInput(panel)"
+                   placeholder="graph:input"
+                   title="DOM CustomEvent name to listen for" />
+        </div>
+
+        <!-- last received -->
+        <div class="event-status" :class="'state-' + panel.state">
+            <span v-if="panel.lastReceived" class="event-time">{{ panel.lastReceived }}</span>
+            <span v-if="panel.lastDetail"   class="event-detail">{{ panel.lastDetail }}</span>
+            <span v-else class="event-idle">listening…</span>
+        </div>
+
+        <!-- test + outbound pip management -->
+        <div class="event-actions">
+            <button @click="dispatchTestEvent(panel)" title="Dispatch a test event on this node's event name">⚡ Test</button>
+            <button class="pip-add" @click="addEventOutboundPip(panel)" style="margin-left:auto">＋ pip</button>
+        </div>
+    </div>
+
+    <!-- outbound pips (right column, named, add/remove) -->
+    <div class="named-pips" style="border-left: 1px solid #1e1a3a">
+        <div v-for="pip in panel.pipsOutbound" :key="pip.index" class="named-pip-row">
+            <input class="pip-name-edit" v-model="pip.name"
+                   :title="'Key in event detail to route here. Rename freely.'" style="width:54px;text-align:right" />
+            <div
+                :class="['pip-dot',
+                    disconnectMode && disconnectFirst && disconnectFirst.pip.label === pip.label && disconnectFirst.pip.index === pip.index ? 'disconnect-selected' :
+                    disconnectMode ? 'disconnect-ready' : '']"
+                :draggable="!disconnectMode"
+                @click="disconnectMode ? disconnectPip(pip, 'outbound') : null"
+                @dragstart="!disconnectMode && pipStartDrag($event, 'outbound', pip)"
+                @dragend="pipEndDrag($event)"
+                @dragover="pipOverDrag($event)"
+                @drop="pipDrop($event, 'outbound', pip)"
+                :id="`${pip.label}-outbound-${pip.index}`"
+                :title="pip.name"
+            ></div>
+            <button class="pip-del" @click="removeEventOutboundPip(panel, pip.index)" v-if="panel.pipsOutbound.length > 1">×</button>
+        </div>
+    </div>
+
+</template>
+{% endraw %}

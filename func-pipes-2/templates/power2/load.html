@@ -1,0 +1,71 @@
+{% raw %}
+<!-- ── LOAD node ── -->
+<template v-else-if="panel.type === 'load'">
+    <div class="node-body">
+        <div class="field-row">
+            <label>Name</label>
+            <input type="text" v-model="panel.label" style="text-align:left" />
+        </div>
+        <div class="field-row">
+            <label>Draw</label>
+            <input type="number" v-model.number="panel.watts" min="0" step="1"
+                   @change="loadParamsChanged(panel)" />
+            <span class="unit">W</span>
+        </div>
+        <div class="field-row">
+            <label>Min V</label>
+            <input type="number" v-model.number="panel.minVolts" min="0" step="1"
+                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+            <span class="unit">V</span>
+        </div>
+        <div class="field-row">
+            <label>Max V</label>
+            <input type="number" v-model.number="panel.maxVolts" min="0" step="1"
+                   @change="loadParamsChanged(panel)" :disabled="panel.blown" />
+            <span class="unit">V</span>
+        </div>
+
+        <div class="blown-notice" v-if="panel.blown">
+            ⚡ BLOWN — press ↺ to replace
+        </div>
+        <div class="status-row">
+            <span class="status-label">State</span>
+            <span :class="['status-value', 'sv-' + panel.state]">
+                {{ panel.state.toUpperCase() }}
+            </span>
+        </div>
+
+        <div class="cap-row" v-if="panel.capacitance > 0">
+            <div class="cap-header">
+                <span class="cap-label">Cap {{ panel.capacitance }}Ws</span>
+                <span class="cap-pct">{{ chargePercent(panel).toFixed(0) }}%</span>
+            </div>
+            <div class="cap-bar-bg">
+                <div class="cap-bar-fill" :style="{ width: chargePercent(panel) + '%' }"></div>
+            </div>
+        </div>
+
+        <div class="ripple-row">
+            <label class="ripple-toggle" :class="panel.ripple.enabled ? 'active' : ''">
+                <input type="checkbox" v-model="panel.ripple.enabled" />
+                ∿ Ripple
+            </label>
+            <template v-if="panel.ripple.enabled">
+                <label class="ripple-field">
+                    <span>±V</span>
+                    <input type="number" min="0.01" step="0.1"
+                           v-model.number="panel.ripple.amount"
+                           @change="rippleParamsChanged(panel)" />
+                </label>
+                <label class="ripple-field">
+                    <span>every</span>
+                    <input type="number" min="0.05" step="0.05"
+                           v-model.number="panel.ripple.interval"
+                           @change="rippleParamsChanged(panel)" />
+                    <span>s</span>
+                </label>
+            </template>
+        </div>
+    </div>
+</template>
+{% endraw %}

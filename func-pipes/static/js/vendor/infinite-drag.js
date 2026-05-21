@@ -46,11 +46,14 @@ class InfiniteDrag {
 
     _onContextMenu(event) {
         // Suppress context menu so right-click drag feels clean
-        // event.preventDefault()
+        if (event.button == this.DRAG_MOUSE_BUTTON_INDEX) {
+            event.preventDefault()
+        }
     }
 
+    DRAG_MOUSE_BUTTON_INDEX = 1
     _onMouseDown(event) {
-        if (event.button !== 2) return
+        if (event.button !== this.DRAG_MOUSE_BUTTON_INDEX) return
         event.preventDefault()
 
         this.dragging = true
@@ -70,7 +73,7 @@ class InfiniteDrag {
     }
 
     _onMouseUp(event) {
-        if (event.button !== 2) return
+        if (event.button !== this.DRAG_MOUSE_BUTTON_INDEX) return
         this.dragging = false
 
         document.removeEventListener('mousemove', this._onMouseMove)
