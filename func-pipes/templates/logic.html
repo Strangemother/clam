@@ -20,6 +20,7 @@
             <button class="btn-gate"   @click="addGate">+ Gate</button>
             <button class="btn-switch" @click="addSwitch">+ Switch</button>
             <button class="btn-led"    @click="addLed">+ LED</button>
+            <button class="btn-example" @click="loadFourBitAdder" :disabled="loadingExample">4-bit Adder</button>
             <span class="toolbar-sep"></span>
             <button :class="['graph-toggle', graphRunning ? 'running' : 'stopped']"
                     @click="toggleGraph"

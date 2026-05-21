@@ -56,6 +56,8 @@ button:disabled { opacity: 0.35; cursor: default; }
 .btn-switch:hover { background: #1a4a2a; }
 .btn-led    { color: #f78166; border-color: #4a1a1a; }
 .btn-led:hover { background: #4a1a1a; }
+.btn-example { color: #f2cc60; border-color: #6f5b1b; }
+.btn-example:hover { background: #6f5b1b; }
 
 button.graph-toggle { font-weight: bold; }
 button.graph-toggle.running { background: #4a1a1a; color: #f78166; border-color: #7a2020; }
