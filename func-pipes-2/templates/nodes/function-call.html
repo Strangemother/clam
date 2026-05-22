@@ -1,5 +1,5 @@
 {% raw %}
-<div class="text-input">
+<div class="function-call">
 
     <ul class="pips inbound">
         <li v-for='(pip, i) in panel.pipsInbound'
@@ -16,8 +16,9 @@
     </ul>
 
     <div class="panel-body">
-        <h2>Text Input</h2>
+        <h2>Functon Call</h2>
         <div>{{ uuid }}</div>
+        <div>{{ panel.funcName }}</div>
         <div>{{ panel.viewData.value }}</div>
     </div>
 

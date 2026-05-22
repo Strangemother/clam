@@ -97,10 +97,10 @@ canvas { display: block; width: 100%; height: 100%; }
     background:    #0d0d1e;
     border:        1px solid #1e1a3a;
     min-width:     5em;
-    width: 10em;
+    width: 20em;
     top: 4em;
     left: 4em;
-    height: 5em;
+    height: 8em;
     user-select:   none;
     padding-top: 1em;
     resize: both;
@@ -113,10 +113,10 @@ canvas { display: block; width: 100%; height: 100%; }
 .pips {
     display:         flex;
     flex-direction:  column;
-    justify-content: center;
-    gap:             8px;
-    padding:         6px 2px;
-    min-width:       14px;
+    /* justify-content: center; */
+    gap: 0.5em;
+    list-style: none;
+    padding: 0 0.4em;
 }
 
 .pip-dot {
@@ -211,3 +211,21 @@ canvas { display: block; width: 100%; height: 100%; }
 ::-webkit-scrollbar-track      { background: #0a0a18; }
 ::-webkit-scrollbar-thumb      { background: #2e1a48; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #cc88ff; }
+
+
+li.pip-container {
+    display: flex;
+    gap: 0.6em;
+    align-items: center;
+}
+
+.outbound li.pip-container {
+    flex-direction: row-reverse;
+}
+
+.pip-container .pip {
+    border: solid 2px #424242;
+    border-radius: 1em;
+    height: 1em;
+    width: 1em;
+}

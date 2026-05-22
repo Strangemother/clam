@@ -151,7 +151,8 @@ createApp({
             const line = {
                 color: palette[Math.floor(Math.random() * palette.length)],
                 width: Math.floor(Math.random() * 4) + 2,
-            }
+            };
+
             document.dispatchEvent(new CustomEvent('connectnodes', {
                 detail: { sender, receiver, line }
             }))

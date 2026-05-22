@@ -109,7 +109,7 @@ class Draggable {
             }
             let rect = node.getBoundingClientRect()
             this.tracking = true
-            console.log('mousedown', this.id())
+            // console.log('mousedown', this.id())
             this.host.tracking.add(this)
             this.dragParent = node.offsetParent || document.documentElement
             this.node.dataset.dragging = 'dragging'

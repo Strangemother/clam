@@ -1,6 +1,13 @@
 # Func Pipes V2
 
+
+
 The first version works well, but after using the AI, I regret it and tend to strip back and start again, focusing on the improvements and gaps.
+
++ DragSolo manages mouse node dragging
++ ZoomableInfiniteDrag manages space zooming and panning
++ Vue handles panel spawning
+
 
 Lessons:
 
