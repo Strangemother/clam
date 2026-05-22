@@ -3,6 +3,14 @@
 const TextInput = {
   props: ['uuid', 'panel']
   , template: getTemplateHTML('.text-input')
+  , mounted() {
+        this.panel._viewComponent = this
+    }
+  , unmounted() {
+        if(this.panel._viewComponent === this) {
+            this.panel._viewComponent = null
+        }
+    }
   , methods: {
 
         addInboundPip(panel) {

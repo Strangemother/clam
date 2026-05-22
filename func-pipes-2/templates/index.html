@@ -56,7 +56,7 @@
                 @click="focusSelect($event, panel)"
                 :key="panel.id">
 
-                <component ref='comp'
+                <component
                     :is='panel.type'
                     :uuid="panel.id"
                     :panel=panel

@@ -3,6 +3,14 @@ const FunctionCall = {
   props: ['uuid', 'panel']
   , emits: ['updatePost']
   , template: getTemplateHTML('.function-call')
+  , mounted() {
+        this.panel._viewComponent = this
+    }
+  , unmounted() {
+        if(this.panel._viewComponent === this) {
+            this.panel._viewComponent = null
+        }
+    }
   , methods: {
 
         addInboundPip(panel) {

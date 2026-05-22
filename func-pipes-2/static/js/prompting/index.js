@@ -181,7 +181,6 @@ const vueApp = createApp({
         , spawnPanel(data={}){
             console.log('spawnPanel', this.selected)
             let type = this.selected || 'function-call'
-            let getViewComponent = _id=> this.$refs[`panel-${_id}`][0]
 
 
             let d = {
@@ -205,15 +204,21 @@ const vueApp = createApp({
                 , callback(data, pip) {
                     console.log('generic node call', this.id, data, pip)
                     let res = data + 1
-                    // Call the component method.
-                    debugger;
+                    const viewComponent = this.getViewComponent()
+                    if(typeof viewComponent?.customCallback == 'function') {
+                        const customResult = viewComponent.customCallback(data, pip)
+                        if(customResult !== undefined) {
+                            res = customResult
+                        }
+                    }
                     this.viewData.value.value = res
 
                     return res
                 }
                 , id: Math.random().toString(32).slice(3)
+                , _viewComponent: null
                 , getViewComponent(){
-                    return getViewComponent(this.id)
+                    return this._viewComponent
                 }
             }
 
