@@ -47,7 +47,7 @@ class SimpleBridge {
     }
 
     emitVisualConnection(fromNode, toNode, meta) {
-      
+
         const sender = this.resolvePipDescriptor(fromNode)
         const receiver = this.resolvePipDescriptor(toNode)
 
@@ -171,6 +171,12 @@ class SimpleBridge {
         }
     }
 
+    emitWaitingCount(){
+        window.dispatchEvent(new CustomEvent('waitingcount', {
+            detail: {count: this._waitingEvents.length}
+        }))
+    }
+
     callWaitingEvents(){
         /*
         Read the list of events, pushed in the last step of the
@@ -190,6 +196,8 @@ class SimpleBridge {
         events.forEach((item)=>{
             this.callNodeEvented(item[0], item[1])
         });
+
+        this.emitWaitingCount()
 
         if( this._waitingEvents.length == 0) {
             console.info('End Graphs.')

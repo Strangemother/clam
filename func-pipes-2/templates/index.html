@@ -35,6 +35,10 @@
                 <button class="btn-text-input" @click="stepButton">Step</button>
                 <div class="spacer"></div>
                 <button class="btn-text-input" @click="clickConnectButton">Connect</button>
+                <div class="spacer"></div>
+                <div class="waiting-count">
+                    {{ waitingCount }}
+                </div>
 
             </div>
         </div>
@@ -52,7 +56,8 @@
                 @click="focusSelect($event, panel)"
                 :key="panel.id">
 
-                <component :is='panel.type'
+                <component ref='comp'
+                    :is='panel.type'
                     :uuid="panel.id"
                     :panel=panel
                     @update-post="onUpdatePost"></component>
@@ -85,9 +90,11 @@
 <script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/prompting/prompt-pipes-dev.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/simple-bridge.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/node-register.js') }}"></script>
-<script src="{{ url_for('static', filename='js/prompting/func-tools-comp.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/nodes/func-tools.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/nodes/text-input.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
 
 </body>

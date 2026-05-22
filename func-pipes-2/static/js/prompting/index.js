@@ -25,7 +25,8 @@ const vueApp = createApp({
         return {
             panels: [],
             available: [],
-            selected: ''
+            selected: '',
+            waitingCount: -1
         }
     },
 
@@ -46,12 +47,15 @@ const vueApp = createApp({
 
         window.addEventListener('nodeselect', this.nodeSelectHandler.bind(this))
         window.addEventListener('pipclick', this.pipclickHandler.bind(this))
+        window.addEventListener('waitingcount', (e)=> {
+            this.waitingCount = e.detail.count
+        })
     },
 
     methods: {
 
         createExample2() {
-            let a = this.spawnPanel({ id: 'a'})
+            let a = this.spawnPanel({ id: 'a', type:'text-input'})
             let b = this.spawnPanel({ id: 'b'})
             simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
         }
@@ -177,6 +181,8 @@ const vueApp = createApp({
         , spawnPanel(data={}){
             console.log('spawnPanel', this.selected)
             let type = this.selected || 'function-call'
+            let getViewComponent = _id=> this.$refs[`panel-${_id}`][0]
+
 
             let d = {
                 pipsInbound: [
@@ -199,12 +205,16 @@ const vueApp = createApp({
                 , callback(data, pip) {
                     console.log('generic node call', this.id, data, pip)
                     let res = data + 1
-
+                    // Call the component method.
+                    debugger;
                     this.viewData.value.value = res
 
                     return res
                 }
                 , id: Math.random().toString(32).slice(3)
+                , getViewComponent(){
+                    return getViewComponent(this.id)
+                }
             }
 
             Object.assign(d, data)

@@ -1,0 +1,41 @@
+<div class="{% block main_class %}text-input{% endblock main_class %}">
+{% raw %}
+
+    <ul class="pips inbound">
+        <li v-for='(pip, i) in panel.pipsInbound'
+            @click="pipClick($event, panel, pip, i)"
+            class="pip-container">
+            <div class="pip" :id="panel.id + '-' + pip.name" :index=i></div>
+            <span class="pip-label"
+                contenteditable="true">{{ pip.name }}</span>
+        </li>
+        <li class="pip-container add-pip" @click='addInboundPip(panel)'>
+            <div class="pip"></div>
+            <span class="pip-label">add</span>
+        </li>
+    </ul>
+
+    <div class="panel-body">
+    {% endraw %}
+    {% block body %}
+        <h2>Default Value</h2>
+        <div>{{ uuid }}</div>
+        <div>{{ panel.viewData.value }}</div>
+    {% endblock body %}
+    {% raw %}
+    </div>
+
+    <ul class="pips outbound">
+        <li v-for='(pip, i) in panel.pipsOutbound'
+            @click="pipClick($event, panel, pip, i)"
+            class="pip-container">
+            <div class="pip" :id="panel.id + '-' + pip.name" :index=i></div>
+            <span class="pip-label" contenteditable="true">{{ pip.name }}</span>
+        </li>
+        <li class="pip-container add-pip" @click='addOutboundPip(panel)'>
+            <div class="pip"></div>
+            <span class="pip-label">add</span>
+        </li>
+    </ul>
+</div>
+{% endraw %}
