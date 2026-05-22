@@ -19,6 +19,59 @@ class SimpleBridge {
             )
     }
 
+    resolvePipDescriptor(node) {
+        const panel = this.panelRegistry[node?.id]
+        if(panel == undefined) {
+            return null
+        }
+
+        const inboundIndex = panel.pipsInbound.findIndex((pip) => pip.name == node.pip)
+        if(inboundIndex > -1) {
+            return {
+                label: node.id,
+                direction: 'inbound',
+                pipIndex: inboundIndex,
+            }
+        }
+
+        const outboundIndex = panel.pipsOutbound.findIndex((pip) => pip.name == node.pip)
+        if(outboundIndex > -1) {
+            return {
+                label: node.id,
+                direction: 'outbound',
+                pipIndex: outboundIndex,
+            }
+        }
+
+        return null
+    }
+
+    emitVisualConnection(fromNode, toNode, meta) {
+      
+        const sender = this.resolvePipDescriptor(fromNode)
+        const receiver = this.resolvePipDescriptor(toNode)
+
+        if(sender == undefined || sender == null || receiver == undefined || receiver == null) {
+            return
+        }
+
+        document.dispatchEvent(new CustomEvent('connectnodes', {
+            detail: {
+                sender,
+                receiver,
+                line: Object.assign({
+                    color: '#5588ff',
+                    design: 's-curve',
+                    width: 2,
+                }, meta?.line || {}),
+            }
+        }))
+
+        if(typeof dispatchRequestDrawEvent == 'function') {
+            requestAnimationFrame(() => dispatchRequestDrawEvent())
+        }
+    }
+
     /* A graph but without the name.*/
     connectPips(fromNode, toNode, meta) {
         let fromName = `${fromNode.id}:${fromNode.pip}`
@@ -41,6 +94,8 @@ class SimpleBridge {
 
         pipRegistry[fromName] = fromDict
         pipRegistry[toName] = toDict
+
+        this.emitVisualConnection(fromNode, toNode, meta)
     }
 
     callNodeEvented(targetNode, data) {

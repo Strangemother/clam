@@ -19,7 +19,7 @@ const panelRegistry = {}
 const simpleBridge = new SimpleBridge(panelRegistry);
 
 
-const app = createApp({
+const vueApp = createApp({
 
     data() {
         return {
@@ -226,7 +226,7 @@ const app = createApp({
 
 
 for(let k in nodeRegister) {
-    app.component(k, nodeRegister[k])
+    vueApp.component(k, nodeRegister[k])
 }
 
-app.mount('#app')
+vueApp.mount('#app')

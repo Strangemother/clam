@@ -47,6 +47,7 @@
                 :class="['type-' + panel.type]"
                 v-for="(panel, i) in panels"
                 :ref="'panel-' + panel.id"
+                :data-panel-id="panel.id"
 
                 @click="focusSelect($event, panel)"
                 :key="panel.id">
@@ -83,6 +84,7 @@
 <!-- Space panning / zoom -->
 <script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
 
+<script src="{{ url_for('static', filename='js/prompting/prompt-pipes-dev.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/simple-bridge.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/node-register.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/func-tools-comp.js') }}"></script>
