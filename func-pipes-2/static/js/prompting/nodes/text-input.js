@@ -15,6 +15,10 @@ const TextInput = {
           console.log('sendContent')
         }
 
+        , customCallback(data, pip) {
+            // somehow called be the spawnpanel callback.
+        }
+
         , addOutboundPip(panel) {
             panel.pipsOutbound.push({
               name: Math.random().toString(32).slice(3)
