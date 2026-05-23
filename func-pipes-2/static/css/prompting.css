@@ -96,8 +96,9 @@ canvas { display: block; width: 100%; height: 100%; }
     flex-direction: row;
     background:    #0d0d1e;
     border:        1px solid #1e1a3a;
-    min-width:     5em;
+    min-width: 17em;
     width: 20em;
+    min-height: 8.5em;
     top: 4em;
     left: 4em;
     height: 8em;
@@ -180,6 +181,7 @@ canvas { display: block; width: 100%; height: 100%; }
     display: flex;
     flex-direction: column;
     min-width: 0;
+    flex-grow: 1;
 }
 
 
@@ -228,4 +230,26 @@ li.pip-container {
     border-radius: 1em;
     height: 1em;
     width: 1em;
+}
+
+.panel-body textarea {
+    /* border: solid; */
+    flex-grow: 1;
+    resize: none;
+}
+
+.panel-body .text-content textarea {
+    /* border: solid; */
+    flex-grow: 1;
+    resize: none;
+    min-height: 2em;
+}
+
+.panel-body .text-content {
+    display: flex;
+    flex-grow: 1;
+}
+
+.templates.display-none {
+    display: none;
 }

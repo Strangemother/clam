@@ -5,9 +5,11 @@
     <h2>Text Input</h2>
     <div>{{ uuid }}</div>
     <div>{{ panel.viewData.value }}</div>
-    <div class="display-flex">
-        <textarea>Content</textarea>
-        <button @click='sendContent'>Send</button>
+    <div class="text-content display-flex">
+        <textarea v-model='userText'>Content</textarea>
+        <div>
+            <button @click='sendContent'>Send</button>
+        </div>
     </div>
     {% endraw %}
 {% endblock body %}

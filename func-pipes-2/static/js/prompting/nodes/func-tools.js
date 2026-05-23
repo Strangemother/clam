@@ -1,42 +1,42 @@
 
 const FunctionCall = {
-  props: ['uuid', 'panel']
-  , emits: ['updatePost']
-  , template: getTemplateHTML('.function-call')
-  , mounted() {
+    props: ['uuid', 'panel']
+    , emits: ['updatePost']
+    , data() {
+        return {
+            userText: `console.log("inner", panel.id, pip, data, this)`
+        }
+    }
+    , template: getTemplateHTML('.function-call')
+    , mounted() {
         this.panel._viewComponent = this
     }
-  , unmounted() {
+    , unmounted() {
         if(this.panel._viewComponent === this) {
             this.panel._viewComponent = null
         }
     }
-  , methods: {
 
-        addInboundPip(panel) {
-            panel.pipsInbound.push({
-              name: Math.random().toString(32).slice(3)
-            })
+    , methods: Object.assign({}, PanelBaseMethods, {
+        customCallback(data, pip) {
+            // somehow called be the spawnpanel callback.
+            console.log('func customCallback', data, pip)
+            try{
+                let f = Function(
+                     `function runUserContent(data, pip, panel) {
+                         ${this.userText}
+                      }; return runUserContent`,
+
+                )
+                let res = f.apply(this).apply(this, [data, pip, this.panel]);
+                // console.log(res)
+                return res
+            }catch(err) {
+                console.warn('Node fail', err)
+            }
+            return data + 10
         }
-
-        , addOutboundPip(panel) {
-            panel.pipsOutbound.push({
-              name: Math.random().toString(32).slice(3)
-            })
-        }
-
-        , pipClick($event, panel, pip, i) {
-            console.log(event, panel)
-            window.dispatchEvent(new CustomEvent('pipclick', {
-                detail: {
-                    panel
-                    , pip
-                    , i
-                }
-            }))
-        }
-
-  }
+    })
 }
 
 nodeRegister.FunctionCall = FunctionCall

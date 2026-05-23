@@ -8,7 +8,17 @@ class SimpleBridge {
         this._waitingEvents = []
         this.panelRegistry = panelRegistry
         window.addEventListener('noderesult', this.noderesultEventListener.bind(this))
+    }
 
+    getCompass() {
+        return {
+            'in': 'out',
+            'out': 'in'
+        }
+    }
+
+    getInverseDirection(v) {
+        return this.getCompass()[v]
     }
 
     easyConnectPips(fromId, toId, meta) {
@@ -55,8 +65,7 @@ class SimpleBridge {
             return
         }
 
-        document.dispatchEvent(new CustomEvent('connectnodes', {
-            detail: {
+        dispatchEvent('connectnodes', {
                 sender,
                 receiver,
                 line: Object.assign({
@@ -64,8 +73,7 @@ class SimpleBridge {
                     design: 's-curve',
                     width: 2,
                 }, meta?.line || {}),
-            }
-        }))
+            }, document)
 
         if(typeof dispatchRequestDrawEvent == 'function') {
             requestAnimationFrame(() => dispatchRequestDrawEvent())
@@ -110,20 +118,55 @@ class SimpleBridge {
         then it dispatches an event, of which is picked up and moved
         */
        // get node
-       let node = panelRegistry[targetNode.id]
+        let destNode = targetNode
+        let destPip = undefined
+
+        if(Array.isArray(targetNode)) {
+            // node, origin pip
+            destNode = targetNode[0]
+            destPip = targetNode[1]
+        }
+       let node = panelRegistry[destNode.id]
        // call with pip index
-       let cleanValue = node.graphExecute(data, targetNode.pip || 'in')
+       let cleanValue = node.graphExecute(data, destPip?.pip || destNode?.pip || 'in')
        // emit result.
-       this.emitResult(cleanValue, targetNode)
+       this.emitResult(cleanValue, destNode)
        // The node result is collected elsewhere and continued.
     }
 
-    emitResult(cleanValue, targetNode) {
+    emitResult(cleanValue, originNode) {
         /* dispatch the standard node result event
 
-        targetNode contains the id and pip used for this cleanValue.
+        originNode contains the id and pip used for this cleanValue.
 
-            targetNode = {
+            originNode = {
+                id: nodeId
+                pip 'in'
+            }
+            cleanValue = 'result from in->callback'
+
+        */
+        let pip = this.getInverseDirection(originNode.pip || 'in')
+        let detail = {
+                    id: originNode.id
+                    // At the moment, a noderesult emits from _out_.
+                    , pip: 'out' // this.getInverseDirection(originNode.pip || 'in')
+                    , value: cleanValue
+                }
+        // let e = new CustomEvent('noderesult', { detail })
+
+        console.log('dispatchEvent', detail)
+        // window.dispatchEvent(e)
+        dispatchEvent('noderesult', detail)
+    }
+
+    emitResultThrough(cleanValue, originNode) {
+        /* dispatch the standard node result event _through_ the originNode.
+        For example to send {out}
+
+        originNode contains the id and pip used for this cleanValue.
+
+            originNode = {
                 id: nodeId
                 pip 'in'
             }
@@ -131,14 +174,16 @@ class SimpleBridge {
 
         */
         let detail = {
-                    id: targetNode.id
-                    , pip: 'out' // At the moment, a noderesult emits from _out_.
+                    id: originNode.id
+                    , pip: originNode.pip
                     , value: cleanValue
                 }
-        let e = new CustomEvent('noderesult', { detail })
+
+        // let e = new CustomEvent('noderesult', { detail })
 
         console.log('dispatchEvent', detail)
-        window.dispatchEvent(e)
+        // window.dispatchEvent(e)
+        dispatchEvent('noderesult', detail)
     }
 
     noderesultEventListener(event) {
@@ -146,9 +191,9 @@ class SimpleBridge {
         let detail = event.detail
         console.log('noderesult EventListener', detail)
         /* Get pip next node.*/
-        let nextNodes = this.getNext(detail);
-        console.log('next', nextNodes)
-        this.callNodesEvented(nextNodes, detail.value)
+        let nextNodesAndPips = this.getNext(detail, true);
+        console.log('next', nextNodesAndPips)
+        this.callNodesEvented(nextNodesAndPips, detail.value)
     }
 
     /* Requires callWaitingEvents() to pump the stack*/
@@ -172,9 +217,11 @@ class SimpleBridge {
     }
 
     emitWaitingCount(){
-        window.dispatchEvent(new CustomEvent('waitingcount', {
-            detail: {count: this._waitingEvents.length}
-        }))
+        // window.dispatchEvent(new CustomEvent('waitingcount', {
+        //     detail: {count: this._waitingEvents.length}
+        // }))
+        dispatchEvent('waitingcount', {count: this._waitingEvents.length})
+
     }
 
     callWaitingEvents(){
@@ -208,7 +255,7 @@ class SimpleBridge {
         }
     }
 
-    getNext(fromNode) {
+    getNext(fromNode, withPip=false) {
         /* return the next pip from the given pip
 
             getNext({
@@ -223,6 +270,10 @@ class SimpleBridge {
 
         fromDict?.to?.forEach((toNode)=>{
             // Resolve each object
+            if(withPip) {
+                res.push([panelRegistry[toNode.id], toNode])
+                return
+            }
             res.push(panelRegistry[toNode.id])
         })
 

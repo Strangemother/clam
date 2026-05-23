@@ -1,50 +1,34 @@
 
 
 const TextInput = {
-  props: ['uuid', 'panel']
-  , template: getTemplateHTML('.text-input')
-  , mounted() {
+    props: ['uuid', 'panel']
+    , template: getTemplateHTML('.text-input')
+    , mounted() {
+
         this.panel._viewComponent = this
     }
-  , unmounted() {
+    , unmounted() {
         if(this.panel._viewComponent === this) {
             this.panel._viewComponent = null
         }
     }
-  , methods: {
 
-        addInboundPip(panel) {
-            panel.pipsInbound.push({
-              name: Math.random().toString(32).slice(3)
+    , methods: Object.assign({}, PanelBaseMethods, {
+        sendContent() {
+            console.log('sendContent', this.userText)
+
+            simpleBridge.emitResultThrough(this.userText, {
+                id: this.panel.id,
+                pip: 'out' // currently ignored
             })
-        }
-
-        , sendContent() {
-          console.log('sendContent')
         }
 
         , customCallback(data, pip) {
             // somehow called be the spawnpanel callback.
+            console.log('customCallback', data, pip)
+            return data + 1
         }
-
-        , addOutboundPip(panel) {
-            panel.pipsOutbound.push({
-              name: Math.random().toString(32).slice(3)
-            })
-        }
-
-        , pipClick($event, panel, pip, i) {
-            console.log(event, panel)
-            window.dispatchEvent(new CustomEvent('pipclick', {
-                detail: {
-                    panel
-                    , pip
-                    , i
-                }
-            }))
-        }
-
-  }
+    })
 }
 
 nodeRegister.TextInput = TextInput

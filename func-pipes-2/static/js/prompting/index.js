@@ -45,9 +45,15 @@ const vueApp = createApp({
             .then((d)=>d.json())
             .then((names)=>{this.available = names})
 
-        window.addEventListener('nodeselect', this.nodeSelectHandler.bind(this))
-        window.addEventListener('pipclick', this.pipclickHandler.bind(this))
-        window.addEventListener('waitingcount', (e)=> {
+        // window.addEventListener('nodeselect', this.nodeSelectHandler.bind(this))
+        // window.addEventListener('pipclick', this.pipclickHandler.bind(this))
+        // window.addEventListener('waitingcount', (e)=> {
+        //     this.waitingCount = e.detail.count
+        // })
+
+        listenEvent('nodeselect', this.nodeSelectHandler.bind(this))
+        listenEvent('pipclick', this.pipclickHandler.bind(this))
+        listenEvent('waitingcount', (e)=> {
             this.waitingCount = e.detail.count
         })
     },
@@ -91,11 +97,12 @@ const vueApp = createApp({
 
         , focusSelect(event, panel){
             // console.log(event, panel)
-            window.dispatchEvent(new CustomEvent('nodeselect', {
-                detail: {
-                    panel
-                }
-            }))
+            // window.dispatchEvent(new CustomEvent('nodeselect', {
+            //     detail: {
+            //         panel
+            //     }
+            // }))
+            dispatchEvent('nodeselect', { panel })
         }
 
         , clickConnectButton() {
@@ -182,46 +189,50 @@ const vueApp = createApp({
             console.log('spawnPanel', this.selected)
             let type = this.selected || 'function-call'
 
+            // let d = {
+            //     pipsInbound: [
+            //         { name: 'in'},
+            //     ]
+            //     , pipsOutbound: [
+            //         { name: 'out'},
+            //     ]
+            //     , viewData: Vue.ref({ value: -1 })
+            //     , pipData: {}
+            //     , type
+            //     , funcName: data.funcName
+            //     , graphExecute(data, throughPip) {
+            //         /* A standard execution of the node function,
+            //         from the graph, e.g. callNodeEvented.
 
-            let d = {
-                pipsInbound: [
-                    { name: 'in'},
-                ]
-                , pipsOutbound: [
-                    { name: 'out'},
-                ]
-                , viewData: Vue.ref({ value: -1 })
-                , type
+            //         Run and return a clean value
+            //         */
+            //             // Here we dispatch to the internal handler
+            //             // or data store.
+            //             this.pipData[throughPip] = data
+            //        return this.callback(data, throughPip)
+            //     }
+            //     , callback(data, pip) {
+            //         console.log('generic node call', this.id, data, pip)
+
+            //         const viewComponent = this.getViewComponent()
+            //         const customResult = viewComponent?.customCallback(data, pip)
+
+
+            //         this.viewData.value.value = customResult
+
+            //         return customResult
+            //     }
+            //     , id: Math.random().toString(32).slice(3)
+            //     , _viewComponent: null
+            //     , getViewComponent(){
+            //         return this._viewComponent
+            //     }
+            // }
+
+            let d = makePanel({
+                type
                 , funcName: data.funcName
-                , graphExecute(data, throughPip) {
-                    /* A standard execution of the node function,
-                    from the graph, e.g. callNodeEvented.
-
-                    Run and return a clean value
-                    */
-                   return this.callback(data, throughPip)
-                }
-                , callback(data, pip) {
-                    console.log('generic node call', this.id, data, pip)
-                    let res = data + 1
-                    const viewComponent = this.getViewComponent()
-                    if(typeof viewComponent?.customCallback == 'function') {
-                        const customResult = viewComponent.customCallback(data, pip)
-                        if(customResult !== undefined) {
-                            res = customResult
-                        }
-                    }
-                    this.viewData.value.value = res
-
-                    return res
-                }
-                , id: Math.random().toString(32).slice(3)
-                , _viewComponent: null
-                , getViewComponent(){
-                    return this._viewComponent
-                }
-            }
-
+            })
             Object.assign(d, data)
 
             panelRegistry[d.id] = d
@@ -238,6 +249,50 @@ const vueApp = createApp({
     },
 
 });
+
+const makePanel = function(extra={}) {
+     let d = Object.assign({
+        pipsInbound: [
+            { name: 'in'},
+        ]
+        , pipsOutbound: [
+            { name: 'out'},
+        ]
+        , viewData: Vue.ref({ value: -1 })
+        , pipData: {}
+        , type: 'text-input'
+        , funcName: ''
+        , graphExecute(data, throughPip) {
+            /* A standard execution of the node function,
+            from the graph, e.g. callNodeEvented.
+
+            Run and return a clean value
+            */
+                // Here we dispatch to the internal handler
+                // or data store.
+                this.pipData[throughPip] = data
+           return this.callback(data, throughPip)
+        }
+        , callback(data, pip) {
+            console.log('generic node call', this.id, data, pip)
+
+            const viewComponent = this.getViewComponent()
+            const customResult = viewComponent?.customCallback(data, pip)
+
+
+            this.viewData.value.value = customResult
+
+            return customResult
+        }
+        , id: Math.random().toString(32).slice(3)
+        , _viewComponent: null
+        , getViewComponent(){
+            return this._viewComponent
+        }
+    }, extra)
+
+    return d;
+}
 
 
 for(let k in nodeRegister) {
