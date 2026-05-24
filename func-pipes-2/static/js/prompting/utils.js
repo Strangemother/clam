@@ -2,7 +2,8 @@ const PanelBaseMethods = {
 
         addInboundPip(panel) {
             panel.pipsInbound.push({
-              name: Math.random().toString(32).slice(3)
+                name: Math.random().toString(32).slice(3),
+                execute: false
             })
         }
 

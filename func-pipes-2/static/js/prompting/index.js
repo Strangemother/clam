@@ -250,50 +250,6 @@ const vueApp = createApp({
 
 });
 
-const makePanel = function(extra={}) {
-     let d = Object.assign({
-        pipsInbound: [
-            { name: 'in'},
-        ]
-        , pipsOutbound: [
-            { name: 'out'},
-        ]
-        , viewData: Vue.ref({ value: -1 })
-        , pipData: {}
-        , type: 'text-input'
-        , funcName: ''
-        , graphExecute(data, throughPip) {
-            /* A standard execution of the node function,
-            from the graph, e.g. callNodeEvented.
-
-            Run and return a clean value
-            */
-                // Here we dispatch to the internal handler
-                // or data store.
-                this.pipData[throughPip] = data
-           return this.callback(data, throughPip)
-        }
-        , callback(data, pip) {
-            console.log('generic node call', this.id, data, pip)
-
-            const viewComponent = this.getViewComponent()
-            const customResult = viewComponent?.customCallback(data, pip)
-
-
-            this.viewData.value.value = customResult
-
-            return customResult
-        }
-        , id: Math.random().toString(32).slice(3)
-        , _viewComponent: null
-        , getViewComponent(){
-            return this._viewComponent
-        }
-    }, extra)
-
-    return d;
-}
-
 
 for(let k in nodeRegister) {
     vueApp.component(k, nodeRegister[k])
