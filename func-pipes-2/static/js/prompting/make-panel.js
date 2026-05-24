@@ -32,8 +32,10 @@ const makePanel = function(extra={}) {
             */
             // Here we dispatch to the internal handler
             // or data store.
-            this.pipData[throughPip] = data
             let pip = this.getPipConf(throughPip)
+            if(pip.store != false) {
+                this.pipData[throughPip] = data
+            }
             if(pip.execute == false) {
                 console.log("Pip doesn't execute")
                 return
