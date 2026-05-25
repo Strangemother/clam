@@ -30,25 +30,21 @@
         }
     }
 
+    createPipesRuntime();
+
+    const requestDraw = function() {
+        dispatchRequestDrawEvent()
+    }
+
+    document.addEventListener('dragmove', requestDraw)
+    document.addEventListener('panspace', requestDraw)
+    document.addEventListener('zoomspace', requestDraw);
+
     document.addEventListener('DOMContentLoaded', function() {
-        if(typeof createPipesRuntime != 'function') {
-            return
-        }
 
-        createPipesRuntime()
-
-        if(window.clItems && typeof window.clItems.animDraw == 'function') {
+        if(window.clItems) {
             window.clItems.animDraw()
         }
 
-        const requestDraw = function() {
-            if(typeof dispatchRequestDrawEvent == 'function') {
-                dispatchRequestDrawEvent()
-            }
-        }
-
-        document.addEventListener('dragmove', requestDraw)
-        document.addEventListener('panspace', requestDraw)
-        document.addEventListener('zoomspace', requestDraw)
     })
 })()

@@ -1,0 +1,9 @@
+{% extends "/nodes/node_base.html" %}
+{% block main_class %}simple-cell{% endblock main_class %}
+{% block body %}
+    {% raw %}
+    <h2 contenteditable="true">Example Step</h2>
+    <div>{{ uuid }}</div>
+    <textarea v-model='userText'>10 Points</textarea>
+    {% endraw %}
+{% endblock body %}

@@ -1,12 +1,19 @@
-const edgesRegistry = {}
-const pipRegistry = {}
+// const edgesRegistry = {}
+// const pipRegistry = {}
 
 
 class SimpleBridge {
 
+    /* Requires callWaitingEvents() to pump the stack*/
+    eventsMode = true
+
     constructor(panelRegistry={}){
-        this._waitingEvents = []
+        this.edgesRegistry = {}
+        this.pipRegistry = {}
+
         this.panelRegistry = panelRegistry
+
+        this._waitingEvents = []
         window.addEventListener('noderesult', this.noderesultEventListener.bind(this))
     }
 
@@ -21,13 +28,6 @@ class SimpleBridge {
         return this.getCompass()[v]
     }
 
-    easyConnectPips(fromId, toId, meta) {
-        return this.connectPips(
-                { id: fromId, pip: 'out' },
-                { id: toId, pip: 'in'},
-                meta
-            )
-    }
 
     resolvePipDescriptor(node) {
         const panel = this.panelRegistry[node?.id]
@@ -80,6 +80,23 @@ class SimpleBridge {
         }
     }
 
+    connectMany(...connections) {
+        connections.forEach((c)=>{
+            if(typeof(c[0]) == 'string') {
+                this.easyConnectPips(c[0], c[1], c[2])
+            } else {
+                this.connectPips(c[0], c[1], c[2])
+            }
+        })
+    }
+
+    easyConnectPips(fromId, toId, meta) {
+        return this.connectPips(
+                { id: fromId, pip: 'out' },
+                { id: toId, pip: 'in'},
+                meta
+            )
+    }
     /* A graph but without the name.*/
     connectPips(fromNode, toNode, meta) {
         let fromName = `${fromNode.id}:${fromNode.pip}`
@@ -88,20 +105,20 @@ class SimpleBridge {
         console.log('Connection', name)
 
         /* Add to the edge to edge.*/
-        edgesRegistry[name] = {
+        this.edgesRegistry[name] = {
             fromNode,
             toNode,
             meta
         }
 
-        let fromDict = pipRegistry[fromName] || { to: new Set, from: new Set}
-        let toDict = pipRegistry[toName] || { to: new Set, from: new Set}
+        let fromDict = this.pipRegistry[fromName] || { to: new Set, from: new Set}
+        let toDict = this.pipRegistry[toName] || { to: new Set, from: new Set}
 
         fromDict.to.add(toNode)
         toDict.from.add(fromNode)
 
-        pipRegistry[fromName] = fromDict
-        pipRegistry[toName] = toDict
+        this.pipRegistry[fromName] = fromDict
+        this.pipRegistry[toName] = toDict
 
         this.emitVisualConnection(fromNode, toNode, meta)
     }
@@ -196,9 +213,6 @@ class SimpleBridge {
         this.callNodesEvented(nextNodesAndPips, detail.value)
     }
 
-    /* Requires callWaitingEvents() to pump the stack*/
-    eventsMode = true
-
     callNodesEvented(targetNodeList, data) {
         /* Call many next nodes - calling callNodeEvented iteratively. */
 
@@ -265,7 +279,7 @@ class SimpleBridge {
             <Node>
         */
         let fromName = `${fromNode.id}:${fromNode.pip}`
-        let fromDict = pipRegistry[fromName]
+        let fromDict = this.pipRegistry[fromName]
         let res = []
 
         fromDict?.to?.forEach((toNode)=>{

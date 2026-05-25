@@ -4,7 +4,7 @@ const FunctionCall = {
     , emits: ['updatePost']
     , data() {
         return {
-            userText: `console.log("inner", panel.id, pip, data, this)`
+            userText: `console.log("inner", panel.id, pip, data, this); return parseInt(data) + 10`
         }
     }
     , template: getTemplateHTML('.function-call')

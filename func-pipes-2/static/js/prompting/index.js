@@ -11,7 +11,17 @@
 
 const { createApp, nextTick } = Vue
 
-const dragHost = new DragSolo()
+const setupDragging = function() {
+    window.dragHost = new DragSolo()
+}
+
+
+const setupZooming = function() {
+    window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel',
+        {
+            zoomMode: 'transform',
+        });
+}
 
 /* live panels by ID */
 const panelRegistry = {}
@@ -33,13 +43,13 @@ const vueApp = createApp({
     async mounted() {
         // Models must be fetched manually via the toolbar after setting the endpoint.
         // Prompting uses transform-based zoom so node contents scale without reflow.
-        window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel',
-            {
-                zoomMode: 'transform',
-            });
+        setupDragging()
+        setupZooming()
 
-        // this.createExample()
-        this.createExample2()
+        // setTimeout(()=>{
+        //     this.createExample()
+        // }, 10)
+        // this.createExample2()
 
         fetch('/nodes/')
             .then((d)=>d.json())
@@ -66,29 +76,66 @@ const vueApp = createApp({
             simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
         }
 
-        , createExample() {
+        , createExample3() {
+            const conf = {
+                panels: [
+                    { id: 'a', type: 'text-input'}
+                    , { id: 'b'}
+                    , { id: 'c'}
+                    , { id: 'd'}
+                    , { id: 'e'}
+                ]
+                , connections: [
+                    [
+                        { id: 'a', pip: 'out' },
+                        { id: 'b', pip: 'in'}
+                    ]
+                    , ['a', 'c']
+                    , ['c', 'd']
+                    , ['d', 'e']
+                ]
+            }
 
-            let a = this.spawnPanel({ id: 'a'})
-            let b = this.spawnPanel({ id: 'b'})
-            let c = this.spawnPanel({ id: 'c'})
-            let d = this.spawnPanel({ id: 'd'})
-            let e = this.spawnPanel({ id: 'e'})
+            let a = this.spawnPanels(...conf.panels)
+
+            simpleBridge.connectMany(...conf.connections)
+
+            /* We pretend an inbound event through A, it will execute and
+            emit an event.*/
+            simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
+        }
+
+        , createExample() {
+            const conf = {
+                panels: [
+                    { id: 'a', type: 'text-input'}
+                    , { id: 'b'}
+                    , { id: 'c'}
+                    , { id: 'd'}
+                    , { id: 'e'}
+                ]
+            }
+
+            let a = this.spawnPanels(...conf.panels)
+
+            // simpleBridge.connectMany(...conf.connections)
+
             // connect a out to b  in
             simpleBridge.connectPips(
-                    { id: a.id, pip: 'out' },
-                    { id: b.id, pip: 'in'}
+                    { id: 'a', pip: 'out' },
+                    { id: 'b', pip: 'in'}
                 )
 
-            simpleBridge.easyConnectPips(a.id, c.id)
+            simpleBridge.easyConnectPips('a', 'c')
             simpleBridge.easyConnectPips('c', 'd')
             simpleBridge.easyConnectPips('d', 'e')
 
-            let nexts = simpleBridge.getNext({ id: a.id, pip: 'out'})
+            let nexts = simpleBridge.getNext({ id: 'a', pip: 'out'})
             console.log(nexts)
 
             /* We pretend an inbound event through A, it will execute and
             emit an event.*/
-            simpleBridge.callNodeEvented({ id: a.id, pip: 'in'}, 1)
+            simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
         }
 
         , stepButton() {
@@ -185,54 +232,22 @@ const vueApp = createApp({
             this.spawnPanel()
         }
 
+        , spawnPanels(...panels){
+            const r = [];
+            panels.forEach((x)=> {
+                r.push(this.spawnPanel(x))
+            });
+            return r
+        }
         , spawnPanel(data={}){
             console.log('spawnPanel', this.selected)
             let type = this.selected || 'function-call'
-
-            // let d = {
-            //     pipsInbound: [
-            //         { name: 'in'},
-            //     ]
-            //     , pipsOutbound: [
-            //         { name: 'out'},
-            //     ]
-            //     , viewData: Vue.ref({ value: -1 })
-            //     , pipData: {}
-            //     , type
-            //     , funcName: data.funcName
-            //     , graphExecute(data, throughPip) {
-            //         /* A standard execution of the node function,
-            //         from the graph, e.g. callNodeEvented.
-
-            //         Run and return a clean value
-            //         */
-            //             // Here we dispatch to the internal handler
-            //             // or data store.
-            //             this.pipData[throughPip] = data
-            //        return this.callback(data, throughPip)
-            //     }
-            //     , callback(data, pip) {
-            //         console.log('generic node call', this.id, data, pip)
-
-            //         const viewComponent = this.getViewComponent()
-            //         const customResult = viewComponent?.customCallback(data, pip)
-
-
-            //         this.viewData.value.value = customResult
-
-            //         return customResult
-            //     }
-            //     , id: Math.random().toString(32).slice(3)
-            //     , _viewComponent: null
-            //     , getViewComponent(){
-            //         return this._viewComponent
-            //     }
-            // }
 
             let d = makePanel({
                 type
                 , funcName: data.funcName
             })
+
             Object.assign(d, data)
 
             panelRegistry[d.id] = d
@@ -255,4 +270,4 @@ for(let k in nodeRegister) {
     vueApp.component(k, nodeRegister[k])
 }
 
-vueApp.mount('#app')
+const mountedApp = vueApp.mount('#app')

@@ -25,6 +25,7 @@
                         <option>---</option>
                         <option value='function-call'>Function Call</option>
                         <option value='text-input'>Text Input</option>
+                        <option value='simple-cell'>Simple Cell</option>
                         <option
                             :value="item"
                             v-for='item in available'>{{ item }}</option>
@@ -74,6 +75,7 @@
         <div class="panel-template">
             {% include "./nodes/function-call.html" %}
             {% include "./nodes/text-input.html" %}
+            {% include "./nodes/simple-cell.html" %}
         </div>
     </div>
 
@@ -84,18 +86,20 @@
 <script src="{{ url_for('static', filename='js/vendor/dragsolo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/vendor/chat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/vendor/model-list.js') }}"></script>
-
 <script src="{{ url_for('static', filename='js/vendor/pipes-runtime.js') }}"></script>
-<!-- Space panning / zoom -->
 <script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
 
-<script src="{{ url_for('static', filename='js/prompting/make-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/prompt-pipes-dev.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/make-panel.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/prompting/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/simple-bridge.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/node-register.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/prompting/nodes/func-tools.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/nodes/text-input.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/nodes/simple-cell.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
 
 </body>
