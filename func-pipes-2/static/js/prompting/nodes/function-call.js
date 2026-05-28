@@ -1,22 +1,12 @@
 
-const FunctionCall = {
-    props: ['uuid', 'panel']
-    , emits: ['updatePost']
-    , data() {
+const FunctionCall = Object.assign({}, NodeBase, {
+    // props: ['uuid', 'panel']
+    data() {
         return {
             userText: `console.log("inner", panel.id, pip, data, this); return parseInt(data) + 10`
         }
     }
     , template: getTemplateHTML('.function-call')
-    , mounted() {
-        this.panel._viewComponent = this
-    }
-    , unmounted() {
-        if(this.panel._viewComponent === this) {
-            this.panel._viewComponent = null
-        }
-    }
-
     , methods: Object.assign({}, PanelBaseMethods, {
         customCallback(data, pip) {
             // somehow called be the spawnpanel callback.
@@ -37,7 +27,7 @@ const FunctionCall = {
             return data + 10
         }
     })
-}
+});
 
 nodeRegister.FunctionCall = FunctionCall
 

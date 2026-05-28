@@ -1,6 +1,18 @@
 # Func Pipes V2
 
 
+## Update
+
+It works great. This second version is agnostic to flow and nodes.
+
+creating a node:
+
+1. Create a node template `templates/nodes/simple-cell.html`
+2. Create the JS node `js/prompting/nodes/simple-cell`
+3. Add to available node list in python `NODES += [ ("simple-cell", "Simple Cell") ]`
+
+
+---
 
 The first version works well, but after using the AI, I regret it and tend to strip back and start again, focusing on the improvements and gaps.
 

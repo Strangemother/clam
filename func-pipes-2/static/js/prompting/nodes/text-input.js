@@ -1,18 +1,7 @@
 
-
-const TextInput = {
-    props: ['uuid', 'panel']
-    , template: getTemplateHTML('.text-input')
-    , mounted() {
-
-        this.panel._viewComponent = this
-    }
-    , unmounted() {
-        if(this.panel._viewComponent === this) {
-            this.panel._viewComponent = null
-        }
-    }
-
+const TextInput = Object.assign({}, NodeBase, {
+    // props: ['uuid', 'panel']
+    template: getTemplateHTML('.text-input')
     , methods: Object.assign({}, PanelBaseMethods, {
         sendContent() {
             console.log('sendContent', this.userText)
@@ -26,9 +15,11 @@ const TextInput = {
         , customCallback(data, pip) {
             // somehow called be the spawnpanel callback.
             console.log('customCallback', data, pip)
-            return data + 1
+            // this.panel.viewData.value = data
+            this.userText = data
+            return data
         }
     })
-}
+});
 
 nodeRegister.TextInput = TextInput

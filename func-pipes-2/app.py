@@ -1,7 +1,13 @@
 import os, json
 from flask import Flask, render_template, request, jsonify
 
-
+NODES = (
+        ("function-call", "Function Call",),
+        ("text-input", "Text Input",),
+        ("simple-cell", "Simple Cell",),
+        ("list-display", "List Display",),
+        ("logic-node", "Logic Node",),
+    )
 
 
 """
@@ -99,8 +105,13 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html',
+            join_strings=join_strings,
+            nodes=NODES)
 
+
+def join_strings(*s):
+    return ''.join(s)
 
 nodes = [
         Node(node_passthrough),

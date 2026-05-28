@@ -182,6 +182,7 @@ canvas { display: block; width: 100%; height: 100%; }
     flex-direction: column;
     min-width: 0;
     flex-grow: 1;
+    overflow: hidden;
 }
 
 
@@ -252,4 +253,36 @@ li.pip-container {
 
 .templates.display-none {
     display: none;
+}
+
+/* list-display */
+
+ul.list-items {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    padding: 0;
+    margin: 1em 0;
+    /* overflow: hidden; */
+    gap: 0.4em;
+}
+
+ul.list-items .list-item {
+    display: flex;
+    padding: 0em 1em;
+}
+
+.list-item .message-card {
+    background: #0d0d1e;
+    padding: 0.3em 0.5em;
+    display: flex;
+}
+
+.message-card.direction-out {
+    margin-left: auto;
+}
+
+.list-items-container {
+    background: #070710;
+    overflow: auto;
 }

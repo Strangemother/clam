@@ -23,14 +23,17 @@
                 <div>
                     <select v-model='selected'>
                         <option>---</option>
-                        <option value='function-call'>Function Call</option>
-                        <option value='text-input'>Text Input</option>
-                        <option value='simple-cell'>Simple Cell</option>
+                        {% endraw %}
+                        {% for pair in nodes %}
+                            <option value='{{ pair[0] }}'>{{ pair[1] }}</option>
+                        {% endfor %}
+                        {% raw %}
                         <option
                             :value="item"
                             v-for='item in available'>{{ item }}</option>
                     </select>
                 </div>
+
                 <button class="btn-text-input"@click="spawnButton">Spawn</button>
                 <div class="spacer"></div>
                 <button class="btn-text-input" @click="stepButton">Step</button>
@@ -73,9 +76,11 @@
 
     <div class="templates display-none">
         <div class="panel-template">
-            {% include "./nodes/function-call.html" %}
-            {% include "./nodes/text-input.html" %}
-            {% include "./nodes/simple-cell.html" %}
+            {% for pair in nodes %}
+                {% with path=join_strings("./nodes/", pair[0],".html") %}
+                    {% include path %}
+                {% endwith %}
+            {% endfor %}
         </div>
     </div>
 
@@ -90,15 +95,27 @@
 <script src="{{ url_for('static', filename='js/vendor/infinite-drag.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/prompting/prompt-pipes-dev.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/prompting/make-panel.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/prompting/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/simple-bridge.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/node-register.js') }}"></script>
 
-<script src="{{ url_for('static', filename='js/prompting/nodes/func-tools.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompting/nodes/base.js') }}"></script>
+
+{% for pair in nodes %}
+    {% with path=join_strings("js/prompting/nodes/", pair[0], ".js") %}
+        <script src="{{ url_for('static', filename=path) }}"></script>
+    {% endwith %}
+{% endfor %}
+
+<!--
+<script src="{{ url_for('static', filename='js/prompting/nodes/function-call.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/nodes/text-input.js') }}"></script>
 <script src="{{ url_for('static', filename='js/prompting/nodes/simple-cell.js') }}"></script>
+-->
+
 
 <script src="{{ url_for('static', filename='js/prompting/index.js') }}"></script>
 

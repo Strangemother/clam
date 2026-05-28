@@ -46,20 +46,15 @@ const vueApp = createApp({
         setupDragging()
         setupZooming()
 
-        // setTimeout(()=>{
-        //     this.createExample()
-        // }, 10)
+        setTimeout(()=>{
+            // this.createExample()
+            this.createExample4()
+        }, 10)
         // this.createExample2()
 
         fetch('/nodes/')
             .then((d)=>d.json())
             .then((names)=>{this.available = names})
-
-        // window.addEventListener('nodeselect', this.nodeSelectHandler.bind(this))
-        // window.addEventListener('pipclick', this.pipclickHandler.bind(this))
-        // window.addEventListener('waitingcount', (e)=> {
-        //     this.waitingCount = e.detail.count
-        // })
 
         listenEvent('nodeselect', this.nodeSelectHandler.bind(this))
         listenEvent('pipclick', this.pipclickHandler.bind(this))
@@ -74,6 +69,12 @@ const vueApp = createApp({
             let a = this.spawnPanel({ id: 'a', type:'text-input'})
             let b = this.spawnPanel({ id: 'b'})
             simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
+        }
+
+        , createExample4() {
+            let a = this.spawnPanel({ id: 'a', type:'list-display'})
+            // let b = this.spawnPanel({ id: 'b'})
+            // simpleBridge.callNodeEvented({ id: 'a', pip: 'in'}, 1)
         }
 
         , createExample3() {
@@ -143,12 +144,6 @@ const vueApp = createApp({
         }
 
         , focusSelect(event, panel){
-            // console.log(event, panel)
-            // window.dispatchEvent(new CustomEvent('nodeselect', {
-            //     detail: {
-            //         panel
-            //     }
-            // }))
             dispatchEvent('nodeselect', { panel })
         }
 
@@ -239,27 +234,29 @@ const vueApp = createApp({
             });
             return r
         }
-        , spawnPanel(data={}){
-            console.log('spawnPanel', this.selected)
-            let type = this.selected || 'function-call'
 
-            let d = makePanel({
+        , spawnPanel(data={}){
+            let type = this.selected || 'function-call'
+            console.log('spawnPanel', type)
+
+            let panel = makePanel({
                 type
                 , funcName: data.funcName
             })
 
-            Object.assign(d, data)
+            Object.assign(panel, data)
 
-            panelRegistry[d.id] = d
-            this.panels.push(d)
+            panelRegistry[panel.id] = panel
+            this.panels.push(panel)
 
             nextTick(() => {
-                const el = this.$refs[`panel-${d.id}`][0]
+                const el = this.$refs[`panel-${panel.id}`][0]
+                panel._viewElement = el;
                 stickAll(el)
                 dragHost.enable(el)
             })
 
-            return d;
+            return panel
         }
     },
 

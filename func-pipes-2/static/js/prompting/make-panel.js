@@ -7,6 +7,7 @@ const makePanel = function(extra={}) {
         , pipsOutbound: [
             { name: 'out'},
         ]
+
         , viewData: Vue.ref({ value: -1 })
         , pipData: {}
         , type: 'text-input'
@@ -33,12 +34,17 @@ const makePanel = function(extra={}) {
             // Here we dispatch to the internal handler
             // or data store.
             let pip = this.getPipConf(throughPip)
-            if(pip.store != false) {
-                this.pipData[throughPip] = data
-            }
-            if(pip.execute == false) {
-                console.log("Pip doesn't execute")
-                return
+            if(!pip) {
+                console.warn('No pip', throughPip)
+            } else {
+
+                    if(pip.store != false) {
+                        this.pipData[throughPip] = data
+                    }
+                    if(pip.execute == false) {
+                        console.log("Pip doesn't execute")
+                        return
+                    }
             }
 
             return this.callback(data, throughPip)
@@ -49,7 +55,6 @@ const makePanel = function(extra={}) {
             const viewComponent = this.getViewComponent()
             const customResult = viewComponent?.customCallback(data, pip)
 
-
             this.viewData.value.value = customResult
 
             return customResult
@@ -58,6 +63,17 @@ const makePanel = function(extra={}) {
         , _viewComponent: null
         , getViewComponent(){
             return this._viewComponent
+        }
+
+        , getPosition() {
+
+            let style = this._viewElement.style
+            return {
+                top: parseFloat(style.top)
+                , left: parseFloat(style.left)
+                , width: parseFloat(style.width)
+                , height: parseFloat(style.height)
+            }
         }
     }, extra)
 

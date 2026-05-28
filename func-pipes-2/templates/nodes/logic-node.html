@@ -1,0 +1,22 @@
+{% extends "/nodes/node_base.html" %}
+{% block main_class %}logic-node{% endblock main_class %}
+{% block body %}
+    {% raw %}
+    <h2>Logic Node</h2>
+    <div>{{ uuid }}</div>
+    <div>{{ panel.viewData.value }}</div>
+    <div class="text-content display-flex">
+        <div>
+            <select v-model='selectedGate' @change='reflowSelection()'>
+                <option value="not">not</option>
+                <option value="and">and</option>
+                <option value="or">or</option>
+                <option value="nand">nand</option>
+                <option value="nor">nor</option>
+                <option value="xor">xor</option>
+                <option value="xnor">xnor</option>
+            </select>
+        </div>
+    </div>
+    {% endraw %}
+{% endblock body %}

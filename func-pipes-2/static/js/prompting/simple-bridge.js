@@ -14,6 +14,7 @@ class SimpleBridge {
         this.panelRegistry = panelRegistry
 
         this._waitingEvents = []
+        this._autoRunEvents = false;
         window.addEventListener('noderesult', this.noderesultEventListener.bind(this))
     }
 
@@ -238,6 +239,11 @@ class SimpleBridge {
 
     }
 
+    autoRunEvents(on=true) {
+        this._autoRunEvents = on
+        this.callWaitingEvents()
+    }
+
     callWaitingEvents(){
         /*
         Read the list of events, pushed in the last step of the
@@ -260,10 +266,17 @@ class SimpleBridge {
 
         this.emitWaitingCount()
 
+        if(this.eventsMode) {
+            if(this._autoRunEvents){
+                setTimeout(()=>this.callWaitingEvents(), 300)
+            }
+        }
+
         if( this._waitingEvents.length == 0) {
             console.info('End Graphs.')
         } else {
             if(this.eventsMode) {
+
                 console.info('simpleBridge.callWaitingEvents()')
             }
         }
