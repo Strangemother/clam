@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Func Sockets Monitor</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --background: #090a0d;
+            --surface: #111318;
+            --surface-raised: #181b21;
+            --border: #30343d;
+            --text: #f2f4f8;
+            --muted: #9299a7;
+            --accent: #5ce1a6;
+            --accent-strong: #28b87b;
+            --danger: #ff6b7a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                var(--background);
+            background-size: 24px 24px;
+            color: var(--text);
+            font-family: "IBM Plex Mono", "Cascadia Code", monospace;
+        }
+
+        main {
+            width: min(56rem, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 3rem 0;
+        }
+
+        header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: Georgia, serif;
+            font-size: clamp(2rem, 7vw, 4rem);
+            font-weight: 400;
+            line-height: 0.95;
+            letter-spacing: 0;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .status::before {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 50%;
+            background: var(--danger);
+            content: "";
+        }
+
+        .status.connected::before {
+            background: var(--accent);
+            box-shadow: 0 0 0.75rem rgba(92, 225, 166, 0.65);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        form + form { border-left: 1px solid var(--border); }
+
+        label {
+            grid-column: 1 / -1;
+            color: var(--muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        input,
+        button {
+            min-width: 0;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font: inherit;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            background: var(--background);
+            color: var(--text);
+            outline: none;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        button {
+            padding: 0.7rem 1rem;
+            background: var(--accent);
+            color: #06130e;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button:hover { background: var(--accent-strong); }
+
+        .stream {
+            margin-top: 1rem;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .stream-title {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        pre {
+            min-height: 22rem;
+            max-height: 60vh;
+            margin: 0;
+            padding: 1rem;
+            overflow: auto;
+            color: var(--accent);
+            font: 0.85rem/1.6 "IBM Plex Mono", "Cascadia Code", monospace;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 700px) {
+            main { padding: 1.5rem 0; }
+            header { align-items: flex-start; flex-direction: column; }
+            .controls { grid-template-columns: 1fr; }
+            form + form { border-top: 1px solid var(--border); border-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Socket Monitor</h1>
+            <div id="status" class="status">Disconnected</div>
+        </header>
+
+        <section class="controls" aria-label="Socket controls">
+            <form id="connect-form">
+                <label for="graph-id">Graph room</label>
+                <input id="graph-id" value="demo">
+                <button>Connect</button>
+            </form>
+            <form id="send-form">
+                <label for="message">Test message</label>
+                <input id="message" value='{"kind":"command","name":"demo.ping"}'>
+                <button>Send</button>
+            </form>
+        </section>
+
+        <section class="stream">
+            <div class="stream-title">
+                <span>Graph traffic</span>
+                <span id="message-count">0 messages</span>
+            </div>
+            <pre id="log" aria-live="polite"></pre>
+        </section>
+    </main>
+
+    <script src="../clients/graph-socket.js"></script>
+    <script>
+        const log = document.querySelector('#log')
+        const status = document.querySelector('#status')
+        const messageCount = document.querySelector('#message-count')
+        let client
+        let received = 0
+
+        const write = (value) => {
+            log.textContent += `${typeof value === 'string' ? value : JSON.stringify(value)}\n`
+            log.scrollTop = log.scrollHeight
+        }
+
+        document.querySelector('#connect-form').addEventListener('submit', (event) => {
+            event.preventDefault()
+            client?.close()
+            status.classList.remove('connected')
+            status.textContent = 'Connecting'
+            client = new GraphSocket(document.querySelector('#graph-id').value)
+            client.addEventListener('open', () => {
+                status.classList.add('connected')
+                status.textContent = 'Connected'
+            })
+            client.addEventListener('close', () => {
+                status.classList.remove('connected')
+                status.textContent = 'Disconnected'
+            })
+            client.addEventListener('message', (event) => {
+                received += 1
+                messageCount.textContent = `${received} message${received === 1 ? '' : 's'}`
+                write(event.detail)
+            })
+            client.connect()
+        })
+
+        document.querySelector('#send-form').addEventListener('submit', (event) => {
+            event.preventDefault()
+            if (!client) {
+                write('Connect to a graph room before sending.')
+                return
+            }
+            client.send(document.querySelector('#message').value)
+        })
+    </script>
+</body>
+</html>

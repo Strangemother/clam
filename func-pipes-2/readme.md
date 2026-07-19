@@ -1,6 +1,12 @@
 # Func Pipes V2
 
 
+## Architecture documentation
+
+The Python-owned graph direction, UI ownership boundary, command/event
+protocol, and implementation plan are documented in [docs/README.md](docs/README.md).
+
+
 ## Update
 
 It works great. This second version is agnostic to flow and nodes.

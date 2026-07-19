@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "func-sockets"
+version = "0.1.0"
+description = "Minimal graph-scoped WebSocket relay"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "websockets>=14,<17",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+func-sockets = "server:main"
+
+[tool.setuptools]
+py-modules = ["relay", "server"]
+packages = ["clients"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

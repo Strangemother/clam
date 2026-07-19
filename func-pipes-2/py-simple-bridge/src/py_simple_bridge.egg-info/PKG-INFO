@@ -19,6 +19,7 @@ event flow.
 - Generic event intake via `emit()` / `push_event()`
 - Manual queue pumping with `call_waiting_events()`
 - Optional async background loop with `start()` / `stop()`
+- Named inbound and outbound pips, with `in` and `out` only as defaults
 - Small function-backed nodes for examples and tests
 
 This PoC stays independent from Flask, DOM events, visual connection state,
@@ -47,6 +48,8 @@ cd /workspaces/clam/func-pipes-2/py-simple-bridge
 python examples/basic_chain.py
 python examples/custom_events.py
 python examples/background_loop.py
+python examples/named_pips.py
+python examples/no_default_named_pips.py
 ```
 
 ## Run tests
@@ -74,3 +77,27 @@ async def main() -> None:
 
 asyncio.run(main())
 ```
+
+## Named pips
+
+Any pip name can be used in a connection. For example:
+
+```python
+bridge.connect_pips(("node_a", "foo"), ("node_b", "bar"))
+bridge.enqueue_node_call(("node_a", "trigger"), "seed")
+```
+
+Custom inbound pip names are passed through to `graph_execute(value, pip)`.
+If a node needs to emit on a named outbound pip, return `NodeOutput`:
+
+```python
+from simple_bridge import NodeOutput
+
+
+async def graph_execute(value, pip="in"):
+    return NodeOutput(value=value, pip="foo")
+```
+
+Plain return values still emit through the default outbound pip `out`.
+For a chain that uses only custom names and never relies on `in` or `out`, see
+`examples/no_default_named_pips.py`.
