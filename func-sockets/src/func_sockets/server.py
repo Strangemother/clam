@@ -1,13 +1,9 @@
 """Run Func Sockets as an independent WebSocket process.
 
-This file adapts real network connections to :class:`relay.GraphRelay`. Start
-it directly or through the installed ``func-sockets`` command::
-
-    python server.py --host 0.0.0.0 --port 8777
-
 Application code normally connects to the running service; it does not import
-this module. Import :func:`run_server` only when embedding the development
-relay in another async launcher or test.
+this module. Use the installed ``func-sockets`` command or run::
+
+    python -m func_sockets --host 0.0.0.0 --port 8777
 """
 
 from __future__ import annotations
@@ -20,35 +16,20 @@ from typing import Any
 
 from websockets.asyncio.server import serve
 
-from relay import GraphRelay, graph_id_from_path
+from .relay import GraphRelay, graph_id_from_path
 
 
 LOG = logging.getLogger("func-sockets")
 
 
 def connection_path(websocket: Any) -> str:
-    """Return the request path used to open a WebSocket connection.
-
-    The path is passed to ``graph_id_from_path`` to support URL-based binding.
-
-    Example::
-
-        path = connection_path(websocket)  # "/graph/demo"
-    """
+    """Return the request path used to open a WebSocket connection."""
     request = getattr(websocket, "request", None)
     return getattr(request, "path", "") or ""
 
 
 async def handle_connection(websocket: Any, relay: GraphRelay) -> None:
-    """Serve one socket until it disconnects.
-
-    The handler binds from the URL when possible, forwards each incoming
-    message to the relay, and always removes the socket on exit.
-
-    Example::
-
-        await handle_connection(websocket, relay)
-    """
+    """Serve one socket until it disconnects."""
     graph_id = graph_id_from_path(connection_path(websocket))
     if graph_id is not None:
         relay.bind(websocket, graph_id)
@@ -62,12 +43,7 @@ async def handle_connection(websocket: Any, relay: GraphRelay) -> None:
 
 
 async def run_server(host: str, port: int) -> None:
-    """Run one relay server until the task is cancelled.
-
-    Example::
-
-        asyncio.run(run_server("127.0.0.1", 8777))
-    """
+    """Run one relay server until the task is cancelled."""
     relay = GraphRelay()
 
     async def handler(websocket: Any) -> None:
@@ -90,12 +66,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Configure logging and run the command-line relay process.
-
-    Example from a shell::
-
-        func-sockets --port 8777 --log-level DEBUG
-    """
+    """Configure logging and run the command-line relay process."""
     args = parse_args()
     logging.basicConfig(
         level=getattr(logging, str(args.log_level).upper(), logging.INFO),

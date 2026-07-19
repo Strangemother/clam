@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/func_sockets/__init__.py
+src/func_sockets/__main__.py
+src/func_sockets/graph_socket.py
+src/func_sockets/relay.py
+src/func_sockets/server.py
+src/func_sockets.egg-info/PKG-INFO
+src/func_sockets.egg-info/SOURCES.txt
+src/func_sockets.egg-info/dependency_links.txt
+src/func_sockets.egg-info/entry_points.txt
+src/func_sockets.egg-info/requires.txt
+src/func_sockets.egg-info/top_level.txt
+tests/test_relay.py
+tests/test_server.py

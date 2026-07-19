@@ -6,7 +6,7 @@ as Python docstrings or JavaScript JSDoc.
 
 ## Runtime files
 
-### `relay.py`
+### `src/func_sockets/relay.py`
 
 This is the transport-independent routing core. It remembers which socket is
 bound to which graph and forwards messages to the other sockets in that graph.
@@ -30,7 +30,7 @@ relay.bind(ui_socket, "demo")
 await relay.receive(graph_socket, "graph event")
 ```
 
-### `server.py`
+### `src/func_sockets/server.py`
 
 This is the executable network adapter. It opens port `8777`, creates one
 `GraphRelay`, and feeds real WebSocket connections into it.
@@ -44,7 +44,7 @@ Open this file when changing:
 Run it with:
 
 ```bash
-python server.py --host 0.0.0.0 --port 8777
+python -m func_sockets --host 0.0.0.0 --port 8777
 ```
 
 Application graph behavior does not belong here. This file should remain a
@@ -52,7 +52,7 @@ thin adapter around `GraphRelay`.
 
 ## Client files
 
-### `clients/graph_socket.py`
+### `src/func_sockets/graph_socket.py`
 
 This is the reusable Python-side connection. The future graph process should
 use it to publish backend events and receive UI commands.
@@ -60,7 +60,7 @@ use it to publish backend events and receive UI commands.
 Minimal use:
 
 ```python
-from clients import GraphSocket
+from func_sockets import GraphSocket
 
 
 async with GraphSocket("demo") as socket:
@@ -72,7 +72,7 @@ Open this file when changing Python connection behavior such as decoding,
 reconnection, or bind confirmation. Graph command handling belongs in the
 graph application, not in this client.
 
-### `clients/graph-socket.js`
+### `examples/spy/graph-socket.js`
 
 This is the browser-side equivalent. The UI uses it to send commands and
 receive events. Incoming JSON is available through a `message` event's
@@ -123,27 +123,35 @@ python examples/publisher.py demo '{"name":"graph.idle"}'
 
 Use `GraphSocket` directly for a long-running graph process.
 
-### `examples/browser.html`
+### `examples/spy/`
 
-This is a manual browser test page. It can connect to a graph, display incoming
-messages, and send text or JSON. It is not the intended Func Pipes UI.
+This is a self-contained manual browser spy. It can connect to a graph, display
+incoming messages, and send text or JSON. It is not the intended Func Pipes UI.
 
-Serve the project directory so the browser can load its JavaScript dependency:
+Its files are separated by responsibility:
+
+- `index.html` contains page structure.
+- `style.css` contains the dark monitor styling.
+- `app.js` handles the spy UI.
+- `graph-socket.js` handles the browser WebSocket connection.
+- `run.py` serves this directory over HTTP.
+
+Run the spy from the project root:
 
 ```bash
-cd /workspaces/clam/func-sockets
-python -m http.server 8080
+python examples/spy/run.py
 ```
 
-Then open `http://127.0.0.1:8080/examples/browser.html`.
+Then open `http://127.0.0.1:8000/`.
 
 ## Project and test files
 
 ### `pyproject.toml`
 
 Defines the Python package, its `websockets` dependency, development test
-dependencies, and the installed `func-sockets` command. Change it when adding a
-runtime dependency or packaging another Python module.
+dependencies, the `src` package location, and the installed `func-sockets`
+command. Change it when adding a runtime dependency or packaging another
+Python module.
 
 ### `tests/test_relay.py`
 

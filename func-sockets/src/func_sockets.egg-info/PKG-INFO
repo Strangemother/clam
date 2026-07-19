@@ -16,6 +16,51 @@ connections by graph ID and forwards messages between peers in the same graph.
 It does not execute graphs, inspect application messages, persist events, or
 depend on the Func Pipes application.
 
+
+For a developer-oriented explanation of every source file and where changes
+belong, see [docs/file-guide.md](docs/file-guide.md). Public functions and
+methods also include minimal examples in their docstrings or JSDoc.
+
+## Quick start
+
+[Install](#install-and-run) below first. Then, from the `func-sockets` directory,
+use three terminals.
+
+After installing the func-tools, run the relay service in a terminal:
+
+```bash
+func-sockets
+# func-sockets: bind by URL: ws://0.0.0.0:8777/graph/<graph_id>
+# websockets.server: server listening on 0.0.0.0:8777
+```
+
+Run the browser client in another terminal - a free one in `func-sockets/examples/`
+
+```bash
+/func-sockets/examples $ python -m http.server
+# Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
+
+Head to http://127.0.0.1:8000/
+
+In another terminal, run the graph:
+
+```bash
+python examples/demo_graph.py
+```
+
+The monitor shows:
+
+```text
+graph.started
+node.output_emitted (source = 3)
+node.output_emitted (multiply = 12)
+graph.idle
+```
+
+Click **Send** in the monitor. Terminal 3 receives the message, replies with
+`demo.command_received`, and exits.
+
 ## Responsibilities
 
 The service does only three things:
@@ -33,6 +78,11 @@ state and does not replay messages.
 ```bash
 cd /workspaces/clam/func-sockets
 python -m pip install -e .[dev]
+```
+
+run as a standalone service:
+
+```bash
 func-sockets
 ```
 

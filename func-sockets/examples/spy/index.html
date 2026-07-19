@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Func Sockets Spy</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Socket Spy</h1>
+            <div id="status" class="status">Disconnected</div>
+        </header>
+
+        <section class="controls" aria-label="Socket controls">
+            <form id="connect-form">
+                <label for="graph-id">Graph room</label>
+                <input id="graph-id" value="demo">
+                <button type="submit">Connect</button>
+            </form>
+
+            <form id="send-form">
+                <label for="message">Test message</label>
+                <input id="message" value='{"kind":"command","name":"demo.ping"}'>
+                <button type="submit">Send</button>
+            </form>
+        </section>
+
+        <section class="stream">
+            <div class="stream-title">
+                <span>Graph traffic</span>
+                <span id="message-count">0 messages</span>
+            </div>
+            <pre id="log" aria-live="polite"></pre>
+        </section>
+    </main>
+
+    <script src="graph-socket.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

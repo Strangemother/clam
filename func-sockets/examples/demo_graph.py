@@ -14,7 +14,7 @@ import asyncio
 import json
 from functools import partial
 
-from clients import GraphSocket
+from func_sockets import GraphSocket
 from simple_bridge import FunctionNode, SimpleBridge, node_multiply, node_passthrough
 
 

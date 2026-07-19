@@ -10,7 +10,7 @@ import argparse
 import asyncio
 import json
 
-from clients.graph_socket import GraphSocket
+from func_sockets import GraphSocket
 
 
 async def publish(graph_id: str, message: str) -> None:

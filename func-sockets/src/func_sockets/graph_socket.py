@@ -1,14 +1,4 @@
-"""Reusable Python client for a single Func Sockets graph room.
-
-Use :class:`GraphSocket` in the Python graph process to publish events and
-receive UI commands without handling WebSocket setup in graph code.
-
-Minimal use::
-
-    async with GraphSocket("graph-42") as socket:
-        await socket.send({"kind": "event", "name": "graph.idle"})
-        command = await socket.receive()
-"""
+"""Reusable Python client for a single Func Sockets graph room."""
 
 from __future__ import annotations
 
@@ -21,28 +11,15 @@ from websockets.exceptions import ConnectionClosed
 
 
 class GraphSocket:
-    """Connect a Python producer or consumer to one graph room.
-
-    The context manager opens the connection, waits for the server's binding
-    confirmation, and closes cleanly when the block exits.
-    """
+    """Connect a Python producer or consumer to one graph room."""
 
     def __init__(self, graph_id: str, base_url: str = "ws://127.0.0.1:8777") -> None:
-        """Prepare a client URL for ``graph_id`` without connecting yet.
-
-        Example::
-
-            socket = GraphSocket("demo", "ws://127.0.0.1:8777")
-        """
+        """Prepare a client URL for ``graph_id`` without connecting yet."""
         self.url = f"{base_url.rstrip('/')}/graph/{quote(graph_id, safe='')}"
         self.websocket = None
 
     async def __aenter__(self) -> GraphSocket:
-        """Open the socket and return this bound client.
-
-        Prefer ``async with GraphSocket("demo") as socket`` over calling this
-        method directly.
-        """
+        """Open the socket and return this bound client."""
         self.websocket = await connect(self.url)
         await self.websocket.recv()
         return self
@@ -54,12 +31,7 @@ class GraphSocket:
             self.websocket = None
 
     async def send(self, message: str | bytes | dict[str, Any]) -> None:
-        """Send text, bytes, or a JSON-serializable dictionary to graph peers.
-
-        Example::
-
-            await socket.send({"kind": "event", "name": "node.updated"})
-        """
+        """Send text, bytes, or a JSON-serializable dictionary to graph peers."""
         if self.websocket is None:
             raise RuntimeError("GraphSocket is not connected")
         if isinstance(message, dict):
@@ -67,14 +39,7 @@ class GraphSocket:
         await self.websocket.send(message)
 
     async def receive(self) -> str | bytes:
-        """Wait for and return the next message from another graph peer.
-
-        JSON remains encoded text so the graph can choose its own decoder.
-
-        Example::
-
-            raw_command = await socket.receive()
-        """
+        """Wait for and return the next message from another graph peer."""
         if self.websocket is None:
             raise RuntimeError("GraphSocket is not connected")
         return await self.websocket.recv()
@@ -84,13 +49,7 @@ class GraphSocket:
         return self
 
     async def __anext__(self) -> str | bytes:
-        """Return the next message, ending iteration after socket closure.
-
-        Example::
-
-            async for message in socket:
-                handle(message)
-        """
+        """Return the next message, ending iteration after socket closure."""
         if self.websocket is None:
             raise StopAsyncIteration
         try:

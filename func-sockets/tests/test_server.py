@@ -5,8 +5,8 @@ import pytest
 from websockets.asyncio.client import connect
 from websockets.asyncio.server import serve
 
-from relay import GraphRelay
-from server import handle_connection
+from func_sockets.relay import GraphRelay
+from func_sockets.server import handle_connection
 
 
 @pytest.mark.asyncio

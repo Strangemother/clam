@@ -74,25 +74,11 @@ class GraphRelay:
         self._send_locks: dict[Hashable, asyncio.Lock] = {}
 
     def graph_for(self, websocket: Hashable) -> str | None:
-        """Return the graph currently selected by a socket, if any.
-
-        Example::
-
-            relay.bind(websocket, "demo")
-            assert relay.graph_for(websocket) == "demo"
-        """
+        """Return the graph currently selected by a socket, if any."""
         return self._bindings.get(websocket)
 
     def bind(self, websocket: Hashable, graph_id: str) -> str:
-        """Bind a socket to one graph and return the normalized graph ID.
-
-        Binding an already-bound socket moves it to the new graph. The graph ID
-        must be a non-empty string.
-
-        Example::
-
-            selected = relay.bind(websocket, "graph-42")
-        """
+        """Bind a socket to one graph and return the normalized graph ID."""
         if not isinstance(graph_id, str):
             raise TypeError("graph_id must be a string")
         resolved_id = str(graph_id).strip()
@@ -107,15 +93,7 @@ class GraphRelay:
         return resolved_id
 
     def unbind(self, websocket: Hashable) -> None:
-        """Remove a socket from its graph room.
-
-        Call this when a connection closes. Calling it for an unbound socket is
-        harmless.
-
-        Example::
-
-            relay.unbind(websocket)
-        """
+        """Remove a socket from its graph room."""
         graph_id = self._bindings.pop(websocket, None)
         if graph_id is None:
             return
@@ -128,17 +106,7 @@ class GraphRelay:
         self._send_locks.pop(websocket, None)
 
     async def receive(self, websocket: Any, message: str | bytes) -> None:
-        """Process one message received from a client socket.
-
-        A ``type: bind`` JSON message changes the socket's room and receives a
-        confirmation. Every other message is forwarded unchanged to the other
-        sockets in the selected graph.
-
-        Example::
-
-            await relay.receive(websocket, '{"type":"bind","graph_id":"demo"}')
-            await relay.receive(websocket, '{"kind":"event","name":"graph.idle"}')
-        """
+        """Process a bind control message or relay one application message."""
         is_bind, bind_graph_id = self._read_bind_message(message)
         if is_bind:
             try:
@@ -165,15 +133,7 @@ class GraphRelay:
         message: str | bytes,
         exclude: Hashable | None = None,
     ) -> None:
-        """Send a message to every live socket in one graph.
-
-        Pass ``exclude`` to omit the source socket. Failed sockets are removed
-        automatically.
-
-        Example::
-
-            await relay.broadcast("demo", "updated", exclude=source_socket)
-        """
+        """Send a message to every live socket in one graph."""
         peers = [peer for peer in self._rooms.get(graph_id, ()) if peer is not exclude]
         if not peers:
             return

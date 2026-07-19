@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from relay import GraphRelay, graph_id_from_path
+from func_sockets.relay import GraphRelay, graph_id_from_path
 
 
 class FakeSocket:

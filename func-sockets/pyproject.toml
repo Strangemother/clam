@@ -19,12 +19,14 @@ dev = [
 ]
 
 [project.scripts]
-func-sockets = "server:main"
+func-sockets = "func_sockets.server:main"
 
-[tool.setuptools]
-py-modules = ["relay", "server"]
-packages = ["clients"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.pyright]
+extraPaths = ["src"]

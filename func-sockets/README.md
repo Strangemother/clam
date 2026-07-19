@@ -15,7 +15,7 @@ methods also include minimal examples in their docstrings or JSDoc.
 [Install](#install-and-run) below first. Then, from the `func-sockets` directory,
 use three terminals.
 
-After installing the func-tools, run the relay service in a terminal:
+After installing, run the relay service in a terminal:
 
 ```bash
 func-sockets
@@ -23,11 +23,11 @@ func-sockets
 # websockets.server: server listening on 0.0.0.0:8777
 ```
 
-Run the browser client in another terminal - a free one in `func-sockets/examples/`
+Run the browser spy in another terminal:
 
 ```bash
-/func-sockets/examples $ python -m http.server
-# Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+python examples/spy/run.py
+# Socket spy: http://127.0.0.1:8000/
 ```
 
 Head to http://127.0.0.1:8000/
@@ -81,7 +81,7 @@ The default address is `ws://0.0.0.0:8777`. Override it when needed:
 func-sockets --host 127.0.0.1 --port 8777 --log-level DEBUG
 ```
 
-You can also run `python server.py` from this directory.
+You can also run `python -m func_sockets` from this directory.
 
 ## Bind by URL
 
@@ -141,10 +141,10 @@ the connection is bound, preventing a payload from selecting another room.
 
 ## Python graph client
 
-`clients/graph_socket.py` supplies a minimal async adapter:
+`src/func_sockets/graph_socket.py` supplies a minimal async adapter:
 
 ```python
-from clients.graph_socket import GraphSocket
+from func_sockets import GraphSocket
 
 
 async with GraphSocket("graph-42") as socket:
@@ -156,7 +156,7 @@ event. It may also receive UI commands over the same connection.
 
 ## Browser client
 
-Load `clients/graph-socket.js`, then connect the UI projection:
+Load `examples/spy/graph-socket.js`, then connect the UI projection:
 
 ```javascript
 const socket = new GraphSocket('graph-42')
@@ -170,9 +170,8 @@ Use `socket.send(command)` for UI-to-graph commands. The relay sends that
 command to every other peer in `graph-42`; the Python graph process decides
 whether it is a command intended for it.
 
-`examples/browser.html` is a manual browser client. Serve the directory through
-any static HTTP server if the browser prevents scripts from loading via a local
-file URL. `examples/publisher.py` publishes one test message from Python.
+`examples/spy/` is the manual browser client and includes its own HTTP runner.
+`examples/publisher.py` publishes one test message from Python.
 
 ## Test
 
