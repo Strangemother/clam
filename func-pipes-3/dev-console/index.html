@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Func Pipes Dev Backend</title>
+    <style>
+        :root { color-scheme: dark; font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+        body { max-width: 900px; margin: 0 auto; padding: 2rem; background: #11151c; color: #e7edf5; }
+        header, form, .stream-title { display: flex; align-items: center; gap: .75rem; }
+        header, .stream-title { justify-content: space-between; }
+        form { margin: 1rem 0; }
+        input, textarea, button { border: 1px solid #3c485b; border-radius: 3px; background: #19212d; color: inherit; padding: .65rem; font: inherit; }
+        input, textarea { flex: 1; min-width: 0; }
+        textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+        button { cursor: pointer; color: #8bd5ff; }
+        .status { color: #ffb86b; }
+        .status.connected { color: #8be28b; }
+        .stream { margin-top: 2rem; border: 1px solid #3c485b; }
+        .stream-title { padding: .75rem; border-bottom: 1px solid #3c485b; }
+        #log { min-height: 18rem; max-height: 34rem; overflow: auto; margin: 0; padding: 1rem; white-space: pre-wrap; }
+        @media (max-width: 600px) { body { padding: 1rem; } form { align-items: stretch; flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Dev backend</h1>
+        <span id="status" class="status">Disconnected</span>
+    </header>
+
+    <form id="connect-form">
+        <label for="ws-url">WebSocket</label>
+        <input id="ws-url" value="ws://127.0.0.1:8778/">
+        <button type="submit">Connect</button>
+    </form>
+
+    <form id="send-form">
+        <label for="message">Message</label>
+        <textarea id="message" rows="5">{"kind":"event","name":"graph.idle"}</textarea>
+        <button type="submit">Send</button>
+    </form>
+
+    <section class="stream">
+        <div class="stream-title"><strong>Traffic</strong><span id="message-count">0 messages</span></div>
+        <pre id="log" aria-live="polite"></pre>
+    </section>
+
+    <script>
+        const wsUrl = document.querySelector('#ws-url')
+        const status = document.querySelector('#status')
+        const message = document.querySelector('#message')
+        const log = document.querySelector('#log')
+        const count = document.querySelector('#message-count')
+        let socket = null
+        let messages = 0
+
+        function write(direction, value) {
+            messages += 1
+            count.textContent = `${messages} message${messages === 1 ? '' : 's'}`
+            const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+            log.textContent += `${direction}\n${text}\n\n`
+            log.scrollTop = log.scrollHeight
+        }
+
+        document.querySelector('#connect-form').addEventListener('submit', (event) => {
+            event.preventDefault()
+            if (socket) socket.close()
+            status.textContent = 'Connecting'
+            socket = new WebSocket(wsUrl.value)
+            socket.addEventListener('open', () => {
+                status.textContent = 'Connected'
+                status.className = 'status connected'
+            })
+            socket.addEventListener('message', (event) => {
+                let value = event.data
+                try { value = JSON.parse(value) } catch {}
+                write('IN', value)
+            })
+            socket.addEventListener('close', () => {
+                status.textContent = 'Disconnected'
+                status.className = 'status'
+                socket = null
+            })
+            socket.addEventListener('error', () => {
+                status.textContent = 'Error'
+                status.className = 'status'
+            })
+        })
+
+        document.querySelector('#send-form').addEventListener('submit', (event) => {
+            event.preventDefault()
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                write('ERROR', 'WebSocket is not connected')
+                return
+            }
+            let value = message.value
+            try { value = JSON.parse(value) } catch {}
+            socket.send(typeof value === 'string' ? value : JSON.stringify(value))
+            write('OUT', value)
+        })
+    </script>
+</body>
+</html>

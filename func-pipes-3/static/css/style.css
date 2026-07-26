@@ -1,0 +1,287 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    color-scheme: dark;
+    --background: #0b0d12;
+    --surface: #121620;
+    --surface-raised: #181d29;
+    --border: #293143;
+    --text: #e7ebf3;
+    --muted: #8993a7;
+    --accent: #71b7ff;
+    --success: #72d6a0;
+}
+
+body .templates {
+    display: none;
+}
+
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.app-shell {
+    min-height: 100vh;
+    padding: clamp(2rem, 3vw, 2rem);
+}
+
+.app-header {
+    max-width: 52rem;
+    margin: 0 auto 2rem;
+}
+
+.eyebrow {
+    margin: 0 0 0.75rem;
+    color: var(--accent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 0.95;
+}
+
+.subtitle {
+    margin-bottom: 0;
+    color: var(--muted);
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.socket-control {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.socket-control input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+.socket-control button {
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font: inherit;
+}
+
+.socket-status {
+    min-width: 6rem;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.socket-status.connected { color: var(--success); }
+.socket-status.error { color: #ff8d8d; }
+
+.dev-console {
+    margin-top: 1.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-align: left;
+}
+
+.dev-console-head,
+.dev-console-send {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+}
+
+.dev-console-head {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+}
+
+.dev-console-head strong { color: var(--text); }
+
+.dev-console-send textarea {
+    flex: 1;
+    min-width: 0;
+    resize: vertical;
+    padding: 0.65rem;
+    border: 1px solid var(--border);
+    background: var(--surface-raised);
+    color: var(--text);
+    font: 0.85rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dev-console-send button {
+    align-self: stretch;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.dev-console-log {
+    max-height: 14rem;
+    overflow: auto;
+    border-top: 1px solid var(--border);
+}
+
+.dev-console-entry {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(41, 49, 67, 0.55);
+}
+
+.dev-console-entry > span {
+    color: var(--muted);
+    font: 0.7rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+}
+
+.dev-console-entry.out > span { color: var(--accent); }
+.dev-console-entry.error > span { color: #ff8d8d; }
+
+.dev-console-entry pre {
+    margin: 0;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: var(--text);
+    font: 0.8rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.workspace {
+    /* max-width: 80rem; */
+    min-height: 32rem;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    /* box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.25); */
+}
+
+.workspace-surface {
+    position: relative;
+    min-height: 28rem;
+    overflow: hidden;
+    cursor: grab;
+    background-color: var(--surface);
+    background-image: linear-gradient(rgba(113, 183, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(113, 183, 255, 0.04) 1px, transparent 1px);
+    background-position: var(--workspace-pan-x) var(--workspace-pan-y);
+    background-size: 2rem 2rem;
+}
+
+.workspace-surface.is-panning {
+    cursor: grabbing;
+}
+
+.workspace-item {
+    position: absolute;
+    top: 4rem;
+    left: 4rem;
+    display: grid;
+    width: 15rem;
+    min-height: 8rem;
+    align-content: center;
+    gap: 0.45rem;
+    padding: 1.25rem;
+    border: 1px solid var(--accent);
+    background: var(--surface-raised);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+    cursor: grab;
+    transform-origin: top left;
+    user-select: none;
+    z-index: 1;
+}
+
+.workspace-item::after {
+    position: absolute;
+    right: -0.35rem;
+    bottom: -0.35rem;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-right: 1px solid var(--accent);
+    border-bottom: 1px solid var(--accent);
+    content: '';
+}
+
+.workspace-item.is-dragging {
+    cursor: grabbing;
+    border-color: var(--success);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35), 0 0 1.5rem rgba(114, 214, 160, 0.12);
+}
+
+.item-two {
+    border-color: #c29bff;
+}
+
+.item-label {
+    color: var(--accent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+}
+
+.workspace-item strong {
+    font-size: 1.2rem;
+    font-weight: 400;
+}
+
+.workspace-item small {
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.workspace-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.status-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 0.25rem rgba(114, 214, 160, 0.1);
+}
+

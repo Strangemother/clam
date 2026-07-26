@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Func Pipes 3</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <main id="app" class="app-shell">
+        <header class="app-header">
+            <p class="eyebrow">Python graph workspace</p>
+            <h1 v-text="title"></h1>
+            <p class="subtitle">A quiet starting point for representing Python execution.</p>
+            <socket-control :socket="backendSocket"></socket-control>
+            <dev-console :socket="backendSocket"></dev-console>
+        </header>
+        <section class="workspace" data-workspace aria-label="Graph workspace">
+            <div class="workspace-bar">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span>Independent interaction demo</span>
+            </div>
+            <div class="workspace-surface">
+                <surface-panel
+                    v-for="(node, index) in nodes"
+                    :key="node.id || node.label || index"
+                    :panel-class="`item-${index + 1}`"
+                    :label="node.label"
+                    :title="node.title"
+                    :description="node.description"
+                    :x="node.x"
+                    :y="node.y">
+                </surface-panel>
+            </div>
+        </section>
+    </main>
+
+    <div class="templates">
+        {% raw %}
+        <div class="socket-control-template">
+            <div class="socket-control">
+                <input v-model="url" aria-label="WebSocket URL" type="url">
+                <button type="button" @click="toggleConnection">
+                    {{ status === 'connected' || status === 'connecting' ? 'Disconnect' : 'Connect' }}
+                </button>
+                <span :class="['socket-status', status]">{{ status }}</span>
+            </div>
+        </div>
+
+        <div class="dev-console-template">
+            <section class="dev-console" aria-label="WebSocket development console">
+                <div class="dev-console-head">
+                    <strong>Socket traffic</strong>
+                    <span>{{ messages.length }} message<span v-if="messages.length !== 1">s</span></span>
+                </div>
+                <div class="dev-console-send">
+                    <textarea v-model="message" aria-label="WebSocket message" rows="3"></textarea>
+                    <button type="button" @click="sendMessage">Send</button>
+                </div>
+                <div class="dev-console-log" aria-live="polite">
+                    <div v-for="(entry, index) in messages" :key="index" :class="['dev-console-entry', entry.direction]">
+                        <span>{{ entry.direction }}</span>
+                        <pre>{{ formatMessage(entry.message) }}</pre>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="surface-panel-template">
+            <div
+                :class="['workspace-item', panelClass]"
+                data-workspace-item
+                :data-x="x"
+                :data-y="y">
+                <span class="item-label">{{ label }}</span>
+                <span class="pipes"><span class="pip">+</span></span>
+                <strong>{{ title }}</strong>
+                <small>{{ description }}</small>
+            </div>
+        </div>
+        {% endraw %}
+    </div>
+    <script src="{{ url_for('static', filename='js/vendors/vue.global.prod.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/websockets.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/infinite-drag.js') }}"></script>
+</body>
+</html>
