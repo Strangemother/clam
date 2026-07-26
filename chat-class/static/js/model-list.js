@@ -10,7 +10,9 @@ class ModelList {
     constructor(config = {}) {
         // Accept the same config shape as Chat; derive the base host from endpoint.
         const base = (config.endpoint || 'http://localhost:1234')
-            .replace(/\/api\/v1\/chat\/?$/, '')   // strip Chat-specific path
+            .replace(/\/api\/v1\/chat\/?$/, '')   // strip native Chat-specific path
+            .replace(/\/v1\/chat\/completions\/?$/, '') // strip OpenAI-compatible chat path
+            .replace(/\/v1\/chat\/?$/, '')        // strip shortened chat path
             .replace(/\/+$/, '')
 
         this.baseUrl = base
@@ -24,7 +26,7 @@ class ModelList {
 
     /** Fetch and return the full list of model objects. Caches locally. */
     async getList() {
-        const res = await fetch(this.modelsUrl)
+        const res = await fetch(this.modelsUrl, { cache: 'no-store' })
         if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
         const data = await res.json()
         this.models = data.data ?? data   // OpenAI wraps in { data: [...] }

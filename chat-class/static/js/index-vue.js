@@ -1,7 +1,15 @@
 const DEFAULT_ENDPOINT = 'http://192.168.50.60:1234/api/v1/chat/'
 const DEFAULT_MODEL    = 'granite-4.0-h-tiny'
+const ENDPOINT_STORAGE_KEY = 'chat-class-endpoints'
+const MAX_SAVED_ENDPOINTS = 20
 
 const { createApp, nextTick } = Vue
+
+const setupZooming = function() {
+    window.infiniteDrag = new ZoomableInfiniteDrag('.layer-space', '.panel', {
+        zoomMode: 'transform',
+    })
+}
 
 /* ── panel factory ────────────────────────────────────────────────────────── */
 
@@ -15,6 +23,7 @@ function makePanel(endpoint, model) {
         pipsOutbound: [{ label: id, index: 0 }],
         endpoint: endpoint || DEFAULT_ENDPOINT,
         model:    model    || DEFAULT_MODEL,
+        modelIds: [],
         prompt:   null,      // selected prompt { name, path } or null
         mode:     'chat',    // 'chat' (history) | 'prompt' (one-shot) | 'input' (passthrough)
         templated: false,    // render system prompt as Jinja2 template before each send
@@ -35,7 +44,9 @@ createApp({
     data() {
         return {
             newEndpoint: DEFAULT_ENDPOINT,
+            savedEndpoints: [],
             modelIds:    [],
+            endpointModels: {},
             prompts:     [],   // [{ name, path }] loaded from /prompts/
             fetching:    false,
             graphRunning: true,  // false = graph forwarding paused
@@ -44,11 +55,36 @@ createApp({
     },
 
     async mounted() {
+        setupZooming()
+        this.loadSavedEndpoints()
         this.fetchModels()
         this.fetchPrompts()
     },
 
     methods: {
+
+        loadSavedEndpoints() {
+            try {
+                const stored = JSON.parse(localStorage.getItem(ENDPOINT_STORAGE_KEY) || '[]')
+                this.savedEndpoints = Array.isArray(stored)
+                    ? stored.filter(endpoint => typeof endpoint === 'string' && endpoint.trim())
+                    : []
+            } catch (e) {
+                console.error('[Endpoints]', e)
+                this.savedEndpoints = []
+            }
+        },
+
+        rememberEndpoint(endpoint) {
+            const value = String(endpoint || '').trim()
+            if (!value) return
+
+            this.savedEndpoints = [
+                value,
+                ...this.savedEndpoints.filter(saved => saved !== value),
+            ].slice(0, MAX_SAVED_ENDPOINTS)
+            localStorage.setItem(ENDPOINT_STORAGE_KEY, JSON.stringify(this.savedEndpoints))
+        },
 
         /* Fetch prompt file list from the server */
         async fetchPrompts() {
@@ -60,13 +96,38 @@ createApp({
             }
         },
 
-        /* Fetch model list and populate all model dropdowns */
+        /* Return the cache key used for model lists and endpoint requests. */
+        endpointKey(endpoint) {
+            return new ModelList({ endpoint }).baseUrl
+        },
+
+        /* Fetch and cache models for one endpoint. */
+        async fetchModelsForEndpoint(endpoint, force = false) {
+            const key = this.endpointKey(endpoint)
+            if (!force && this.endpointModels[key]) {
+                return this.endpointModels[key]
+            }
+
+            const ml = new ModelList({ endpoint })
+            const models = await ml.getList()
+            const ids = models.map(model => model.id)
+            this.endpointModels[key] = ids
+            return ids
+        },
+
+        /* Fetch the toolbar endpoint and update only panels using that endpoint. */
         async fetchModels() {
             this.fetching = true
             try {
-                const ml = new ModelList({ endpoint: this.newEndpoint })
-                ml.onResult = (models) => { this.modelIds = models.map(m => m.id) }
-                await ml.getList()
+                this.rememberEndpoint(this.newEndpoint)
+                const key = this.endpointKey(this.newEndpoint)
+                const ids = await this.fetchModelsForEndpoint(this.newEndpoint, true)
+                this.modelIds = ids
+                this.panels.forEach(panel => {
+                    if (this.endpointKey(panel.endpoint) === key) {
+                        this.applyPanelModels(panel, ids)
+                    }
+                })
             } catch (e) {
                 console.error('[ModelList]', e)
             } finally {
@@ -74,9 +135,40 @@ createApp({
             }
         },
 
+        /* Populate a panel from its endpoint and retain a valid selection. */
+        async loadPanelModels(panel, force = false) {
+            const endpoint = panel.endpoint
+            const key = this.endpointKey(endpoint)
+            try {
+                const ids = await this.fetchModelsForEndpoint(endpoint, force)
+                if (this.endpointKey(panel.endpoint) !== key) return
+                this.applyPanelModels(panel, ids)
+            } catch (e) {
+                if (this.endpointKey(panel.endpoint) === key) {
+                    panel.modelIds = []
+                }
+                console.error('[ModelList]', e)
+            }
+        },
+
+        applyPanelModels(panel, ids) {
+            panel.modelIds = [...ids]
+            if (!panel.modelIds.includes(panel.model)) {
+                panel.model = panel.modelIds[0] || ''
+            }
+        },
+
+        panelEndpointChanged(panel) {
+            this.rememberEndpoint(panel.endpoint)
+            panel._chat?.reset()
+            this.loadPanelModels(panel, true)
+        },
+
         addPanel()    {
+            this.rememberEndpoint(this.newEndpoint)
             let panel = makePanel(this.newEndpoint)
             this.panels.push(panel)
+            this.loadPanelModels(panel)
 
             setTimeout(()=>{
                 let n = this._.refs[`panel-${panel.id}`][0]
@@ -86,9 +178,11 @@ createApp({
         },
 
         addInputPanel() {
+            this.rememberEndpoint(this.newEndpoint)
             let panel = makePanel(this.newEndpoint)
             panel.mode = 'input'
             this.panels.push(panel)
+            this.loadPanelModels(panel)
 
             setTimeout(()=>{
                 let n = this._.refs[`panel-${panel.id}`][0]

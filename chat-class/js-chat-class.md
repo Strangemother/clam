@@ -6,6 +6,8 @@ their own message history, state, and UI binding.
 
 ---
 
+![ui demo](image.png)
+
 ## Usage sketch
 
 ```js

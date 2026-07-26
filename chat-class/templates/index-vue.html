@@ -18,7 +18,7 @@
         {% raw %}
 
         <div id="toolbar">
-            <input v-model="newEndpoint" placeholder="endpoint" />
+            <input v-model="newEndpoint" list="endpoint-history" @change="rememberEndpoint(newEndpoint)" placeholder="endpoint" />
             <button @click="addPanel">+ Panel</button>
                         <button @click="addInputPanel">+ Input</button>
             <button class="ghost" @click="fetchModels" :disabled="fetching">
@@ -32,6 +32,10 @@
                 {{ graphRunning ? '⏹ Stop Graph' : '▶ Run Graph' }}
             </button>
         </div>
+
+        <datalist id="endpoint-history">
+            <option v-for="endpoint in savedEndpoints" :key="endpoint" :value="endpoint"></option>
+        </datalist>
 
         <div id="panels">
             <div class="panel"
@@ -54,11 +58,11 @@
 
                 <div class="panel-head">
                     <div class="double-stack">
-                        <input v-model="panel.endpoint" placeholder="endpoint" />
+                        <input v-model="panel.endpoint" list="endpoint-history" @change="panelEndpointChanged(panel)" placeholder="endpoint" />
                         <div class="panel-head-controls">
                             <select v-if="panel.mode !== 'input'" v-model="panel.model">
                                 <option value="">— model —</option>
-                                <option v-for="id in modelIds" :key="id" :value="id">{{ id }}</option>
+                                <option v-for="id in panel.modelIds" :key="id" :value="id">{{ id }}</option>
                             </select>
                             <select v-if="panel.mode !== 'input'" @change="selectPrompt(panel, $event.target.value)">
                                 <option value="">— system prompt —</option>
@@ -135,6 +139,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 <script src="{{ url_for('static', filename='js/dragsolo.js') }}"></script>
+<script src="{{ url_for('static', filename='js/infinite-drag.js') }}"></script>
 <script src="{{ url_for('static', filename='js/index-vue-dragging.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pipes/pens/straight-lines.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pipes/pens/curve-lines.js') }}"></script>
