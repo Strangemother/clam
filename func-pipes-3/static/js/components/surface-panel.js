@@ -1,4 +1,4 @@
-app.component('surface-panel', {
+window.surfacePanelComponent = {
     props: {
         panelClass: { type: String, default: '' },
         label: { type: String, required: true },
@@ -8,4 +8,4 @@ app.component('surface-panel', {
         y: { type: Number, default: 0 },
     },
     template: document.querySelector('.surface-panel-template').innerHTML,
-})
+}

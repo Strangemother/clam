@@ -1,4 +1,4 @@
-app.component('socket-control', {
+window.socketControlComponent = {
     props: {
         socket: { type: Object, default: null },
     },
@@ -29,4 +29,4 @@ app.component('socket-control', {
         },
     },
     template: document.querySelector('.socket-control-template').innerHTML,
-})
+}

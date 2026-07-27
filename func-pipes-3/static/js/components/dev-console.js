@@ -1,4 +1,4 @@
-app.component('dev-console', {
+window.devConsoleComponent = {
     props: {
         socket: { type: Object, default: null },
     },
@@ -42,4 +42,4 @@ app.component('dev-console', {
         },
     },
     template: document.querySelector('.dev-console-template').innerHTML,
-})
+}

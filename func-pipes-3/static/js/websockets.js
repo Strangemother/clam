@@ -1,5 +1,5 @@
 class BackendSocket {
-    constructor(url = `ws://${window.location.hostname}:8777/graph/func-pipes-3`) {
+    constructor(url = `ws://127.0.0.1:8777/graph/func-pipes-3`) {
         this.url = url
         this.socket = null
         this.messageHandlers = []

@@ -32,4 +32,8 @@ const app = Vue.createApp({
     },
 })
 
+app.component('socket-control', window.socketControlComponent)
+app.component('dev-console', window.devConsoleComponent)
+app.component('surface-panel', window.surfacePanelComponent)
+
 const mountedApp = app.mount('#app')
