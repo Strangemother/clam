@@ -32,11 +32,11 @@ EXAMPLES
 import pathlib
 import datetime
 
-from simple_bulb import perform
-
 
 def simple_bulb_perform(text: str) -> str:
     """Return the input unchanged."""
+    from simple_bulb import perform
+
     return perform(text)
     # return text
 
