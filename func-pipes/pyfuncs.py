@@ -80,3 +80,33 @@ def join_lines(a: str, b: str) -> str:
 def word_count(text: str) -> str:
     """Return the number of words in the text as a string."""
     return str(len(text.split()))
+
+
+def if_split(text: str) -> str:
+    """Given text matches, split and return intents.
+
+        action "roam"
+        action "chill"
+        action "roam"
+        remember "I want to win"
+        remember "I need a mate"
+        remember "Focus on domination"
+        track entity#12
+        track food#23
+        track undefined
+
+        other "miscellaneous"
+
+    """
+    actions = {
+        "action": [],
+        "remember": [],
+        "track": [],
+        "other": []
+    }
+
+    ww = text.split()
+    if ww[0] not in actions:
+        return 'error("unknown action")'
+    res = f"{ww[0]}({', '.join(ww[1:])})"
+    return res
