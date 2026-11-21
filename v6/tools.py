@@ -85,11 +85,11 @@ def ask_decision_model(
 ) -> Any:
     payload = {
         "model": model_id,
-        "state": context,
+        "state": f"{context}\n\nUser message: {question}",
         "questions": {
             "route": {
                 "type": "choice",
-                "instructions": question,
+                "instructions": "Which route best matches the user's message?",
                 "criteria": choices,
             },
             "calm": {
