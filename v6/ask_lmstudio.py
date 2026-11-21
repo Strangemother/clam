@@ -11,8 +11,15 @@ from urllib.request import Request, urlopen
 
 
 DEFAULT_URL = "http://192.168.50.60:1234"
-DEFAULT_STATE = "I was charged twice this month. Please refund one charge."
-DEFAULT_QUESTION = "Is the customer asking for a refund?"
+DEFAULT_CONTEXT = (
+    "Select from one of these internal routes: lightbulb, heater, door."
+)
+DEFAULT_QUESTION = "Turn on the light"
+ROUTING_CHOICES = {
+    "lightbulb": "Control the lights",
+    "heater": "Control the heating",
+    "door": "Control the door",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -27,7 +34,7 @@ def parse_args() -> argparse.Namespace:
         help="list loaded decision model IDs",
     )
     parser.add_argument(
-        "--state", default=DEFAULT_STATE,
+        "--context", default=DEFAULT_CONTEXT,
         help="context for the decision model",
     )
     parser.add_argument("--base-url", default=DEFAULT_URL)
@@ -106,16 +113,20 @@ def list_loaded_decision_models(
 
 def ask_decision_model(
     model_id: str,
-    state: str,
+    context: str,
     question: str,
     base_url: str,
     headers: dict[str, str],
 ) -> Any:
     payload = {
         "model": model_id,
-        "state": state,
+        "state": context,
         "questions": {
-            "answer": {"type": "noul", "instructions": question},
+            "route": {
+                "type": "choice",
+                "instructions": question,
+                "criteria": ROUTING_CHOICES,
+            },
         },
     }
     result = request_json(
@@ -125,9 +136,9 @@ def ask_decision_model(
     )
     if not isinstance(result, dict) or not isinstance(
         result.get("answers"), dict
-    ) or "answer" not in result["answers"]:
+    ) or "route" not in result["answers"]:
         raise RuntimeError("LM Studio returned an unexpected answer format.")
-    return result["answers"]["answer"]
+    return result["answers"]["route"]
 
 
 def main() -> None:
@@ -143,7 +154,7 @@ def main() -> None:
 
         answer = ask_decision_model(
             args.model,
-            args.state,
+            args.context,
             args.question,
             base_url,
             headers,
