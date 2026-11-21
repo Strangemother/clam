@@ -4,113 +4,155 @@
 import argparse
 import json
 import os
+import sys
+from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
 DEFAULT_URL = "http://192.168.50.60:1234"
-DEFAULT_STATE = (
-    "I was charged twice this month. Please refund one of the charges."
-)
+DEFAULT_STATE = "I was charged twice this month. Please refund one charge."
 DEFAULT_QUESTION = "Is the customer asking for a refund?"
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("model", nargs="?", help="LM Studio model ID")
+    parser.add_argument("model", nargs="?", help="loaded decision model ID")
     parser.add_argument(
-        "question", nargs="?",
-        help="question to ask (defaults to the refund example)",
+        "question", nargs="?", default=DEFAULT_QUESTION,
+        help="question to ask",
     )
     parser.add_argument(
-        "--list-models", action="store_true", help="list available model IDs",
+        "--list-models", action="store_true",
+        help="list loaded decision model IDs",
     )
     parser.add_argument(
-        "--state", default=DEFAULT_STATE, help="context for the decision model",
-    )
-    parser.add_argument(
-        "--chat", action="store_true", help="use a regular chat model instead",
+        "--state", default=DEFAULT_STATE,
+        help="context for the decision model",
     )
     parser.add_argument("--base-url", default=DEFAULT_URL)
     args = parser.parse_args()
+    if not args.list_models and not args.model:
+        parser.error("provide a model ID or use --list-models")
+    return args
 
+
+def make_headers() -> dict[str, str]:
     headers = {"Accept": "application/json"}
     token = os.environ.get("LM_STUDIO_API_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    return headers
 
-    base_url = args.base_url.rstrip("/")
-    if args.list_models:
-        path = "/v1/models" if args.chat else "/api/v1/models"
-        request = Request(f"{base_url}{path}", headers=headers)
-    else:
-        if not args.model:
-            parser.error("provide a model ID or use --list-models")
-        question = args.question or DEFAULT_QUESTION
-        if args.chat:
-            path = "/v1/chat/completions"
-            if args.question is None:
-                question = (
-                    f"Customer message: {args.state}\n\n"
-                    f"Question: {question} Answer only Yes or No."
-                )
-            payload = {
-                "model": args.model,
-                "messages": [{"role": "user", "content": question}],
-            }
-        else:
-            path = "/v1/systemone"
-            payload = {
-                "model": args.model,
-                "state": args.state,
-                "questions": {
-                    "answer": {"type": "noul", "instructions": question},
-                },
-            }
-        headers["Content-Type"] = "application/json"
-        request = Request(
-            f"{base_url}{path}",
-            data=json.dumps(payload).encode("utf-8"),
-            headers=headers,
-        )
+
+def request_json(
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any] | None = None,
+) -> Any:
+    request_headers = headers.copy()
+    data = None
+    if payload is not None:
+        request_headers["Content-Type"] = "application/json"
+        data = json.dumps(payload).encode("utf-8")
+    request = Request(url, data=data, headers=request_headers)
 
     try:
         with urlopen(request, timeout=60) as response:
-            result = json.load(response)
+            return json.load(response)
     except HTTPError as exc:
         detail = exc.read(2048).decode("utf-8", errors="replace").strip()
-        parser.exit(1, f"{path}: HTTP {exc.code}: {detail or exc.reason}\n")
+        raise RuntimeError(
+            f"{url}: HTTP {exc.code}: {detail or exc.reason}"
+        ) from exc
     except OSError as exc:
-        parser.exit(1, f"Could not reach LM Studio at {base_url}: {exc}\n")
+        raise RuntimeError(f"Could not reach LM Studio: {exc}") from exc
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        parser.exit(1, f"LM Studio did not return valid JSON: {exc}\n")
+        message = f"LM Studio did not return valid JSON: {exc}"
+        raise RuntimeError(message) from exc
+
+
+def list_loaded_decision_models(
+    base_url: str,
+    headers: dict[str, str],
+) -> list[str]:
+    result = request_json(f"{base_url}/api/v1/models", headers)
+    if not isinstance(result, dict) or not isinstance(
+        result.get("models"), list
+    ):
+        raise RuntimeError("LM Studio returned an unexpected model list.")
+
+    model_ids = []
+    for model in result["models"]:
+        if not isinstance(model, dict) or model.get("type") != "decision":
+            continue
+        instances = model.get("loaded_instances", [])
+        if not isinstance(instances, list):
+            continue
+        model_ids.extend(
+            instance["id"]
+            for instance in instances
+            if isinstance(instance, dict)
+            and isinstance(instance.get("id"), str)
+        )
+
+    if not model_ids:
+        raise RuntimeError(
+            f"No loaded decision models found at {base_url}. "
+            "Check the Developer tab on that LM Studio server."
+        )
+    return model_ids
+
+
+def ask_decision_model(
+    model_id: str,
+    state: str,
+    question: str,
+    base_url: str,
+    headers: dict[str, str],
+) -> Any:
+    payload = {
+        "model": model_id,
+        "state": state,
+        "questions": {
+            "answer": {"type": "noul", "instructions": question},
+        },
+    }
+    result = request_json(
+        f"{base_url}/v1/systemone",
+        headers,
+        payload,
+    )
+    if not isinstance(result, dict) or not isinstance(
+        result.get("answers"), dict
+    ) or "answer" not in result["answers"]:
+        raise RuntimeError("LM Studio returned an unexpected answer format.")
+    return result["answers"]["answer"]
+
+
+def main() -> None:
+    args = parse_args()
+    base_url = args.base_url.rstrip("/")
+    headers = make_headers()
 
     try:
         if args.list_models:
-            if args.chat:
-                models = [model["id"] for model in result["data"]]
-            else:
-                models = [
-                    instance["id"]
-                    for model in result["models"]
-                    if model["type"] == "decision"
-                    for instance in model["loaded_instances"]
-                ]
-                if not models:
-                    parser.exit(
-                        1, f"No loaded decision models found at {base_url}. "
-                        "Check the Developer tab on that LM Studio server.\n",
-                    )
-            print("\n".join(models) if models else "No models returned.")
-        elif args.chat:
-            answer = result["choices"][0]["message"]["content"]
-            if not isinstance(answer, str) or not answer.strip():
-                parser.exit(1, "LM Studio returned no text answer.\n")
-            print(answer.strip())
-        else:
-            print(json.dumps(result["answers"]["answer"], indent=2))
-    except (IndexError, KeyError, TypeError):
-        parser.exit(1, "LM Studio returned an unexpected response format.\n")
+            model_ids = list_loaded_decision_models(base_url, headers)
+            print("\n".join(model_ids))
+            return
+
+        answer = ask_decision_model(
+            args.model,
+            args.state,
+            args.question,
+            base_url,
+            headers,
+        )
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+
+    print(json.dumps(answer, indent=2))
 
 
 if __name__ == "__main__":

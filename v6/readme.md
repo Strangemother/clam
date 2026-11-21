@@ -19,7 +19,7 @@ model is loaded (not just downloaded) in the Developer tab on the same
 LM Studio server. Use `--base-url` if that server has a different address.
 
 If authentication is enabled, set the `LM_STUDIO_API_TOKEN` environment
-variable before running the script. Use `--chat` for regular chat models.
+variable before running the script.
 
 ### Ask multiple decision questions with curl
 
