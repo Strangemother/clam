@@ -8,50 +8,25 @@ Python 3's standard library and defaults to `http://192.168.50.60:1234`.
 ```bash
 python3 v6/ask_lmstudio.py --list-models
 python3 v6/ask_lmstudio.py YOUR_MODEL_ID
-python3 v6/ask_lmstudio.py YOUR_MODEL_ID "Your question here"
+python3 v6/ask_lmstudio.py YOUR_MODEL_ID "Was I charged twice?" \
+  --state "My statement shows two identical charges."
 ```
 
-Use the ID printed for your decision model. Without a question, the script
-asks the refund question below. If authentication is enabled, set the
-`LM_STUDIO_API_TOKEN` environment variable before running the script.
+The script lists loaded decision model instance IDs from `/api/v1/models`
+and asks questions through `/v1/systemone`. Without a question or context,
+it runs the refund example. If no IDs are listed, check that the decision
+model is loaded (not just downloaded) in the Developer tab on the same
+LM Studio server. Use `--base-url` if that server has a different address.
 
-### Equivalent curl requests
+If authentication is enabled, set the `LM_STUDIO_API_TOKEN` environment
+variable before running the script. Use `--chat` for regular chat models.
 
-Start the LM Studio server and load your decision model. List the model IDs
-the server exposes:
-
-```bash
-curl --fail-with-body --silent --show-error \
-  http://192.168.50.60:1234/v1/models
-```
-
-Replace `YOUR_MODEL_ID` with the matching `data[].id` from that response:
+### Ask multiple decision questions with curl
 
 ```bash
-curl --fail-with-body --silent --show-error \
-  http://192.168.50.60:1234/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "YOUR_MODEL_ID",
-    "messages": [
-      {"role": "system", "content": "Answer with only Yes or No."},
-      {"role": "user", "content": "Customer message: I was charged twice this month. Please refund one of the charges.\n\nQuestion: Is the customer asking for a refund?"}
-    ]
-  }'
-```
-
-The answer is in `choices[0].message.content`. For this example, the expected
-answer is `Yes`. If authentication is enabled, add an
-`Authorization: Bearer <token>` header to both requests.
-
-## Custom decision payload
-
-The `state` and `questions` fields below are for a custom decision endpoint,
-not LM Studio's standard chat completions endpoint. Use this example only if
-your server implements that payload at `/`.
-
-```bash
-curl http://192.168.50.60:1234/ -H "Content-Type: application/json" -d '{
+curl --fail-with-body http://192.168.50.60:1234/v1/systemone \
+  -H "Content-Type: application/json" -d '{
+  "model": "YOUR_MODEL_ID",
   "state": "I was charged twice this month, please refund one of them.",
   "questions": {
     "refund":  {"type": "noul", "instructions": "Is the customer asking for a refund?"},
@@ -63,3 +38,6 @@ curl http://192.168.50.60:1234/ -H "Content-Type: application/json" -d '{
   }
 }'
 ```
+
+The response contains an `answers` object keyed by question ID. If
+authentication is enabled, add an `Authorization: Bearer <token>` header.
