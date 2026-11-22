@@ -3,6 +3,7 @@
 
 Start the server on the model host from the v6 directory with
 `python easy-run.py`. Replace HOST_IP below with that machine's LAN address.
+Open `http://HOST_IP:8000/ui` to run a prompt example in the browser.
 
 Check health and list the loaded model:
 
@@ -99,17 +100,25 @@ import argparse
 import base64
 import binascii
 from io import BytesIO
+import json
 import os
+from pathlib import Path
 import sys
 import threading
+from urllib.parse import urlsplit
+from urllib.request import urlopen
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 from PIL import Image
+import yaml
+
+from prompt_utils import load_prompt
 
 
 MODEL_ID = "LiquidAI/d1-Omni-2B"
 MODEL_ALIAS = "d1-omni-2b"
 MAX_REQUEST_BYTES = 64 * 1024 * 1024
+PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
@@ -142,6 +151,10 @@ def image_from_data_url(data_url: str):
         content = base64.b64decode(encoded, validate=True)
     except (binascii.Error, ValueError) as exc:
         raise ValueError("Image data URL has invalid base64 data.") from exc
+    return image_from_bytes(content)
+
+
+def image_from_bytes(content: bytes):
     try:
         with Image.open(BytesIO(content)) as image:
             return image.convert("RGB")
@@ -149,9 +162,148 @@ def image_from_data_url(data_url: str):
         raise ValueError(f"Could not decode image: {exc}") from exc
 
 
+def load_example_image(prompt_path: Path, source: str):
+    parsed = urlsplit(source)
+    if parsed.scheme in {"http", "https"}:
+        with urlopen(source, timeout=30) as response:
+            content = response.read(MAX_REQUEST_BYTES + 1)
+    elif parsed.scheme:
+        raise ValueError("Example images must use HTTP(S) or a local path.")
+    else:
+        image_path = Path(source)
+        if not image_path.is_absolute():
+            image_path = prompt_path.parent / image_path
+        content = image_path.read_bytes()
+
+    if len(content) > MAX_REQUEST_BYTES:
+        raise ValueError("Example image exceeds the 64 MiB limit.")
+    return image_from_bytes(content)
+
+
+def available_prompts() -> list[str]:
+    return sorted(path.name for path in PROMPT_DIR.glob("*.d.yaml"))
+
+
+def example_label(example: str | dict[str, str]) -> str:
+    if isinstance(example, str):
+        return example
+    return example.get("text") or example["image"]
+
+
+def render_prompt_page(
+    selected_prompt: str | None = None,
+    selected_example: int = 0,
+    output: str | None = None,
+    error: str | None = None,
+    status: int = 200,
+):
+    prompts = available_prompts()
+    if selected_prompt not in prompts:
+        selected_prompt = prompts[0] if prompts else None
+
+    examples = []
+    prompt_state = None
+    if selected_prompt:
+        prompt = load_prompt(
+            PROMPT_DIR / selected_prompt,
+            allow_image_examples=True,
+        )
+        prompt_state = prompt["state"]
+        examples = [
+            {"index": index, "label": example_label(example)}
+            for index, example in enumerate(prompt["examples"])
+        ]
+
+    return (
+        render_template(
+            "prompt_runner.html",
+            prompts=prompts,
+            selected_prompt=selected_prompt,
+            selected_example=selected_example,
+            prompt_state=prompt_state,
+            examples=examples,
+            output=output,
+            error=error,
+        ),
+        status,
+    )
+
+
 @app.errorhandler(413)
 def request_too_large(_error):
     return api_error("Request body exceeds the 64 MiB limit."), 413
+
+
+@app.get("/ui")
+def prompt_ui():
+    selected_prompt = request.args.get("prompt")
+    if selected_prompt and selected_prompt not in available_prompts():
+        return render_prompt_page(
+            error="Unknown prompt selection.",
+            status=400,
+        )
+    return render_prompt_page(selected_prompt)
+
+
+@app.post("/ui/run")
+def run_ui_example():
+    selected_prompt = request.form.get("prompt", "")
+    if selected_prompt not in available_prompts():
+        return render_prompt_page(
+            error="Unknown prompt selection.",
+            status=400,
+        )
+    try:
+        selected_example = int(request.form.get("example", ""))
+    except ValueError:
+        return render_prompt_page(
+            selected_prompt,
+            error="Choose a valid example.",
+            status=400,
+        )
+
+    try:
+        prompt_path = PROMPT_DIR / selected_prompt
+        prompt = load_prompt(prompt_path, allow_image_examples=True)
+        examples = prompt["examples"]
+        if not 0 <= selected_example < len(examples):
+            return render_prompt_page(
+                selected_prompt,
+                error="Choose a valid example.",
+                status=400,
+            )
+        example = examples[selected_example]
+
+        if isinstance(example, dict):
+            state = prompt["state"]
+            if example.get("text"):
+                state += f"\n\nImage description: {example['text']}"
+            media = [load_example_image(prompt_path, example["image"])]
+        else:
+            state = f"{prompt['state']}\n\nUser message: {example}"
+            media = None
+
+        if model is None or torch is None:
+            raise RuntimeError("The decision model is not loaded.")
+        with inference_lock, torch.inference_mode():
+            result = model.system_one(
+                state,
+                prompt["questions"],
+                media=media,
+            )
+    except (OSError, RuntimeError, ValueError, yaml.YAMLError) as exc:
+        app.logger.exception("Could not run prompt example")
+        return render_prompt_page(
+            selected_prompt,
+            error=str(exc),
+            status=500,
+        )
+
+    return render_prompt_page(
+        selected_prompt,
+        selected_example,
+        output=json.dumps(result, indent=2, ensure_ascii=False),
+    )
 
 
 @app.get("/health")

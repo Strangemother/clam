@@ -105,6 +105,9 @@ and installs [requirements.txt](./requirements.txt), then starts
 provides `/v1/systemone` and `/api/v1/models` on port 8000. First startup
 downloads the model. Allow inbound TCP port 8000 through Windows Firewall.
 
+Open `http://HOST_IP:8000/ui` to select a YAML prompt and run one of its
+examples in the browser.
+
 On the client, point `second.py` at the host's LAN address:
 
 ```powershell
