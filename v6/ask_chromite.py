@@ -84,8 +84,7 @@ def ask_chromite(
             ability: {
                 "type": "noul",
                 "instructions": question,
-            }
-            for ability, question in ABILITY_QUESTIONS.items()
+            } for ability, question in ABILITY_QUESTIONS.items()
         },
     }
     result = request_json(

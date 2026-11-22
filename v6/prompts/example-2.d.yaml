@@ -1,0 +1,13 @@
+# Internal routing choices
+state: >
+  Select from one of these internal routes: lightbulb, heater, door.
+
+questions:
+  route: 
+    type: "choice"
+    instructions: "question"
+    criteria: 
+      lightbulb: "Control the lights"
+      heater: "Control the heating"
+      door: "Control the door"
+
