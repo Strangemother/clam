@@ -85,6 +85,7 @@ def main() -> None:
             if not message.strip():
                 message = examples[example_index]
                 example_index = (example_index + 1) % len(examples)
+                print(message)
             payload = {
                 "model": args.model,
                 "state": (
@@ -97,7 +98,7 @@ def main() -> None:
                 make_headers(),
                 payload,
             )
-            print(json.dumps(result, indent=4))
+            print(json.dumps(result, indent="\t"))
             if args.once:
                 break
     except (OSError, RuntimeError, ValueError, yaml.YAMLError) as exc:
