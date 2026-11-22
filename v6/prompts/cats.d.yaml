@@ -19,5 +19,5 @@ questions:
     max: 4
 
 examples:
-  - image: https://images.cocodataset.org/val2017/000000039769.jpg
-    text: "Two cats on a sofa."
+  - image: ./cats.png
+    # text: "Two cats on a sofa."
