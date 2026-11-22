@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+Flask>=3.0
+Pillow>=11.0
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+transformers>=5.19

@@ -90,6 +90,30 @@ This uses only the Python standard library for image loading and encoding;
 the configured model must support image input. `--model` and `--base-url`
 can override the defaults.
 
+## Host the Transformers model
+
+On the Windows host with an RTX 5060, run:
+
+```powershell
+cd C:\dev\clam\v6
+python easy-run.py
+```
+
+`easy-run.py` runs [first-setup.py](./first-setup.py), which creates `env/`
+and installs [requirements.txt](./requirements.txt), then starts
+[server.py](./server.py). The Flask server loads `LiquidAI/d1-Omni-2B` and
+provides `/v1/systemone` and `/api/v1/models` on port 8000. First startup
+downloads the model. Allow inbound TCP port 8000 through Windows Firewall.
+
+On the client, point `second.py` at the host's LAN address:
+
+```powershell
+python second.py prompts\cats.d.yaml --image .\prompts\cats.png `
+  --base-url http://HOST_IP:8000 --model d1-omni-2b
+```
+
+This demo service has no authentication; keep it on a trusted network.
+
 ### The routing request sent to LM Studio
 
 ```bash
