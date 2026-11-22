@@ -11,7 +11,17 @@ def load_prompt(
     allow_image_examples: bool = False,
 ) -> dict[str, Any]:
     with path.open(encoding="utf-8") as prompt_file:
-        prompt = yaml.safe_load(prompt_file)
+        return parse_prompt(
+            prompt_file.read(),
+            allow_image_examples=allow_image_examples,
+        )
+
+
+def parse_prompt(
+    source: str,
+    allow_image_examples: bool = False,
+) -> dict[str, Any]:
+    prompt = yaml.safe_load(source)
 
     if not isinstance(prompt, dict):
         raise ValueError("Prompt must be a YAML object.")

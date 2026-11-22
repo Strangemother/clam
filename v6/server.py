@@ -103,7 +103,9 @@ from io import BytesIO
 import os
 import platform
 from pathlib import Path
+import re
 import sys
+import tempfile
 import threading
 from urllib.parse import urlsplit
 from urllib.request import urlopen
@@ -119,7 +121,7 @@ from flask import (
 from PIL import Image
 import yaml
 
-from prompt_utils import load_prompt
+from prompt_utils import load_prompt, parse_prompt
 from tools import (
     list_loaded_decision_models,
     make_headers,
@@ -132,6 +134,7 @@ MODEL_ALIAS = "d1-omni-2b"
 DEFAULT_LM_STUDIO_URL = "http://192.168.50.60:1234"
 LM_STUDIO_QUESTION_TYPES = {"noul", "choice", "score"}
 MAX_REQUEST_BYTES = 64 * 1024 * 1024
+PROMPT_FILENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*\.d\.yaml\Z")
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
 app = Flask(__name__)
@@ -212,6 +215,69 @@ def append_state_text(state: str, text: str) -> str:
     return f"{state}\n\n{text}" if state else text
 
 
+def prompt_details(prompt_name: str, source: str) -> dict:
+    prompt = parse_prompt(source, allow_image_examples=True)
+    return {
+        "name": prompt_name,
+        "yaml": source,
+        "state": prompt["state"],
+        "questions": prompt["questions"],
+        "examples": [
+            {
+                "index": index,
+                "label": example_label(example),
+                "is_image": isinstance(example, dict),
+            }
+            for index, example in enumerate(prompt["examples"])
+        ],
+        "lm_studio_questions_supported": all(
+            question.get("type") in LM_STUDIO_QUESTION_TYPES
+            for question in prompt["questions"].values()
+        ),
+    }
+
+
+def valid_prompt_filename(prompt_name: str) -> bool:
+    return PROMPT_FILENAME.fullmatch(prompt_name) is not None
+
+
+def save_prompt_source(
+    prompt_path: Path,
+    source: str,
+    create_new: bool,
+) -> None:
+    if create_new:
+        created = False
+        try:
+            with prompt_path.open("x", encoding="utf-8") as prompt_file:
+                created = True
+                prompt_file.write(source)
+        except OSError:
+            if created:
+                prompt_path.unlink(missing_ok=True)
+            raise
+        return
+
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=PROMPT_DIR,
+            prefix=".prompt-",
+            suffix=".tmp",
+            delete=False,
+        ) as prompt_file:
+            temporary_path = Path(prompt_file.name)
+            prompt_file.write(source)
+            prompt_file.flush()
+            os.fsync(prompt_file.fileno())
+        os.replace(temporary_path, prompt_path)
+    finally:
+        if temporary_path and temporary_path.exists():
+            temporary_path.unlink()
+
+
 @app.errorhandler(413)
 def request_too_large(_error):
     return api_error("Request body exceeds the 64 MiB limit."), 413
@@ -240,6 +306,14 @@ def prompt_ui():
                     example_index=0,
                 ).rsplit("/", 2)[0]
             ),
+            "prompt_collection_url": url_for("ui_create_prompt"),
+            "prompt_save_url": (
+                url_for(
+                    "ui_update_prompt",
+                    prompt_name="prompt-placeholder",
+                ).rsplit("/", 1)[0]
+                + "/"
+            ),
             "models_url": url_for("ui_lm_studio_models"),
             "run_url": url_for("run_ui_example"),
         },
@@ -254,29 +328,75 @@ def ui_prompt_details(prompt_name: str):
     prompt_path = PROMPT_DIR / prompt_name
     try:
         source = prompt_path.read_text(encoding="utf-8")
-        prompt = load_prompt(prompt_path, allow_image_examples=True)
+        details = prompt_details(prompt_name, source)
     except (OSError, ValueError, yaml.YAMLError) as exc:
         return api_error(f"Could not load prompt: {exc}"), 400
 
-    return jsonify(
-        {
-            "name": prompt_name,
-            "yaml": source,
-            "state": prompt["state"],
-            "questions": prompt["questions"],
-            "examples": [
-                {
-                    "index": index,
-                    "label": example_label(example),
-                    "is_image": isinstance(example, dict),
-                }
-                for index, example in enumerate(prompt["examples"])
-            ],
-            "lm_studio_questions_supported": all(
-                question.get("type") in LM_STUDIO_QUESTION_TYPES
-                for question in prompt["questions"].values()
-            ),
-        }
+    return jsonify(details)
+
+
+def save_prompt_request(
+    source: object,
+    prompt_name: object,
+    create_new: bool,
+):
+    if not isinstance(prompt_name, str) or not valid_prompt_filename(
+        prompt_name
+    ):
+        return api_error(
+            "Prompt filename must use letters, numbers, hyphens, or "
+            "underscores and end in '.d.yaml'."
+        ), 400
+    if not isinstance(source, str):
+        return api_error("Prompt YAML must be a string."), 400
+
+    try:
+        details = prompt_details(prompt_name, source)
+    except (ValueError, yaml.YAMLError) as exc:
+        return api_error(f"Invalid prompt YAML: {exc}"), 400
+
+    prompt_path = PROMPT_DIR / prompt_name
+    if not create_new and prompt_name not in available_prompts():
+        return api_error("The prompt to overwrite does not exist."), 404
+
+    try:
+        save_prompt_source(prompt_path, source, create_new)
+    except FileExistsError:
+        return api_error(
+            "A prompt with that filename already exists. "
+            "Choose another name to avoid overwriting it."
+        ), 409
+    except OSError as exc:
+        app.logger.exception("Could not save prompt %s", prompt_name)
+        return api_error(
+            f"Could not save prompt: {exc}",
+            "server_error",
+        ), 500
+
+    return jsonify(details)
+
+
+@app.post("/ui/api/prompts")
+def ui_create_prompt():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return api_error("Request body must be a JSON object."), 400
+    return save_prompt_request(
+        payload.get("yaml"),
+        payload.get("name"),
+        create_new=True,
+    )
+
+
+@app.put("/ui/api/prompts/<path:prompt_name>")
+def ui_update_prompt(prompt_name: str):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return api_error("Request body must be a JSON object."), 400
+    return save_prompt_request(
+        payload.get("yaml"),
+        prompt_name,
+        create_new=False,
     )
 
 

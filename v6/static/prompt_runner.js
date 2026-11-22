@@ -26,6 +26,8 @@ Vue.createApp({
             selectedPrompt: "",
             prompt: null,
             promptState: "",
+            promptYaml: "",
+            newPromptName: "",
             selectedExample: "",
             userInput: "",
             backend: "",
@@ -34,8 +36,10 @@ Vue.createApp({
             loadingPrompt: false,
             loadingModels: false,
             running: false,
+            savingPrompt: false,
             error: "",
             modelStatus: "",
+            saveStatus: "",
             resultText: "",
             activeTab: "runner",
             draggingImage: false,
@@ -69,6 +73,19 @@ Vue.createApp({
                     String(example.index) === this.selectedExample
                 ),
             ) || null;
+        },
+
+        yamlIsDirty() {
+            return Boolean(
+                this.prompt && this.promptYaml !== this.prompt.yaml,
+            );
+        },
+
+        canSaveAsNew() {
+            return Boolean(
+                this.newPromptName.trim()
+                && this.promptYaml.trim(),
+            );
         },
 
         imageDisplayUrl() {
@@ -184,6 +201,17 @@ Vue.createApp({
 
     watch: {
         selectedPrompt(name) {
+            if (this.prompt && this.prompt.name === name) {
+                return;
+            }
+            if (
+                this.prompt
+                && this.yamlIsDirty
+                && !window.confirm("Discard unsaved YAML changes?")
+            ) {
+                this.selectedPrompt = this.prompt.name;
+                return;
+            }
             this.loadPrompt(name);
         },
 
@@ -250,6 +278,7 @@ Vue.createApp({
             const requestId = ++this.promptRequestId;
             this.prompt = null;
             this.promptState = "";
+            this.promptYaml = "";
             this.selectedExample = "";
             this.userInput = "";
             this.imageFile = null;
@@ -274,6 +303,7 @@ Vue.createApp({
                 }
                 this.prompt = data;
                 this.promptState = data.state;
+                this.promptYaml = data.yaml;
             } catch (error) {
                 if (requestId === this.promptRequestId) {
                     this.error = error.message;
@@ -282,6 +312,60 @@ Vue.createApp({
                 if (requestId === this.promptRequestId) {
                     this.loadingPrompt = false;
                 }
+            }
+        },
+
+        async saveCurrentPrompt() {
+            if (!this.selectedPrompt || !this.yamlIsDirty) {
+                return;
+            }
+            await this.savePrompt(this.selectedPrompt, false);
+        },
+
+        async saveAsNewPrompt() {
+            const name = this.newPromptName.trim();
+            if (!name || !this.promptYaml.trim()) {
+                return;
+            }
+            await this.savePrompt(name, true);
+        },
+
+        async savePrompt(name, createNew) {
+            this.savingPrompt = true;
+            this.saveStatus = "";
+            this.error = "";
+            const url = createNew
+                ? this.config.prompt_collection_url
+                : `${this.config.prompt_save_url}${encodeURIComponent(name)}`;
+            try {
+                const data = await fetchJson(url, {
+                    method: createNew ? "POST" : "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        name,
+                        yaml: this.promptYaml,
+                    }),
+                });
+                if (!this.prompts.includes(data.name)) {
+                    this.prompts.push(data.name);
+                    this.prompts.sort();
+                }
+                this.prompt = data;
+                this.promptState = data.state;
+                this.promptYaml = data.yaml;
+                this.selectedExample = "";
+                this.userInput = "";
+                this.resultData = null;
+                this.resultText = "";
+                this.selectedPrompt = data.name;
+                if (createNew) {
+                    this.newPromptName = "";
+                }
+                this.saveStatus = `Saved ${data.name}.`;
+            } catch (error) {
+                this.saveStatus = error.message;
+            } finally {
+                this.savingPrompt = false;
             }
         },
 

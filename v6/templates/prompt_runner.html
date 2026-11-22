@@ -79,7 +79,9 @@
                 v-model="selectedPrompt"
                 :disabled="loadingPrompt"
             >
-                <option disabled value="">--- Select a prompt file ---</option>
+                <option disabled value="">
+                    --- Select a prompt file ---
+                </option>
                 <option
                     v-for="name in prompts"
                     :key="name"
@@ -311,12 +313,61 @@
             role="tabpanel"
             aria-labelledby="yaml-tab"
         >
-            <template v-if="prompt">
-                <h2>[[ prompt.name ]]</h2>
-                <pre class="yaml-source"><code>[[ prompt.yaml ]]</code></pre>
-            </template>
-            <p v-else class="field-help">
-                Select a prompt file to view its YAML source.
+            <h2 v-if="prompt">Edit [[ prompt.name ]]</h2>
+            <h2 v-else>New prompt YAML</h2>
+            <label for="prompt-yaml">Prompt YAML source</label>
+            <textarea
+                id="prompt-yaml"
+                v-model="promptYaml"
+                class="yaml-editor"
+                rows="24"
+                spellcheck="false"
+                placeholder="state: Describe the context&#10;questions:&#10;  answer:&#10;    type: noul&#10;    instructions: Is this true?"
+                @input="saveStatus = ''"
+            ></textarea>
+            <p v-if="yamlIsDirty" class="notice">
+                Unsaved YAML changes are not used by the runner until saved.
+            </p>
+
+            <div class="save-controls">
+                <button
+                    v-if="selectedPrompt"
+                    type="button"
+                    :disabled="savingPrompt || !yamlIsDirty"
+                    @click="saveCurrentPrompt"
+                >
+                    [[ savingPrompt ? "Saving..." : "Save changes" ]]
+                </button>
+                <div class="save-as-controls">
+                    <label for="new-prompt-name">Save as a new prompt</label>
+                    <input
+                        id="new-prompt-name"
+                        v-model="newPromptName"
+                        type="text"
+                        placeholder="my-prompt.d.yaml"
+                        autocomplete="off"
+                    >
+                    <p class="field-help">
+                        Use letters, numbers, hyphens, or underscores and
+                        include the <code>.d.yaml</code> suffix.
+                    </p>
+                    <button
+                        class="secondary-button"
+                        type="button"
+                        :disabled="savingPrompt || !canSaveAsNew"
+                        @click="saveAsNewPrompt"
+                    >
+                        [[ savingPrompt ? "Saving..." : "Save as new" ]]
+                    </button>
+                </div>
+            </div>
+            <p
+                v-if="saveStatus"
+                class="field-help"
+                role="status"
+                aria-live="polite"
+            >
+                [[ saveStatus ]]
             </p>
         </section>
 

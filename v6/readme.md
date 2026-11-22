@@ -113,6 +113,10 @@ examples, drop a PNG, JPEG, or WebP onto the image area to override the YAML
 image. The page also has a dark-mode toggle and a copyable Python request
 example. Dropdowns start unselected so a prompt, backend, and any required
 model or example must be selected explicitly.
+In the YAML tab, edit the source and choose **Save changes** to overwrite the
+selected prompt, or provide a new `*.d.yaml` filename and choose **Save as
+new**. The server validates the prompt structure before writing and refuses
+to overwrite an existing file when saving as new.
 
 The browser UI serves Vue 3's prebuilt global browser script from
 `v6/static/vue.global.prod.js`. No Node.js, npm, build step, or browser

@@ -136,7 +136,8 @@ label {
 
 select,
 textarea,
-input[type="file"] {
+input[type="file"],
+input[type="text"] {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.4rem;
@@ -347,6 +348,41 @@ code {
     max-height: 65vh;
     overflow: auto;
     tab-size: 2;
+}
+
+.yaml-editor {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    min-height: 55vh;
+    tab-size: 2;
+    white-space: pre;
+}
+
+.save-controls {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    margin-top: 1rem;
+}
+
+.save-controls > button,
+.save-as-controls > button {
+    align-self: start;
+    justify-self: start;
+    margin-top: 0;
+}
+
+.save-as-controls {
+    background: var(--soft);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.save-as-controls label {
+    margin-top: 0;
+}
+
+.save-as-controls .field-help {
+    margin-bottom: 0.75rem;
 }
 
 .result-section {
