@@ -12,7 +12,7 @@
         window.promptRunnerConfig = {{ config|tojson }};
     </script>
     <script
-        src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"
+        src="{{ url_for('static', filename='vue.global.prod.js') }}"
         defer
     ></script>
     <script
@@ -210,12 +210,6 @@
                             accept="image/png,image/jpeg,image/webp"
                             @change="handleImageChange"
                         >
-                        <img
-                            v-if="imagePreview"
-                            class="image-preview"
-                            :src="imagePreview"
-                            alt="Selected image preview"
-                        >
                     </div>
                     <p v-if="imageStatus" class="field-help" role="status">
                         [[ imageStatus ]]
@@ -225,6 +219,72 @@
                         PNG, JPEG, and WebP are supported.
                     </p>
                 </div>
+
+                <section
+                    v-if="imageDisplayUrl"
+                    class="image-result-section"
+                    aria-label="Image and model box results"
+                >
+                    <h2>Image and detected boxes</h2>
+                    <p v-if="imageLoadError" class="error" role="alert">
+                        Could not load the image for display.
+                    </p>
+                    <div v-else class="image-stage">
+                        <img
+                            class="image-preview"
+                            :src="imageDisplayUrl"
+                            alt="Image sent to the model"
+                            @load="onImageLoad"
+                            @error="onImageError"
+                        >
+                        <svg
+                            v-if="resultBoxes.length"
+                            class="box-overlay"
+                            viewBox="0 0 1 1"
+                            preserveAspectRatio="none"
+                            role="img"
+                            aria-label="Detected image regions"
+                        >
+                            <g
+                                v-for="(box, index) in resultBoxes"
+                                :key="`${box.label}-${index}`"
+                            >
+                                <rect
+                                    :x="box.left"
+                                    :y="box.top"
+                                    :width="box.right - box.left"
+                                    :height="box.bottom - box.top"
+                                    :stroke="box.color"
+                                    vector-effect="non-scaling-stroke"
+                                >
+                                    <title>[[ box.label ]]</title>
+                                </rect>
+                                <text
+                                    :x="box.left"
+                                    :y="Math.max(box.top, 0.035)"
+                                    :fill="box.color"
+                                >
+                                    [[ box.label ]]
+                                </text>
+                            </g>
+                        </svg>
+                    </div>
+                    <ul v-if="resultBoxes.length" class="box-legend">
+                        <li
+                            v-for="(box, index) in resultBoxes"
+                            :key="`${box.label}-legend-${index}`"
+                        >
+                            <span
+                                class="box-swatch"
+                                :style="{ backgroundColor: box.color }"
+                            ></span>
+                            [[ box.label ]]
+                        </li>
+                    </ul>
+                    <p v-else-if="resultData" class="field-help">
+                        The response did not contain any valid box results.
+                    </p>
+                </section>
 
                 <p v-if="compatibilityMessage" class="notice" role="status">
                     [[ compatibilityMessage ]]

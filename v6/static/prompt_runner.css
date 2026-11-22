@@ -265,9 +265,64 @@ input:focus-visible {
     border: 1px solid var(--border);
     border-radius: 0.4rem;
     display: block;
-    margin: 1rem auto 0;
-    max-height: 20rem;
+    margin: 0;
+    max-height: 70vh;
     max-width: 100%;
+}
+
+.image-result-section {
+    margin: 1.5rem 0;
+}
+
+.image-stage {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.box-overlay {
+    height: 100%;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+}
+
+.box-overlay rect {
+    fill: rgb(255 255 255 / 5%);
+    stroke-width: 2px;
+}
+
+.box-overlay text {
+    font-size: 0.025px;
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-linejoin: round;
+    stroke-width: 0.006px;
+}
+
+.box-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+}
+
+.box-legend li {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.4rem;
+}
+
+.box-swatch {
+    border-radius: 0.15rem;
+    display: inline-block;
+    height: 0.8rem;
+    width: 0.8rem;
 }
 
 pre {

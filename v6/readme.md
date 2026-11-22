@@ -114,8 +114,14 @@ image. The page also has a dark-mode toggle and a copyable Python request
 example. Dropdowns start unselected so a prompt, backend, and any required
 model or example must be selected explicitly.
 
-The browser UI uses Vue 3 directly from a CDN; no Node.js, npm, or build step
-is required. The browser needs internet access to load Vue.
+The browser UI serves Vue 3's prebuilt global browser script from
+`v6/static/vue.global.prod.js`. No Node.js, npm, build step, or browser
+internet access is required. The Vue MIT license is included at
+`v6/static/VUE-LICENSE.txt`.
+
+When a local-model image example is selected, the UI displays the image.
+After inference, normalized `box` and `boxes` answers are drawn as an SVG
+overlay on that image. A dropped override is shown and annotated instead.
 
 The LM Studio option uses the endpoint `http://192.168.50.60:1234` by default.
 Set another endpoint at launch with `--lm-studio-url` or the

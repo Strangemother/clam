@@ -108,7 +108,14 @@ import threading
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 
-from flask import Flask, jsonify, render_template, request, url_for
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
 from PIL import Image
 import yaml
 
@@ -226,6 +233,13 @@ def prompt_ui():
                 ).rsplit("/", 1)[0]
                 + "/"
             ),
+            "image_url": (
+                url_for(
+                    "ui_prompt_image",
+                    prompt_name="prompt-placeholder",
+                    example_index=0,
+                ).rsplit("/", 2)[0]
+            ),
             "models_url": url_for("ui_lm_studio_models"),
             "run_url": url_for("run_ui_example"),
         },
@@ -264,6 +278,34 @@ def ui_prompt_details(prompt_name: str):
             ),
         }
     )
+
+
+@app.get(
+    "/ui/api/prompt-images/<string:prompt_name>/<int:example_index>"
+)
+def ui_prompt_image(prompt_name: str, example_index: int):
+    if prompt_name not in available_prompts():
+        return api_error("Unknown prompt selection."), 404
+
+    prompt_path = PROMPT_DIR / prompt_name
+    try:
+        prompt = load_prompt(prompt_path, allow_image_examples=True)
+        examples = prompt["examples"]
+        if not 0 <= example_index < len(examples):
+            return api_error("Choose a valid image example."), 404
+
+        example = examples[example_index]
+        if not isinstance(example, dict):
+            return api_error("The selected example is not an image."), 400
+
+        image = load_example_image(prompt_path, example["image"])
+        image_buffer = BytesIO()
+        image.save(image_buffer, format="PNG")
+        image_buffer.seek(0)
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        return api_error(f"Could not load prompt image: {exc}"), 400
+
+    return send_file(image_buffer, mimetype="image/png", max_age=0)
 
 
 @app.get("/ui/lm-studio/models")

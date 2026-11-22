@@ -42,6 +42,8 @@ Vue.createApp({
             imageFile: null,
             imagePreview: "",
             imageStatus: "",
+            imageLoadError: false,
+            resultData: null,
             copyStatus: "",
             theme: (
                 localStorage.getItem("prompt-runner-theme")
@@ -67,6 +69,78 @@ Vue.createApp({
                     String(example.index) === this.selectedExample
                 ),
             ) || null;
+        },
+
+        imageDisplayUrl() {
+            if (
+                this.backend !== "local"
+                || !this.selectedExampleData
+                || !this.selectedExampleData.is_image
+            ) {
+                return "";
+            }
+            if (this.imagePreview) {
+                return this.imagePreview;
+            }
+            return (
+                `${this.config.image_url}/`
+                + `${encodeURIComponent(this.selectedPrompt)}/`
+                + this.selectedExampleData.index
+            );
+        },
+
+        resultBoxes() {
+            const answers = this.resultData?.answers;
+            if (!answers || typeof answers !== "object") {
+                return [];
+            }
+
+            const boxes = [];
+            const colors = ["#ff4d4d", "#27a5ff", "#ffc247", "#51c878"];
+            const addBox = (value, label, index, color) => {
+                if (!value || typeof value !== "object") {
+                    return;
+                }
+                const {top, bottom, left, right} = value;
+                if (
+                    ![top, bottom, left, right].every(
+                        coordinate => (
+                            typeof coordinate === "number"
+                            && Number.isFinite(coordinate)
+                            && coordinate >= 0
+                            && coordinate <= 1
+                        ),
+                    )
+                    || bottom < top
+                    || right < left
+                ) {
+                    return;
+                }
+                boxes.push({
+                    label: index === null
+                        ? label
+                        : `${label} ${index + 1}`,
+                    top,
+                    bottom,
+                    left,
+                    right,
+                    color,
+                });
+            };
+
+            for (const [name, answer] of Object.entries(answers)) {
+                if (!answer || typeof answer !== "object") {
+                    continue;
+                }
+                const color = colors[boxes.length % colors.length];
+                addBox(answer.box, name, null, color);
+                if (Array.isArray(answer.boxes)) {
+                    answer.boxes.forEach((box, index) => {
+                        addBox(box.box || box, name, index, color);
+                    });
+                }
+            }
+            return boxes;
         },
 
         compatibilityMessage() {
@@ -114,6 +188,8 @@ Vue.createApp({
         },
 
         backend(value) {
+            this.resultData = null;
+            this.resultText = "";
             if (value === "lm_studio") {
                 this.loadModels();
                 this.imageFile = null;
@@ -122,6 +198,9 @@ Vue.createApp({
         },
 
         selectedExampleData(example) {
+            this.imageLoadError = false;
+            this.resultData = null;
+            this.resultText = "";
             if (!example || !example.is_image) {
                 this.imageFile = null;
                 this.imageStatus = "";
@@ -132,10 +211,22 @@ Vue.createApp({
             if (this.imagePreview) {
                 URL.revokeObjectURL(this.imagePreview);
             }
+            this.resultData = null;
+            this.resultText = "";
             this.imagePreview = file ? URL.createObjectURL(file) : "";
             if (!file && this.$refs.imageFileInput) {
                 this.$refs.imageFileInput.value = "";
             }
+        },
+
+        promptState() {
+            this.resultData = null;
+            this.resultText = "";
+        },
+
+        userInput() {
+            this.resultData = null;
+            this.resultText = "";
         },
 
         theme(value) {
@@ -162,7 +253,9 @@ Vue.createApp({
             this.selectedExample = "";
             this.userInput = "";
             this.imageFile = null;
+            this.resultData = null;
             this.resultText = "";
+            this.imageLoadError = false;
             this.error = "";
             if (!name) {
                 return;
@@ -252,12 +345,21 @@ Vue.createApp({
             }
         },
 
+        onImageLoad() {
+            this.imageLoadError = false;
+        },
+
+        onImageError() {
+            this.imageLoadError = true;
+        },
+
         async runPrompt() {
             if (!this.canRun || this.running) {
                 return;
             }
             this.running = true;
             this.error = "";
+            this.resultData = null;
             this.resultText = "";
 
             const form = new FormData();
@@ -276,6 +378,7 @@ Vue.createApp({
                     method: "POST",
                     body: form,
                 });
+                this.resultData = data;
                 this.resultText = JSON.stringify(data, null, 2);
             } catch (error) {
                 this.error = error.message;
