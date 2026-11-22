@@ -2,7 +2,6 @@
 """Ask an LM Studio decision model using a YAML prompt."""
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -85,7 +84,7 @@ def main() -> None:
             if not message.strip():
                 message = examples[example_index]
                 example_index = (example_index + 1) % len(examples)
-                print(message)
+                print(message, end="\n\n")
             payload = {
                 "model": args.model,
                 "state": (
@@ -98,7 +97,14 @@ def main() -> None:
                 make_headers(),
                 payload,
             )
-            print(json.dumps(result, indent="\t"))
+            print(
+                yaml.safe_dump(
+                    result,
+                    sort_keys=False,
+                    indent=4,
+                ),
+                end="",
+            )
             if args.once:
                 break
     except (OSError, RuntimeError, ValueError, yaml.YAMLError) as exc:

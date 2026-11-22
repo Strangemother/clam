@@ -53,8 +53,8 @@ python3 v6/first.py v6/prompts/example.d.yaml --once
 
 Press Enter to send the current numbered example from the YAML file. Typed
 messages do not advance the example. The selected example is echoed, and
-responses are printed as tab-indented JSON. Ctrl+C exits; `--live-file` reloads
-the YAML file before each prompt, and `--once` exits after one request.
+responses are printed as indented YAML-style text. Ctrl+C exits; `--live-file`
+reloads the YAML file before each prompt, and `--once` exits after one request.
 
 ### The routing request sent to LM Studio
 
