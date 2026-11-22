@@ -1,360 +1,300 @@
 "use strict";
 
-const themeToggle = document.getElementById("theme-toggle");
-const promptSelect = document.getElementById("prompt");
-const backendSelect = document.getElementById("backend");
-const promptFormBackend = document.getElementById("prompt-backend");
-const promptFormModel = document.getElementById("prompt-lm-model");
-const lmStudioControls = document.getElementById("lm-studio-controls");
-const modelSelect = document.getElementById("lm-studio-model");
-const modelStatus = document.getElementById("model-status");
-const refreshModelsButton = document.getElementById("refresh-models");
-const exampleSelect = document.getElementById("example");
-const userPrompt = document.getElementById("user-prompt");
-const runButton = document.getElementById("run-button");
-const runnerForm = document.getElementById("runner-form");
-const compatibilityMessage = document.getElementById(
-    "compatibility-message",
-);
-const imageInputPanel = document.getElementById("image-input");
-const imageDropZone = document.getElementById("image-drop-zone");
-const imageInput = document.getElementById("image-override");
-const imagePreview = document.getElementById("image-preview");
-const imageStatus = document.getElementById("image-status");
-const pythonRequestCode = document.getElementById("python-request-code");
-const copyPythonRequest = document.getElementById(
-    "copy-python-request",
-);
-const copyStatus = document.getElementById("copy-status");
+const config = window.promptRunnerConfig;
 
-function setTheme(theme) {
-    document.documentElement.dataset.theme = theme;
-    themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
-    themeToggle.textContent = theme === "dark"
-        ? "Switch to light mode"
-        : "Switch to dark mode";
-}
-
-if (themeToggle) {
-    const savedTheme = localStorage.getItem("prompt-runner-theme");
-    const initialTheme = savedTheme || (
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light"
-    );
-    setTheme(initialTheme);
-    themeToggle.addEventListener("click", () => {
-        const nextTheme = (
-            document.documentElement.dataset.theme === "dark"
-                ? "light"
-                : "dark"
-        );
-        localStorage.setItem("prompt-runner-theme", nextTheme);
-        setTheme(nextTheme);
-    });
-}
-
-if (promptSelect) {
-    promptSelect.addEventListener("change", () => {
-        promptSelect.form.requestSubmit();
-    });
-}
-
-let modelsLoaded = false;
-
-function selectedExampleOption() {
-    return exampleSelect
-        ? exampleSelect.selectedOptions[0]
-        : null;
-}
-
-function syncPromptForm() {
-    if (promptFormBackend && backendSelect) {
-        promptFormBackend.value = backendSelect.value;
-    }
-    if (promptFormModel && modelSelect) {
-        promptFormModel.value = (
-            modelSelect.value || promptFormModel.value
-        );
-    }
-}
-
-function updateRequestExample() {
-    if (!pythonRequestCode) {
-        return;
-    }
-    const useLmStudio = backendSelect
-        && backendSelect.value === "lm_studio";
-    const baseUrl = useLmStudio
-        ? pythonRequestCode.dataset.lmStudioUrl
-        : pythonRequestCode.dataset.localUrl;
-    const modelId = useLmStudio
-        ? (modelSelect.value || "SELECT_LOADED_MODEL_ID")
-        : pythonRequestCode.dataset.localModel;
-    const lines = [
-        "import json",
-        "from urllib.request import Request, urlopen",
-        "",
-        `base_url = ${JSON.stringify(baseUrl)}`,
-        `model_id = ${JSON.stringify(modelId)}`,
-        'prompt_state = "You are Chromite, a small tadpole creature."',
-        'user_input = "The pet owner says hello."',
-        "state = prompt_state",
-        "if user_input:",
-        "    state = (",
-        '        f"{state}\\n\\nUser message: {user_input}"',
-        "        if state",
-        '        else f"User message: {user_input}"',
-        "    )",
-        "payload = {",
-        '    "model": model_id,',
-        '    "state": state,',
-        '    "questions": {',
-        '        "greeting": {',
-        '            "type": "noul",',
-        '            "instructions": "Is the pet owner greeting Chromite?",',
-        "        },",
-        "    },",
-        "}",
-        "request = Request(",
-        '    f"{base_url}/v1/systemone",',
-        "    data=json.dumps(payload).encode('utf-8'),",
-        '    headers={"Content-Type": "application/json"},',
-        ")",
-        "with urlopen(request) as response:",
-        "    print(json.dumps(json.load(response), indent=2))",
-    ];
-    pythonRequestCode.textContent = lines.join("\n");
-}
-
-function updateImageInput() {
-    if (!imageInputPanel || !exampleSelect || !imageInput) {
-        return;
-    }
-    const option = selectedExampleOption();
-    const isImage = option
-        && option.dataset.isImage === "true";
-    const useLmStudio = backendSelect
-        && backendSelect.value === "lm_studio";
-    imageInputPanel.hidden = !isImage || useLmStudio;
-    imageInput.disabled = !isImage || useLmStudio;
-    if (!isImage) {
-        imageInput.value = "";
-        URL.revokeObjectURL(imagePreview.src);
-        imagePreview.removeAttribute("src");
-        imagePreview.hidden = true;
-    }
-}
-
-function updateRunState() {
-    if (!runButton) {
-        return;
-    }
-    const option = selectedExampleOption();
-    const hasUserInput = Boolean(userPrompt && userPrompt.value.trim());
-    const hasExample = Boolean(option);
-    const hasInput = hasUserInput || hasExample;
-    const useLmStudio = backendSelect
-        && backendSelect.value === "lm_studio";
-    let compatible = true;
-    let reason = "";
-
-    if (useLmStudio && runnerForm) {
-        const questionsSupported = option
-            ? option.dataset.lmQuestionsSupported === "true"
-            : runnerForm.dataset.lmQuestionsSupported === "true";
-        const selectedImage = Boolean(
-            option && option.dataset.isImage === "true",
-        );
-        const imageIsReplaced = hasUserInput;
-        compatible = questionsSupported && (
-            !selectedImage || imageIsReplaced
-        );
-        if (!questionsSupported) {
-            reason = (
-                "LM Studio supports only noul, choice, and score questions."
-            );
-        } else if (selectedImage && !imageIsReplaced) {
-            reason = (
-                "This image example is unavailable in LM Studio mode. "
-                + "Enter a text input to use it instead."
-            );
-        }
-    }
-
-    if (compatibilityMessage) {
-        compatibilityMessage.textContent = reason;
-        compatibilityMessage.hidden = !reason;
-    }
-    runButton.disabled = !hasInput || (
-        useLmStudio && (
-            !modelsLoaded
-            || !modelSelect
-            || !modelSelect.value
-            || !compatible
-        )
-    );
-}
-
-async function loadModels() {
-    if (!lmStudioControls || !modelSelect || !modelStatus) {
-        return;
-    }
-    modelsLoaded = false;
-    modelSelect.disabled = true;
-    modelStatus.textContent = "Loading decision models...";
-    modelSelect.replaceChildren(new Option("Select a model", ""));
-    updateRunState();
+async function fetchJson(url, options = {}) {
+    const response = await fetch(url, options);
+    let body;
     try {
-        const response = await fetch(lmStudioControls.dataset.modelsUrl, {
-            headers: {"Accept": "application/json"},
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.error || "Could not load LM Studio models.");
-        }
-        if (!Array.isArray(result.models)) {
-            throw new Error("LM Studio returned an unexpected model list.");
-        }
-        for (const modelId of result.models) {
-            const option = new Option(modelId, modelId);
-            modelSelect.add(option);
-        }
-        const selectedModel = (
-            lmStudioControls.dataset.selectedModel
-            || modelSelect.dataset.selectedModel
-        );
-        if (result.models.includes(selectedModel)) {
-            modelSelect.value = selectedModel;
-        }
-        modelsLoaded = true;
-        modelSelect.disabled = result.models.length === 0;
-        modelStatus.textContent = result.models.length
-            ? `Found ${result.models.length} loaded decision model(s).`
-            : "No loaded decision models were found.";
+        body = await response.json();
     } catch (error) {
-        modelStatus.textContent = error.message;
+        throw new Error(`Server returned invalid JSON: ${error.message}`);
     }
-    syncPromptForm();
-    updateRequestExample();
-    updateRunState();
+    if (!response.ok) {
+        throw new Error(body.error?.message || "The request failed.");
+    }
+    return body;
 }
 
-if (backendSelect) {
-    backendSelect.addEventListener("change", () => {
-        const useLmStudio = backendSelect.value === "lm_studio";
-        lmStudioControls.hidden = !useLmStudio;
-        syncPromptForm();
-        updateImageInput();
-        updateRequestExample();
-        updateRunState();
-        if (useLmStudio && !modelsLoaded) {
-            loadModels();
+Vue.createApp({
+    delimiters: ["[[", "]]"],
+
+    data() {
+        return {
+            config,
+            prompts: config.prompts,
+            selectedPrompt: "",
+            prompt: null,
+            promptState: "",
+            selectedExample: "",
+            userInput: "",
+            backend: "",
+            models: [],
+            selectedModel: "",
+            loadingPrompt: false,
+            loadingModels: false,
+            running: false,
+            error: "",
+            modelStatus: "",
+            resultText: "",
+            activeTab: "runner",
+            draggingImage: false,
+            imageFile: null,
+            imagePreview: "",
+            imageStatus: "",
+            copyStatus: "",
+            theme: (
+                localStorage.getItem("prompt-runner-theme")
+                || (
+                    window.matchMedia(
+                        "(prefers-color-scheme: dark)",
+                    ).matches
+                        ? "dark"
+                        : "light"
+                )
+            ),
+            promptRequestId: 0,
+        };
+    },
+
+    computed: {
+        selectedExampleData() {
+            if (!this.prompt || this.selectedExample === "") {
+                return null;
+            }
+            return this.prompt.examples.find(
+                example => (
+                    String(example.index) === this.selectedExample
+                ),
+            ) || null;
+        },
+
+        compatibilityMessage() {
+            if (!this.prompt || this.backend !== "lm_studio") {
+                return "";
+            }
+            if (!this.prompt.lm_studio_questions_supported) {
+                return (
+                    "LM Studio supports only noul, choice, and score "
+                    + "questions in this prompt."
+                );
+            }
+            if (
+                this.selectedExampleData
+                && this.selectedExampleData.is_image
+                && !this.userInput.trim()
+            ) {
+                return (
+                    "LM Studio cannot process images. Enter a text message "
+                    + "to use instead of this image example."
+                );
+            }
+            return "";
+        },
+
+        canRun() {
+            if (!this.prompt || !this.backend) {
+                return false;
+            }
+            if (!this.userInput.trim() && !this.selectedExampleData) {
+                return false;
+            }
+            if (this.backend === "lm_studio") {
+                return Boolean(
+                    this.selectedModel && !this.compatibilityMessage,
+                );
+            }
+            return true;
+        },
+    },
+
+    watch: {
+        selectedPrompt(name) {
+            this.loadPrompt(name);
+        },
+
+        backend(value) {
+            if (value === "lm_studio") {
+                this.loadModels();
+                this.imageFile = null;
+                this.imageStatus = "";
+            }
+        },
+
+        selectedExampleData(example) {
+            if (!example || !example.is_image) {
+                this.imageFile = null;
+                this.imageStatus = "";
+            }
+        },
+
+        imageFile(file) {
+            if (this.imagePreview) {
+                URL.revokeObjectURL(this.imagePreview);
+            }
+            this.imagePreview = file ? URL.createObjectURL(file) : "";
+            if (!file && this.$refs.imageFileInput) {
+                this.$refs.imageFileInput.value = "";
+            }
+        },
+
+        theme(value) {
+            document.documentElement.dataset.theme = value;
+            localStorage.setItem("prompt-runner-theme", value);
+        },
+    },
+
+    mounted() {
+        document.documentElement.dataset.theme = this.theme;
+    },
+
+    beforeUnmount() {
+        if (this.imagePreview) {
+            URL.revokeObjectURL(this.imagePreview);
         }
-    });
-}
+    },
 
-if (refreshModelsButton) {
-    refreshModelsButton.addEventListener("click", loadModels);
-}
+    methods: {
+        async loadPrompt(name) {
+            const requestId = ++this.promptRequestId;
+            this.prompt = null;
+            this.promptState = "";
+            this.selectedExample = "";
+            this.userInput = "";
+            this.imageFile = null;
+            this.resultText = "";
+            this.error = "";
+            if (!name) {
+                return;
+            }
 
-if (modelSelect) {
-    modelSelect.addEventListener("change", () => {
-        syncPromptForm();
-        updateRequestExample();
-        updateRunState();
-    });
-}
+            this.loadingPrompt = true;
+            try {
+                const url = (
+                    this.config.prompt_url + encodeURIComponent(name)
+                );
+                const data = await fetchJson(url, {
+                    headers: {"Accept": "application/json"},
+                });
+                if (requestId !== this.promptRequestId) {
+                    return;
+                }
+                this.prompt = data;
+                this.promptState = data.state;
+            } catch (error) {
+                if (requestId === this.promptRequestId) {
+                    this.error = error.message;
+                }
+            } finally {
+                if (requestId === this.promptRequestId) {
+                    this.loadingPrompt = false;
+                }
+            }
+        },
 
-if (exampleSelect) {
-    exampleSelect.addEventListener("change", () => {
-        updateImageInput();
-        updateRunState();
-    });
-}
+        async loadModels() {
+            this.loadingModels = true;
+            this.modelStatus = "";
+            try {
+                const data = await fetchJson(this.config.models_url, {
+                    headers: {"Accept": "application/json"},
+                });
+                this.models = data.models;
+                if (!this.models.includes(this.selectedModel)) {
+                    this.selectedModel = "";
+                }
+                this.modelStatus = this.models.length
+                    ? `Found ${this.models.length} loaded decision model(s).`
+                    : "No loaded decision models were found.";
+            } catch (error) {
+                this.models = [];
+                this.selectedModel = "";
+                this.modelStatus = error.message;
+            } finally {
+                this.loadingModels = false;
+            }
+        },
 
-if (userPrompt) {
-    userPrompt.addEventListener("input", updateRunState);
-}
+        toggleTheme() {
+            this.theme = this.theme === "dark" ? "light" : "dark";
+        },
 
-if (imageInput) {
-    imageInput.addEventListener("change", () => {
-        const file = imageInput.files[0];
-        if (!file) {
-            URL.revokeObjectURL(imagePreview.src);
-            imagePreview.removeAttribute("src");
-            imagePreview.hidden = true;
-            return;
-        }
-        const supportedTypes = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-        ];
-        if (!supportedTypes.includes(file.type)) {
-            imageInput.value = "";
-            imageStatus.textContent = (
-                "Choose a PNG, JPEG, or WebP image."
-            );
-            return;
-        }
-        imageStatus.textContent = "";
-        URL.revokeObjectURL(imagePreview.src);
-        imagePreview.src = URL.createObjectURL(file);
-        imagePreview.hidden = false;
-    });
-}
+        acceptImage(file) {
+            const supportedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+            ];
+            if (!supportedTypes.includes(file.type)) {
+                this.imageStatus = "Choose a PNG, JPEG, or WebP image.";
+                return;
+            }
+            if (file.size > 64 * 1024 * 1024) {
+                this.imageStatus = "Image exceeds the 64 MiB limit.";
+                return;
+            }
+            this.imageStatus = "";
+            this.imageFile = file;
+        },
 
-if (imageDropZone && imageInput) {
-    imageDropZone.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        imageDropZone.classList.add("is-dragging");
-    });
-    imageDropZone.addEventListener("dragleave", () => {
-        imageDropZone.classList.remove("is-dragging");
-    });
-    imageDropZone.addEventListener("drop", (event) => {
-        event.preventDefault();
-        imageDropZone.classList.remove("is-dragging");
-        const file = event.dataTransfer.files[0];
-        const supportedTypes = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-        ];
-        if (!file || !supportedTypes.includes(file.type)) {
-            imageStatus.textContent = (
-                "Drop a PNG, JPEG, or WebP image."
-            );
-            return;
-        }
-        const transfer = new DataTransfer();
-        transfer.items.add(file);
-        imageInput.files = transfer.files;
-        imageInput.dispatchEvent(new Event("change"));
-    });
-}
+        handleImageChange(event) {
+            const [file] = event.target.files;
+            if (file) {
+                this.acceptImage(file);
+            }
+        },
 
-if (copyPythonRequest && pythonRequestCode && copyStatus) {
-    copyPythonRequest.addEventListener("click", async () => {
-        try {
-            await navigator.clipboard.writeText(
-                pythonRequestCode.textContent,
-            );
-            copyStatus.textContent = "Copied.";
-        } catch (error) {
-            copyStatus.textContent = (
-                `Could not copy: ${error.message}. Select the code manually.`
-            );
-        }
-    });
-}
+        handleImageDrop(event) {
+            this.draggingImage = false;
+            const [file] = event.dataTransfer.files;
+            if (file) {
+                this.acceptImage(file);
+            }
+        },
 
-syncPromptForm();
-updateRequestExample();
-updateImageInput();
-updateRunState();
-if (backendSelect && backendSelect.value === "lm_studio") {
-    lmStudioControls.hidden = false;
-    loadModels();
-}
+        async runPrompt() {
+            if (!this.canRun || this.running) {
+                return;
+            }
+            this.running = true;
+            this.error = "";
+            this.resultText = "";
+
+            const form = new FormData();
+            form.append("prompt", this.selectedPrompt);
+            form.append("backend", this.backend);
+            form.append("model", this.selectedModel);
+            form.append("example", this.selectedExample);
+            form.append("prompt_state", this.promptState);
+            form.append("user_prompt", this.userInput);
+            if (this.imageFile) {
+                form.append("image_override", this.imageFile);
+            }
+
+            try {
+                const data = await fetchJson(this.config.run_url, {
+                    method: "POST",
+                    body: form,
+                });
+                this.resultText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                this.error = error.message;
+            } finally {
+                this.running = false;
+            }
+        },
+
+        async copyRequest() {
+            const code = this.$refs.pythonRequest.textContent;
+            try {
+                await navigator.clipboard.writeText(code);
+                this.copyStatus = "Copied.";
+            } catch (error) {
+                this.copyStatus = (
+                    `Could not copy: ${error.message}. `
+                    + "Select the code manually."
+                );
+            }
+        },
+    },
+}).mount("#app");

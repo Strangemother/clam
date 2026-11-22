@@ -106,10 +106,16 @@ provides `/v1/systemone` and `/api/v1/models` on port 8000. First startup
 downloads the model. Allow inbound TCP port 8000 through Windows Firewall.
 
 Open `http://HOST_IP:8000/ui` to use the browser prompt runner. The page lets
-you edit the prompt state, enter a user message or select a YAML example, and
-choose between the local Transformers model and LM Studio. For image examples,
-drop a PNG, JPEG, or WebP onto the image area to override the YAML image.
-The page also has a dark-mode toggle and a copyable Python request example.
+you select a YAML prompt, edit its state, enter a user message or choose an
+example, and choose between the local Transformers model and LM Studio.
+The **Prompt YAML** tab shows the selected prompt file's source. For image
+examples, drop a PNG, JPEG, or WebP onto the image area to override the YAML
+image. The page also has a dark-mode toggle and a copyable Python request
+example. Dropdowns start unselected so a prompt, backend, and any required
+model or example must be selected explicitly.
+
+The browser UI uses Vue 3 directly from a CDN; no Node.js, npm, or build step
+is required. The browser needs internet access to load Vue.
 
 The LM Studio option uses the endpoint `http://192.168.50.60:1234` by default.
 Set another endpoint at launch with `--lm-studio-url` or the

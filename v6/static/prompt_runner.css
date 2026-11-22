@@ -102,6 +102,32 @@ h2 {
     padding: 1.25rem;
 }
 
+.tabs {
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.4rem;
+}
+
+.tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    color: var(--muted);
+    margin: 0;
+    padding: 0.7rem 1rem;
+}
+
+.tab:hover {
+    background: var(--soft);
+    color: var(--text);
+}
+
+.tab.active {
+    border-bottom-color: var(--accent);
+    color: var(--text);
+}
+
 label {
     display: block;
     font-weight: 650;
@@ -199,6 +225,17 @@ input:focus-visible {
     padding: 0.75rem;
 }
 
+.backend-panel {
+    background: var(--soft);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.9rem;
+}
+
+.backend-panel .notice {
+    margin-bottom: 0;
+}
+
 .error {
     background: var(--error-surface);
     border: 1px solid var(--error);
@@ -249,6 +286,16 @@ code {
 
 .result {
     margin-bottom: 0;
+}
+
+.yaml-source {
+    max-height: 65vh;
+    overflow: auto;
+    tab-size: 2;
+}
+
+.result-section {
+    margin-top: 1.5rem;
 }
 
 details > summary {
