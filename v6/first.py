@@ -64,6 +64,7 @@ def main() -> None:
     args = parse_args()
     try:
         prompt = load_prompt(args.prompt)
+        print(f"State:\n{prompt['state']}\n")
         example_index = 0
         while True:
             if args.live_file:
