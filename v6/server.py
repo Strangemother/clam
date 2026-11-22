@@ -102,6 +102,7 @@ import binascii
 from io import BytesIO
 import json
 import os
+import platform
 from pathlib import Path
 import sys
 import threading
@@ -381,13 +382,42 @@ def load_model(model_id: str) -> None:
         model_id,
         trust_remote_code=True,
         dtype=dtype,
-    ).to("cuda")
+    )
+    configure_windows_attention()
+    loaded_model = loaded_model.to("cuda")
     loaded_model.eval()
 
     global model, torch
     model = loaded_model
     torch = torch_module
     print("Model loaded.")
+
+
+def disable_fused_attention(query) -> bool:
+    del query
+    return False
+
+
+def configure_windows_attention() -> None:
+    if platform.system() != "Windows":
+        return
+
+    attention_modules = [
+        module
+        for module in tuple(sys.modules.values())
+        if module is not None
+        and getattr(module, "d1_attention", None) is not None
+        and getattr(module, "_fused", None) is not None
+    ]
+    if not attention_modules:
+        raise RuntimeError(
+            "Could not find D1 Omni's attention module for the "
+            "Windows SDPA fallback."
+        )
+
+    for module in attention_modules:
+        module._fused = disable_fused_attention
+    print("Using PyTorch SDPA instead of fused FlashAttention on Windows.")
 
 
 def parse_args() -> argparse.Namespace:
