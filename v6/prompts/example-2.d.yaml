@@ -11,3 +11,8 @@ questions:
       heater: "Control the heating"
       door: "Control the door"
 
+examples:
+  - "Turn on the light"
+  - "Make the room warmer"
+  - "Unlock the front door"
+

@@ -29,3 +29,8 @@ questions:
   track:
     type: "noul"
     instruction: "Is there an entity Chromite should focus on?"
+
+examples:
+  - "The pet owner's name is Miso, and she likes sunbeams."
+  - "The pet is sleeping peacefully in a quiet room."
+  - "A bird just landed beside the pond. What should Chromite do?"

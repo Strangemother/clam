@@ -22,3 +22,8 @@ questions:
       - "Can wait"
       - "Today"
       - "Blocking the customer now"
+
+examples:
+  - "Can you refund one of the duplicate charges?"
+  - "I was charged twice; which team handles refunds?"
+  - "I was charged twice, but it's not urgent. Can this wait?"

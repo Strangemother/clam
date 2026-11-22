@@ -41,6 +41,20 @@ prints the selected abilities as a JSON list. Abilities with a probability
 of at least `0.5` are selected. It uses the same server, authentication, and
 model-list options as `ask_lmstudio.py`.
 
+## Ask a YAML prompt repeatedly
+
+From the repository root, run [first.py](./first.py) with a prompt file:
+
+```bash
+python3 v6/first.py v6/prompts/example.d.yaml --model d1-omni-2b
+python3 v6/first.py v6/prompts/example.d.yaml --live-file
+python3 v6/first.py v6/prompts/example.d.yaml --once
+```
+
+Press Enter to send the current numbered example from the YAML file. Typed
+messages do not advance the example. Ctrl+C exits; `--live-file` reloads the
+YAML file before each prompt, and `--once` exits after one request.
+
 ### The routing request sent to LM Studio
 
 ```bash
