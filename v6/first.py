@@ -4,10 +4,10 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import Any
 
 import yaml
 
+from prompt_utils import load_prompt
 from tools import make_headers, request_json
 
 DEFAULT_URL = "http://192.168.50.60:1234"
@@ -30,34 +30,6 @@ def parse_args() -> argparse.Namespace:
         help="ask once, then exit",
     )
     return parser.parse_args()
-
-
-def load_prompt(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as prompt_file:
-        prompt = yaml.safe_load(prompt_file)
-
-    if not isinstance(prompt, dict):
-        raise ValueError("Prompt must be a YAML object.")
-    if not isinstance(prompt.get("state"), str):
-        raise ValueError("Prompt must define a string 'state'.")
-    questions = prompt.get("questions")
-    if not isinstance(questions, dict) or not questions:
-        raise ValueError("Prompt must define one or more 'questions'.")
-    examples = prompt.get("examples", [])
-    if not isinstance(examples, list) or not all(
-        isinstance(example, str) and example.strip()
-        for example in examples
-    ):
-        raise ValueError("'examples' must be a list of non-empty strings.")
-
-    for question in questions.values():
-        if not isinstance(question, dict):
-            raise ValueError("Each question must be a YAML object.")
-        if "instructions" not in question and "instruction" in question:
-            question["instructions"] = question.pop("instruction")
-
-    prompt["examples"] = examples
-    return prompt
 
 
 def main() -> None:

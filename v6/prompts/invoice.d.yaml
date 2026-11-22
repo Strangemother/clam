@@ -1,0 +1,24 @@
+# Extract the requested details from an invoice.
+
+state: |
+  ACME SA
+  Invoice 2026-117
+  Total due: 1 234,50 EUR
+  Pay before 03/04/2026 (day/month/year)
+
+questions:
+  payee:
+    type: text
+    instructions: "Who issued the invoice?"
+  total:
+    type: number
+    instructions: "How much is due?"
+  due:
+    type: date
+    instructions: "By when must it be paid?"
+  vat:
+    type: number
+    instructions: "How much VAT is charged?"
+
+examples:
+  - "Extract the requested details from this invoice."

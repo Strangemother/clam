@@ -1,0 +1,23 @@
+# Count cats and locate the remote in the attached image.
+#   python3 v6/second.py v6/prompts/cats.d.yaml
+#   python3 v6/second.py v6/prompts/cats.d.yaml --image ./local.jpg
+state: >
+  Inspect the image and answer the visual questions about its contents.
+
+questions:
+  cats:
+    type: number
+    instructions: "How many cats are there?"
+    range: [0, 10]
+    step: 1
+  remote:
+    type: box
+    instructions: "Where is the remote control on the left?"
+  every_cat:
+    type: boxes
+    instructions: "Every cat."
+    max: 4
+
+examples:
+  - image: https://images.cocodataset.org/val2017/000000039769.jpg
+    text: "Two cats on a sofa."

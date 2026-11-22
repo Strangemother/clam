@@ -1,5 +1,7 @@
 # v6
 
+- https://huggingface.co/LiquidAI/d1-Omni-2B
+
 ## Ask the decision model through LM Studio
 
 From the repository root, run [ask_lmstudio.py](./ask_lmstudio.py). It uses
@@ -56,6 +58,37 @@ numbered example from the YAML file. Typed messages do not advance the example.
 The selected example is echoed, and responses are printed as indented YAML
 text. Ctrl+C exits; `--live-file` reloads the YAML file before each prompt,
 and `--once` exits after one request.
+
+For example, the invoice extraction prompt can be sent once by pressing
+Enter to use its example message:
+
+```bash
+python3 v6/first.py v6/prompts/invoice.d.yaml --once
+```
+
+The support triage example can be run the same way:
+
+```bash
+python3 v6/first.py v6/prompts/support.d.yaml --once
+```
+
+## Ask once with an image
+
+Run [second.py](./second.py) with the example image from the YAML file, or
+override it with `--image` and a local JPEG, PNG, or WebP:
+
+```bash
+python3 v6/second.py v6/prompts/cats.d.yaml
+python3 v6/second.py v6/prompts/cats.d.yaml --image ./scene.jpg
+```
+
+Without `--image`, the first item in `examples` supplies the image; its
+optional `text` is included as image-description context. Relative image paths
+in the YAML file are resolved relative to that file. The script sends the
+prompt's `state` and `questions` with the image as an inline base64 data URL.
+This uses only the Python standard library for image loading and encoding;
+the configured model must support image input. `--model` and `--base-url`
+can override the defaults.
 
 ### The routing request sent to LM Studio
 
