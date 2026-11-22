@@ -1,0 +1,274 @@
+:root {
+    color-scheme: light;
+    --background: #f4f6f8;
+    --surface: #ffffff;
+    --text: #17212b;
+    --muted: #536273;
+    --border: #ccd5de;
+    --accent: #165d9c;
+    --accent-hover: #0e4778;
+    --soft: #e9eff5;
+    --error: #a32121;
+    --error-surface: #fff0f0;
+    --focus: #e69b18;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: #111820;
+    --surface: #1b2631;
+    --text: #e7edf3;
+    --muted: #aebdca;
+    --border: #415160;
+    --accent: #7ab8f0;
+    --accent-hover: #a2cefa;
+    --soft: #263545;
+    --error: #ffaaaa;
+    --error-surface: #3a2428;
+    --focus: #f3c969;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        color-scheme: dark;
+        --background: #111820;
+        --surface: #1b2631;
+        --text: #e7edf3;
+        --muted: #aebdca;
+        --border: #415160;
+        --accent: #7ab8f0;
+        --accent-hover: #a2cefa;
+        --soft: #263545;
+        --error: #ffaaaa;
+        --error-surface: #3a2428;
+        --focus: #f3c969;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.page {
+    margin: 2rem auto;
+    max-width: 58rem;
+    padding: 0 1rem 3rem;
+}
+
+.page-header {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+h1,
+h2,
+p {
+    margin-top: 0;
+}
+
+h1 {
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+    margin-bottom: 0;
+}
+
+h2 {
+    font-size: 1.25rem;
+}
+
+.eyebrow {
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+    padding: 1.25rem;
+}
+
+label {
+    display: block;
+    font-weight: 650;
+    margin: 1rem 0 0.35rem;
+}
+
+select,
+textarea,
+input[type="file"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    color: var(--text);
+    font: inherit;
+    max-width: 100%;
+    padding: 0.55rem 0.65rem;
+    width: 100%;
+}
+
+textarea {
+    min-height: 5rem;
+    resize: vertical;
+}
+
+button {
+    background: var(--accent);
+    border: 1px solid transparent;
+    border-radius: 0.4rem;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 650;
+    margin-top: 1rem;
+    padding: 0.55rem 0.85rem;
+}
+
+:root[data-theme="dark"] button {
+    color: #101820;
+}
+
+button:hover {
+    background: var(--accent-hover);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.secondary-button {
+    background: var(--soft);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.secondary-button:hover {
+    background: var(--border);
+}
+
+:root[data-theme="dark"] .secondary-button {
+    color: var(--text);
+}
+
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.field-help {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0.35rem 0 0.8rem;
+}
+
+.inline-controls,
+.copy-controls {
+    align-items: center;
+    display: flex;
+    gap: 0.65rem;
+}
+
+.inline-controls button,
+.copy-controls button {
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+.notice {
+    background: var(--soft);
+    border-left: 4px solid var(--accent);
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+}
+
+.error {
+    background: var(--error-surface);
+    border: 1px solid var(--error);
+    border-radius: 0.5rem;
+    color: var(--error);
+    padding: 0.8rem 1rem;
+}
+
+.drop-zone {
+    background: var(--soft);
+    border: 2px dashed var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.drop-zone p {
+    margin-bottom: 0.75rem;
+}
+
+.drop-zone.is-dragging {
+    border-color: var(--accent);
+    outline: 3px solid var(--focus);
+}
+
+.image-preview {
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    display: block;
+    margin: 1rem auto 0;
+    max-height: 20rem;
+    max-width: 100%;
+}
+
+pre {
+    background: var(--soft);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    overflow: auto;
+    padding: 1rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.result {
+    margin-bottom: 0;
+}
+
+details > summary {
+    cursor: pointer;
+    font-weight: 650;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 34rem) {
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .inline-controls,
+    .copy-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

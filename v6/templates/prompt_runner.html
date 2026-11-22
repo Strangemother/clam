@@ -4,84 +4,267 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>D1 Omni prompt runner</title>
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            margin: 2rem auto;
-            max-width: 52rem;
-            padding: 0 1rem;
-        }
-        label, select, button {
-            display: block;
-            margin: 0.5rem 0;
-        }
-        select {
-            max-width: 100%;
-            width: 40rem;
-        }
-        pre {
-            background: #f3f3f3;
-            overflow-wrap: anywhere;
-            padding: 1rem;
-            white-space: pre-wrap;
-        }
-        .error {
-            color: #a00;
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='prompt_runner.css') }}"
+    >
+    <script
+        src="{{ url_for('static', filename='prompt_runner.js') }}"
+        defer
+    ></script>
 </head>
 <body>
-    <h1>D1 Omni prompt runner</h1>
+    <main class="page">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">Decision model playground</p>
+                <h1>D1 Omni prompt runner</h1>
+            </div>
+            <button
+                id="theme-toggle"
+                class="secondary-button"
+                type="button"
+                aria-pressed="false"
+            >
+                Toggle dark mode
+            </button>
+        </header>
 
-    {% if error %}
-    <p class="error" role="alert">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+        <p class="error" role="alert">{{ error }}</p>
+        {% endif %}
 
-    {% if prompts %}
-    <form action="{{ url_for('prompt_ui') }}" method="get">
-        <label for="prompt">Prompt</label>
-        <select id="prompt" name="prompt" onchange="this.form.submit()">
-            {% for name in prompts %}
-            <option value="{{ name }}"
-                {% if name == selected_prompt %}selected{% endif %}>
-                {{ name }}
-            </option>
-            {% endfor %}
-        </select>
-        <button type="submit">Load examples</button>
-    </form>
+        {% if prompts %}
+        <section class="panel">
+            <form
+                id="prompt-selection-form"
+                action="{{ url_for('prompt_ui') }}"
+                method="get"
+            >
+                <label for="prompt">Prompt file</label>
+                <select id="prompt" name="prompt">
+                    {% for name in prompts %}
+                    <option value="{{ name }}"
+                        {% if name == selected_prompt %}selected{% endif %}
+                    >
+                        {{ name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <input
+                    id="prompt-backend"
+                    type="hidden"
+                    name="backend"
+                    value="{{ selected_backend }}"
+                >
+                <input
+                    id="prompt-lm-model"
+                    type="hidden"
+                    name="lm_studio_model"
+                    value="{{ selected_model }}"
+                >
+                <button class="secondary-button" type="submit">
+                    Load prompt
+                </button>
+            </form>
 
-    {% if selected_prompt %}
-    <details>
-        <summary>Prompt state</summary>
-        <pre>{{ prompt_state }}</pre>
-    </details>
+            {% if selected_prompt %}
+            <form
+                id="runner-form"
+                action="{{ url_for('run_ui_example') }}"
+                method="post"
+                enctype="multipart/form-data"
+                data-lm-questions-supported="{{ 'true' if lm_studio_questions_supported else 'false' }}"
+            >
+                <input
+                    type="hidden"
+                    name="prompt"
+                    value="{{ selected_prompt }}"
+                >
 
-    {% if examples %}
-    <form action="{{ url_for('run_ui_example') }}" method="post">
-        <input type="hidden" name="prompt" value="{{ selected_prompt }}">
-        <label for="example">Example</label>
-        <select id="example" name="example">
-            {% for example in examples %}
-            <option value="{{ example.index }}"
-                {% if example.index == selected_example %}selected{% endif %}>
-                {{ example.label }}
-            </option>
-            {% endfor %}
-        </select>
-        <button type="submit">Run example</button>
-    </form>
-    {% else %}
-    <p>This prompt has no examples.</p>
-    {% endif %}
-    {% endif %}
-    {% else %}
-    <p>No YAML prompts were found.</p>
-    {% endif %}
+                <label for="prompt-state">Prompt / state</label>
+                <textarea
+                    id="prompt-state"
+                    name="prompt_state"
+                    rows="5"
+                    spellcheck="true"
+                >{{ user_state }}</textarea>
+                <p class="field-help">
+                    Starts with the YAML prompt state. Edit it for this run.
+                </p>
 
-    {% if output %}
-    <h2>Result</h2>
-    <pre>{{ output }}</pre>
-    {% endif %}
+                <label for="backend">Model backend</label>
+                <select id="backend" name="backend">
+                    <option
+                        value="local"
+                        {% if selected_backend == "local" %}selected{% endif %}
+                    >
+                        Local Transformers model (this server)
+                    </option>
+                    <option
+                        value="lm_studio"
+                        {% if selected_backend == "lm_studio" %}selected{% endif %}
+                    >
+                        LM Studio API
+                    </option>
+                </select>
+
+                <div
+                    id="lm-studio-controls"
+                    data-models-url="{{ url_for('ui_lm_studio_models') }}"
+                    data-base-url="{{ lm_studio_base_url }}"
+                    data-selected-model="{{ selected_model }}"
+                    hidden
+                >
+                    <p class="field-help">
+                        Endpoint: <code>{{ lm_studio_base_url }}</code>
+                    </p>
+                    <label for="lm-studio-model">
+                        Loaded LM Studio decision model
+                    </label>
+                    <div class="inline-controls">
+                        <select
+                            id="lm-studio-model"
+                            name="lm_studio_model"
+                            disabled
+                        >
+                            <option value="">Select a model</option>
+                        </select>
+                        <button
+                            id="refresh-models"
+                            class="secondary-button"
+                            type="button"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+                    <p
+                        id="model-status"
+                        class="field-help"
+                        role="status"
+                        aria-live="polite"
+                    ></p>
+                    <p class="notice">
+                        LM Studio supports text examples and noul, choice,
+                        and score questions. If an image example is selected,
+                        entering text uses that text instead of the image.
+                    </p>
+                </div>
+
+                <label for="user-prompt">Input / user message</label>
+                <textarea
+                    id="user-prompt"
+                    name="user_prompt"
+                    rows="3"
+                    placeholder="Optional. Overrides a text example; for image examples it adds context."
+                    spellcheck="true"
+                >{{ user_prompt }}</textarea>
+                <p class="field-help">
+                    Leave blank to use the selected example.
+                </p>
+
+                {% if examples %}
+                <label for="example">Example input</label>
+                <select id="example" name="example">
+                    {% for example in examples %}
+                    <option
+                        value="{{ example.index }}"
+                        data-is-image="{{ 'true' if example.is_image else 'false' }}"
+                        data-lm-compatible="{{ 'true' if example.lm_studio_compatible else 'false' }}"
+                        data-lm-questions-supported="{{ 'true' if example.lm_studio_questions_supported else 'false' }}"
+                        {% if example.index == selected_example %}selected{% endif %}
+                    >
+                        {{ example.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <p class="field-help">
+                    This prompt has no examples. Enter an input message above.
+                </p>
+                {% endif %}
+
+                <div id="image-input" class="image-input" hidden>
+                    <label for="image-override">Image input override</label>
+                    <div id="image-drop-zone" class="drop-zone">
+                        <p>Drop an image here, or choose a file.</p>
+                        <input
+                            id="image-override"
+                            name="image_override"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled
+                        >
+                        <img
+                            id="image-preview"
+                            class="image-preview"
+                            alt="Selected image preview"
+                            hidden
+                        >
+                    </div>
+                    <p
+                        id="image-status"
+                        class="field-help"
+                        role="status"
+                        aria-live="polite"
+                    ></p>
+                    <p class="field-help">
+                        Replaces the image from the selected YAML example.
+                        PNG, JPEG, and WebP are supported.
+                    </p>
+                </div>
+
+                <p
+                    id="compatibility-message"
+                    class="notice"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                ></p>
+                <button id="run-button" type="submit">Run example</button>
+            </form>
+            {% endif %}
+        </section>
+        {% else %}
+        <p class="panel">No YAML prompts were found.</p>
+        {% endif %}
+
+        <details class="panel">
+            <summary>Python request example</summary>
+            <p class="field-help">
+                This sends a text request directly to the selected backend.
+                LM Studio requires a supported question type.
+            </p>
+            <pre><code
+                id="python-request-code"
+                data-local-url="{{ api_base_url }}"
+                data-local-model="{{ model_alias }}"
+                data-lm-studio-url="{{ lm_studio_base_url }}"
+                data-selected-model="{{ selected_model }}"
+            ></code></pre>
+            <div class="copy-controls">
+                <button
+                    id="copy-python-request"
+                    class="secondary-button"
+                    type="button"
+                >
+                    Copy Python example
+                </button>
+                <span
+                    id="copy-status"
+                    class="field-help"
+                    role="status"
+                    aria-live="polite"
+                ></span>
+            </div>
+        </details>
+
+        {% if output %}
+        <section class="panel">
+            <h2>Result</h2>
+            <pre class="result">{{ output }}</pre>
+        </section>
+        {% endif %}
+    </main>
 </body>
 </html>

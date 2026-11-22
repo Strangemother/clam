@@ -114,15 +114,26 @@ from PIL import Image
 import yaml
 
 from prompt_utils import load_prompt
+from tools import (
+    list_loaded_decision_models,
+    make_headers,
+    request_json,
+)
 
 
 MODEL_ID = "LiquidAI/d1-Omni-2B"
 MODEL_ALIAS = "d1-omni-2b"
+DEFAULT_LM_STUDIO_URL = "http://192.168.50.60:1234"
+LM_STUDIO_QUESTION_TYPES = {"noul", "choice", "score"}
 MAX_REQUEST_BYTES = 64 * 1024 * 1024
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
+app.config["LM_STUDIO_BASE_URL"] = os.environ.get(
+    "LM_STUDIO_BASE_URL",
+    DEFAULT_LM_STUDIO_URL,
+).rstrip("/")
 model = None
 torch = None
 inference_lock = threading.Lock()
@@ -191,29 +202,58 @@ def example_label(example: str | dict[str, str]) -> str:
     return example.get("text") or example["image"]
 
 
+def append_state_text(state: str, text: str) -> str:
+    return f"{state}\n\n{text}" if state else text
+
+
 def render_prompt_page(
     selected_prompt: str | None = None,
     selected_example: int = 0,
+    selected_backend: str = "local",
+    selected_model: str = "",
+    user_prompt: str = "",
+    user_state: str | None = None,
     output: str | None = None,
     error: str | None = None,
     status: int = 200,
 ):
     prompts = available_prompts()
+    if selected_backend not in {"local", "lm_studio"}:
+        selected_backend = "local"
     if selected_prompt not in prompts:
         selected_prompt = prompts[0] if prompts else None
 
     examples = []
     prompt_state = None
+    lm_studio_questions_supported = False
     if selected_prompt:
         prompt = load_prompt(
             PROMPT_DIR / selected_prompt,
             allow_image_examples=True,
         )
         prompt_state = prompt["state"]
+        lm_studio_questions_supported = all(
+            isinstance(question, dict)
+            and question.get("type") in LM_STUDIO_QUESTION_TYPES
+            for question in prompt["questions"].values()
+        )
         examples = [
-            {"index": index, "label": example_label(example)}
+            {
+                "index": index,
+                "label": example_label(example),
+                "lm_studio_compatible": (
+                    not isinstance(example, dict)
+                    and lm_studio_questions_supported
+                ),
+                "lm_studio_questions_supported": (
+                    lm_studio_questions_supported
+                ),
+                "is_image": isinstance(example, dict),
+            }
             for index, example in enumerate(prompt["examples"])
         ]
+    else:
+        prompt_state = ""
 
     return (
         render_template(
@@ -221,7 +261,19 @@ def render_prompt_page(
             prompts=prompts,
             selected_prompt=selected_prompt,
             selected_example=selected_example,
+            selected_backend=selected_backend,
+            selected_model=selected_model,
+            user_prompt=user_prompt,
+            user_state=(
+                prompt_state if user_state is None else user_state
+            ),
+            model_alias=MODEL_ALIAS,
+            lm_studio_base_url=app.config["LM_STUDIO_BASE_URL"],
+            api_base_url=request.host_url.rstrip("/"),
             prompt_state=prompt_state,
+            lm_studio_questions_supported=(
+                lm_studio_questions_supported
+            ),
             examples=examples,
             output=output,
             error=error,
@@ -232,33 +284,71 @@ def render_prompt_page(
 
 @app.errorhandler(413)
 def request_too_large(_error):
+    if request.path == "/ui/run":
+        return render_prompt_page(
+            error="Request body exceeds the 64 MiB limit.",
+            status=413,
+        )
     return api_error("Request body exceeds the 64 MiB limit."), 413
 
 
 @app.get("/ui")
 def prompt_ui():
     selected_prompt = request.args.get("prompt")
+    selected_backend = request.args.get("backend", "local")
+    selected_model = request.args.get("lm_studio_model", "")
     if selected_prompt and selected_prompt not in available_prompts():
         return render_prompt_page(
             error="Unknown prompt selection.",
             status=400,
         )
-    return render_prompt_page(selected_prompt)
+    return render_prompt_page(
+        selected_prompt,
+        selected_backend=selected_backend,
+        selected_model=selected_model,
+    )
+
+
+@app.get("/ui/lm-studio/models")
+def ui_lm_studio_models():
+    try:
+        model_ids = list_loaded_decision_models(
+            app.config["LM_STUDIO_BASE_URL"],
+            make_headers(),
+        )
+    except RuntimeError as exc:
+        return jsonify({"error": str(exc)}), 502
+    return jsonify({"models": model_ids})
 
 
 @app.post("/ui/run")
 def run_ui_example():
     selected_prompt = request.form.get("prompt", "")
+    selected_backend = request.form.get("backend", "local")
+    selected_model = request.form.get("lm_studio_model", "")
+    user_prompt = request.form.get("user_prompt", "").strip()
+    user_state = request.form.get("prompt_state")
     if selected_prompt not in available_prompts():
         return render_prompt_page(
             error="Unknown prompt selection.",
             status=400,
         )
+    if selected_backend not in {"local", "lm_studio"}:
+        return render_prompt_page(
+            selected_prompt,
+            error="Choose a valid model backend.",
+            status=400,
+        )
+    raw_example = request.form.get("example", "")
     try:
-        selected_example = int(request.form.get("example", ""))
+        selected_example = int(raw_example) if raw_example else 0
     except ValueError:
         return render_prompt_page(
             selected_prompt,
+            selected_backend=selected_backend,
+            selected_model=selected_model,
+            user_prompt=user_prompt,
+            user_state=user_state,
             error="Choose a valid example.",
             status=400,
         )
@@ -267,42 +357,197 @@ def run_ui_example():
         prompt_path = PROMPT_DIR / selected_prompt
         prompt = load_prompt(prompt_path, allow_image_examples=True)
         examples = prompt["examples"]
-        if not 0 <= selected_example < len(examples):
+        if user_state is None:
+            user_state = prompt["state"]
+        if examples and not 0 <= selected_example < len(examples):
             return render_prompt_page(
                 selected_prompt,
+                selected_backend=selected_backend,
+                selected_model=selected_model,
+                user_prompt=user_prompt,
+                user_state=user_state,
                 error="Choose a valid example.",
                 status=400,
             )
-        example = examples[selected_example]
-
-        if isinstance(example, dict):
-            state = prompt["state"]
-            if example.get("text"):
-                state += f"\n\nImage description: {example['text']}"
-            media = [load_example_image(prompt_path, example["image"])]
-        else:
-            state = f"{prompt['state']}\n\nUser message: {example}"
-            media = None
-
-        if model is None or torch is None:
-            raise RuntimeError("The decision model is not loaded.")
-        with inference_lock, torch.inference_mode():
-            result = model.system_one(
-                state,
-                prompt["questions"],
-                media=media,
+        if not user_prompt and not examples:
+            return render_prompt_page(
+                selected_prompt,
+                selected_backend=selected_backend,
+                selected_model=selected_model,
+                user_prompt=user_prompt,
+                user_state=user_state,
+                error="Enter a message or choose an example.",
+                status=400,
             )
-    except (OSError, RuntimeError, ValueError, yaml.YAMLError) as exc:
+        selected_example_data = (
+            examples[selected_example] if examples else None
+        )
+        image_override = request.files.get("image_override")
+        has_image_override = bool(
+            image_override and image_override.filename
+        )
+        if has_image_override and not isinstance(
+            selected_example_data, dict
+        ):
+            return render_prompt_page(
+                selected_prompt,
+                selected_example,
+                selected_backend,
+                selected_model,
+                user_prompt,
+                user_state,
+                error=(
+                    "Choose an image example before uploading an "
+                    "image override."
+                ),
+                status=400,
+            )
+
+        if selected_backend == "lm_studio":
+            if not selected_model:
+                return render_prompt_page(
+                    selected_prompt,
+                    selected_example,
+                    selected_backend,
+                    selected_model,
+                    user_prompt,
+                    user_state,
+                    error="Select a loaded LM Studio decision model.",
+                    status=400,
+                )
+            if has_image_override:
+                return render_prompt_page(
+                    selected_prompt,
+                    selected_example,
+                    selected_backend,
+                    selected_model,
+                    user_prompt,
+                    user_state,
+                    error="LM Studio mode does not support image examples.",
+                    status=400,
+                )
+            example = user_prompt or selected_example_data
+            if isinstance(example, dict):
+                return render_prompt_page(
+                    selected_prompt,
+                    selected_example,
+                    selected_backend,
+                    selected_model,
+                    user_prompt,
+                    user_state,
+                    error="LM Studio mode does not support image examples.",
+                    status=400,
+                )
+            unsupported_questions = [
+                f"{name} ({question.get('type', 'unknown')})"
+                for name, question in prompt["questions"].items()
+                if question.get("type") not in LM_STUDIO_QUESTION_TYPES
+            ]
+            if unsupported_questions:
+                return render_prompt_page(
+                    selected_prompt,
+                    selected_example,
+                    selected_backend,
+                    selected_model,
+                    user_prompt,
+                    user_state,
+                    error=(
+                        "LM Studio supports only noul, choice, and score "
+                        "questions. Unsupported: "
+                        + ", ".join(unsupported_questions)
+                    ),
+                    status=400,
+                )
+            state = append_state_text(
+                user_state,
+                f"User message: {example}" if example else "",
+            )
+            result = request_json(
+                f"{app.config['LM_STUDIO_BASE_URL']}/v1/systemone",
+                make_headers(),
+                {
+                    "model": selected_model,
+                    "state": state,
+                    "questions": prompt["questions"],
+                },
+            )
+        else:
+            if isinstance(selected_example_data, dict):
+                example = selected_example_data
+                state = user_state
+                if example.get("text"):
+                    state = append_state_text(
+                        state,
+                        f"Image description: {example['text']}",
+                    )
+                if user_prompt:
+                    state = append_state_text(
+                        state,
+                        f"User message: {user_prompt}",
+                    )
+                if has_image_override:
+                    image_bytes = image_override.stream.read(
+                        MAX_REQUEST_BYTES + 1
+                    )
+                    if len(image_bytes) > MAX_REQUEST_BYTES:
+                        raise ValueError(
+                            "Image override exceeds the 64 MiB limit."
+                        )
+                    media = [image_from_bytes(image_bytes)]
+                else:
+                    media = [
+                        load_example_image(
+                            prompt_path,
+                            example["image"],
+                        )
+                    ]
+            else:
+                example = user_prompt or selected_example_data or ""
+                state = append_state_text(
+                    user_state,
+                    f"User message: {example}" if example else "",
+                )
+                media = None
+
+            if model is None or torch is None:
+                raise RuntimeError("The decision model is not loaded.")
+            with inference_lock, torch.inference_mode():
+                result = model.system_one(
+                    state,
+                    prompt["questions"],
+                    media=media,
+                )
+    except ValueError as exc:
+        return render_prompt_page(
+            selected_prompt,
+            selected_example,
+            selected_backend,
+            selected_model,
+            user_prompt,
+            user_state,
+            error=str(exc),
+            status=400,
+        )
+    except (OSError, RuntimeError, yaml.YAMLError) as exc:
         app.logger.exception("Could not run prompt example")
         return render_prompt_page(
             selected_prompt,
+            selected_example,
+            selected_backend,
+            selected_model,
+            user_prompt,
+            user_state,
             error=str(exc),
-            status=500,
+            status=502 if selected_backend == "lm_studio" else 500,
         )
 
     return render_prompt_page(
         selected_prompt,
         selected_example,
+        selected_backend,
+        selected_model,
+        user_prompt,
+        user_state,
         output=json.dumps(result, indent=2, ensure_ascii=False),
     )
 
@@ -438,12 +683,27 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("D1_MODEL_ID", MODEL_ID),
         help="Hugging Face model ID",
     )
+    parser.add_argument(
+        "--lm-studio-url",
+        default=os.environ.get(
+            "LM_STUDIO_BASE_URL",
+            DEFAULT_LM_STUDIO_URL,
+        ),
+        help="LM Studio API base URL used by the browser UI",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
 
+    parsed_lm_studio_url = urlsplit(args.lm_studio_url)
+    if (
+        parsed_lm_studio_url.scheme not in {"http", "https"}
+        or not parsed_lm_studio_url.netloc
+    ):
+        raise ValueError("LM Studio URL must be an HTTP(S) URL.")
+    app.config["LM_STUDIO_BASE_URL"] = args.lm_studio_url.rstrip("/")
     load_model(args.model_id)
     print(f"Serving {args.model_id} at http://{args.host}:{args.port}")
     app.run(host=args.host, port=args.port, threaded=True)

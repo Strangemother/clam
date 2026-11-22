@@ -105,8 +105,25 @@ and installs [requirements.txt](./requirements.txt), then starts
 provides `/v1/systemone` and `/api/v1/models` on port 8000. First startup
 downloads the model. Allow inbound TCP port 8000 through Windows Firewall.
 
-Open `http://HOST_IP:8000/ui` to select a YAML prompt and run one of its
-examples in the browser.
+Open `http://HOST_IP:8000/ui` to use the browser prompt runner. The page lets
+you edit the prompt state, enter a user message or select a YAML example, and
+choose between the local Transformers model and LM Studio. For image examples,
+drop a PNG, JPEG, or WebP onto the image area to override the YAML image.
+The page also has a dark-mode toggle and a copyable Python request example.
+
+The LM Studio option uses the endpoint `http://192.168.50.60:1234` by default.
+Set another endpoint at launch with `--lm-studio-url` or the
+`LM_STUDIO_BASE_URL` environment variable:
+
+```powershell
+python easy-run.py --lm-studio-url http://HOST_IP:1234
+```
+
+The browser fetches loaded decision-model IDs from LM Studio. LM Studio mode
+supports text inputs and `noul`, `choice`, and `score` questions; image inputs
+and other question types require the local Transformers model. If the LM Studio
+server requires authentication, set `LM_STUDIO_API_TOKEN` on the host running
+this service.
 
 On the client, point `second.py` at the host's LAN address:
 
