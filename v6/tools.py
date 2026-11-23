@@ -92,15 +92,20 @@ def ask_decision_model(
                 "instructions": "Which route best matches the user's message?",
                 "criteria": choices,
             },
-            "calm": {
-                "type": "score",
-                "instructions": "How calm is the speaker?",
-                "criteria": ["Agitated", "Neutral", "Calm"],
-            },
-            "redo": {
+            # "calm": {
+            #     "type": "score",
+            #     "instructions": "How calm is the speaker?",
+            #     "criteria": ["Agitated", "Neutral", "Calm"],
+            # },
+            "memory": {
                 "type": "noul",
-                "instructions": "Is the user asking more than one question?",
+                "instructions": "Should we story a persistent memory about for user preferences?",
             },
+            "anger": {
+                "type": "noul", 
+                "name": "angry", 
+                "instructions": "Is the user angry?"
+            }
         },
     }
     result = request_json(
@@ -113,5 +118,3 @@ def ask_decision_model(
     ) or "route" not in result["answers"]:
         raise RuntimeError("LM Studio returned an unexpected answer format.")
     return result["answers"]
-
-

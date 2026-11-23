@@ -10,7 +10,8 @@ import yaml
 from prompt_utils import load_prompt
 from tools import make_headers, request_json
 
-DEFAULT_URL = "http://192.168.50.60:1234"
+# DEFAULT_URL = "http://192.168.50.60:1234"
+DEFAULT_URL = "http://127.0.0.1:8000"
 DEFAULT_MODEL = "d1-omni-2b"
 
 

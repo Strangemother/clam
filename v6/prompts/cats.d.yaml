@@ -16,7 +16,7 @@ questions:
   every_cat:
     type: boxes
     instructions: "Every cat."
-    max: 4
+    # max: 10
 
 examples:
   - image: ./cats.png

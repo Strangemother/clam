@@ -717,7 +717,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.environ.get("D1_PORT", "8000")),
+        default=int(os.environ.get("D1_PORT", "8430")),
         help="HTTP port",
     )
     parser.add_argument(
