@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Silero VAD demo</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='vad.css') }}"
+    >
+    <script
+        src="{{ url_for('static', filename='vad.js') }}"
+        defer
+    ></script>
+</head>
+<body>
+    <main>
+        <h1>Silero VAD</h1>
+        <p>Selected model: Silero VAD (CPU)</p>
+        <button id="listen" type="button">Listen</button>
+        <p id="status" role="status" aria-live="polite">
+            Select Listen and speak. Select it again to detect speech.
+        </p>
+    </main>
+</body>
+</html>
