@@ -1,0 +1,23 @@
+# Count cats and locate the remote in the attached image.
+#   python3 v6/second.py v6/prompts/cats.d.yaml
+#   python3 v6/second.py v6/prompts/cats.d.yaml --image ./local.jpg
+state: >
+  Inspect the image and answer the visual questions about its contents.
+
+questions:
+  people:
+    type: number
+    instructions: "How many people are there?"
+    range: [0, 10]
+    step: 1
+  woman:
+    type: box
+    instructions: "highlight the most attractive woman"
+  every_face:
+    type: boxes
+    instructions: "Every face."
+    max: 10
+
+examples:
+  - image: ./people.jpg
+    # text: "Two cats on a sofa."

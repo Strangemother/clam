@@ -1,0 +1,44 @@
+# Extract the requested details from an invoice.
+
+state: |
+    Clean up local asset names, extracting the name, season number and episode number from the given name.
+
+    A typical format the asset "[Series Name].S[series number]E[episode number].[Meta data].[ext]"
+
+    Examples:
+
+    - The.Big.Bang.Theory.S01-S07.480p.BluRay.WEB-DL.x264-Sticky83/The.Big.Bang.Theory.S01E03.480p.BluRay.x264-Sticky83.mkv
+      series_name: The Big Bang Theory
+      season_number: 1
+      episode_number: 3
+    - Clarksons.Farm.S01E05.1080p.HEVC.x265-MeGusta/Clarksons.Farm.S01E05.1080p.HEVC.x265-MeGusta.mkv
+      series_name: Clarksons Farm
+      season_number: 1
+      episode_number: 5
+
+
+
+questions:
+  series_name:
+    type: text
+    instructions: "What is the Series name?"
+  season_number:
+    type: number
+    instructions: "What season number is this asset?"
+  episode_number:
+    type: number
+    instructions: "What episode number is this asset?"
+
+
+examples:
+  - "Clarksons.Farm.S01E05.mkv"
+
+tests:
+  - input: "The.Big.Bang.Theory.S01-S07.480p.BluRay.WEB-DL.x264-Sticky83/The.Big.Bang.Theory.S01E03.480p.BluRay.x264-Sticky83.mkv"
+    series_name: "The Big Bang Theory"
+    season_number: 1
+    episode_number: 3
+  - input: "Clarksons.Farm.S01E05.1080p.HEVC.x265-MeGusta/Clarksons.Farm.S01E05.1080p.HEVC.x265-MeGusta.mkv"
+    series_name: "Clarksons Farm"
+    season_number: 1
+    episode_number: 5

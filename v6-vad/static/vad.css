@@ -1,0 +1,16 @@
+body {
+    font-family: system-ui, sans-serif;
+    margin: 3rem auto;
+    max-width: 38rem;
+    padding: 0 1rem;
+}
+
+button {
+    font: inherit;
+    padding: 0.7rem 1.2rem;
+}
+
+#status {
+    margin-top: 1rem;
+    min-height: 1.5rem;
+}
