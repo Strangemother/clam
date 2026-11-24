@@ -32,7 +32,9 @@ When both servers are running, Flask also serves copies of these pages at
 `http://localhost:8430/ws/ui/` and
 `http://localhost:8430/ws/images-ui`. The Flask-only
 `http://localhost:8430/ws/yaml-ui` selects and displays a prompt and sends
-state text. Use the configured `D1_PORT` instead
+state text. Selecting a prompt updates the WebSocket path immediately; the
+proxy must use the same prompt directory as Flask. Disconnect before switching
+prompts. Use the configured `D1_PORT` instead
 of `8430` if it differs. These pages use the same editable WebSocket URL as
 the local files; the proxy listens only on localhost by default.
 

@@ -63,12 +63,15 @@ test("YAML selection, connection, state and formatted responses", async () => {
     return {ok: true, json: async () => ({yaml: "state: selected\n"})};
   };
   el.prompt.value = "chromite-3.d.yaml";
-  await el.prompt.onchange();
+  const loading = el.prompt.onchange();
+  assert.equal(el.url.value, "ws://localhost:9999/chromite-3/");
+  await loading;
   assert.equal(fetched, "/ui/api/prompts/chromite-3.d.yaml");
   assert.equal(el["prompt-content"].value, "state: selected\n");
+  el.url.value = "ws://example.com:1234/other/";
   el.connect.onclick();
   const socket = sockets[0];
-  assert.equal(socket.url, "ws://localhost:9999/chromite-3/");
+  assert.equal(socket.url, "ws://example.com:1234/chromite-3/");
   assert.equal(el.prompt.disabled, true);
   socket.onopen();
   el.state.value = "A bird appears";
@@ -82,6 +85,25 @@ test("YAML selection, connection, state and formatted responses", async () => {
   );
   socket.close();
   assert.equal(el.prompt.disabled, false);
+  el.prompt.value = "";
+  await el.prompt.onchange();
+  assert.equal(el.url.value, "ws://example.com:1234/");
+  el.connect.onclick();
+  assert.equal(sockets.length, 1);
+});
+
+test("invalid proxy URLs are reported and cannot connect", async () => {
+  const {elements: el, sockets} = setup();
+  el.url.value = "ws://localhost:9999/chromite/?token=example";
+  el.prompt.value = "chromite-3.d.yaml";
+  await el.prompt.onchange();
+  assert.match(el.status.textContent, /query or fragment/);
+  el.connect.onclick();
+  assert.equal(sockets.length, 0);
+  assert.match(el.status.textContent, /query or fragment/);
+  el.url.value = "wss://example.com:1234/other/";
+  el.connect.onclick();
+  assert.equal(sockets[0].url, "wss://example.com:1234/chromite-3/");
 });
 
 test("failed and stale prompt loads cannot be used", async () => {

@@ -20,6 +20,9 @@ class IndexTests(unittest.TestCase):
         client = server.app.test_client()
         response = client.get("/")
         self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "WebSocket YAML prompt demo", response.get_data(as_text=True)
+        )
         parser = LinkParser()
         parser.feed(response.get_data(as_text=True))
         expected = {

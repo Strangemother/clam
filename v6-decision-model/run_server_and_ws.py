@@ -72,12 +72,39 @@ def model_url():
     return f"http://{host}:{int(os.environ.get('D1_PORT', '8430'))}"
 
 
+def check_port_after_timeout(host, port):
+    try:
+        addresses = socket.getaddrinfo(
+            host or None, port, type=socket.SOCK_STREAM, flags=socket.AI_PASSIVE
+        )
+        for family, socktype, proto, _, address in addresses:
+            with socket.socket(family, socktype, proto) as probe:
+                if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+                    probe.setsockopt(
+                        socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1
+                    )
+                probe.bind(address)
+    except OSError as exc:
+        raise RuntimeError(
+            f"Connection to {host}:{port} timed out and the bind address "
+            f"is occupied or unavailable: {exc}"
+        ) from exc
+    print(
+        f"Connection to {host}:{port} timed out, but the bind address is "
+        "available; starting server.",
+        flush=True,
+    )
+    return False
+
+
 def port_open(host, port):
     try:
         with socket.create_connection((local_host(host), port), timeout=1):
             return True
     except ConnectionRefusedError:
         return False
+    except TimeoutError:
+        return check_port_after_timeout(host, port)
     except OSError as exc:
         raise RuntimeError(f"Cannot check {host}:{port}: {exc}") from exc
 
@@ -114,6 +141,8 @@ def websocket_running(host, port):
         )
     except ConnectionRefusedError:
         return False
+    except TimeoutError:
+        return check_port_after_timeout(host, port)
     except OSError as exc:
         raise RuntimeError(f"WebSocket check failed on {host}:{port}: {exc}")
     try:

@@ -107,7 +107,10 @@ regardless of its configured remote endpoint.
 The launcher skips servers already running or starting. It checks the model
 health endpoint and the WebSocket handshake; another WebSocket service on the
 configured port is indistinguishable from the proxy. Re-running it starts only
-missing services. Keep each launcher window open: Ctrl+C or closing it stops
+missing services. If a connection probe times out, the launcher starts the
+service only when its configured local bind address is available; an occupied
+or unavailable address is reported instead. Keep each launcher window open:
+Ctrl+C or closing it stops
 the servers started in that window, not servers it skipped. First model startup
 can take time to download and load the model. Startup errors are printed.
 
@@ -117,8 +120,9 @@ browser-accessible endpoints.
 With both servers running, open `http://localhost:8430/ws/ui/` for the
 WebSocket text demo or `http://localhost:8430/ws/images-ui` for the image
 demo. At `http://localhost:8430/ws/yaml-ui`, select a prompt to view its YAML,
-connect, and send state text. The selected filename determines the WebSocket
-path; reconnect to switch prompts. The proxy appends the text to the prompt's
+connect, and send state text. Selecting a file immediately updates the
+WebSocket path; reconnect to switch prompts. The proxy must use the same
+prompt directory as the Flask server. It appends the text to the prompt's
 state and uses its questions. Responses are formatted as indented JSON.
 These Flask templates are separate copies of the standalone proxy pages
 and share CSS and JavaScript in `static/`. Replace `8430` with `D1_PORT` if

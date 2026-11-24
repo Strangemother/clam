@@ -138,6 +138,53 @@ class LauncherTests(unittest.TestCase):
                 setup.assert_not_called()
                 popen.assert_not_called()
 
+    def test_connection_timeout_starts_services_when_port_is_free(self):
+        with socket.socket() as reservation:
+            reservation.bind(("127.0.0.1", 0))
+            port = reservation.getsockname()[1]
+        checks = (
+            ("model", lambda: launcher.port_open("0.0.0.0", port)),
+            (
+                "websocket",
+                lambda: launcher.websocket_running("localhost", port),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                patch.object(launcher, "LOCK_DIR", Path(directory)),
+                patch.object(launcher, "ensure_environment"),
+                patch.object(launcher.subprocess, "Popen") as popen,
+                patch.object(
+                    launcher.socket, "create_connection",
+                    side_effect=TimeoutError("timed out"),
+                ),
+            ):
+                for name, check in checks:
+                    with self.subTest(service=name):
+                        child = launcher.start_service(name, check, ["server"])
+                        self.assertIsNotNone(child)
+                        child[1].close()
+                self.assertEqual(popen.call_count, 2)
+
+    def test_connection_timeout_does_not_start_on_occupied_port(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            port = listener.getsockname()[1]
+            with patch.object(
+                launcher.socket, "create_connection",
+                side_effect=TimeoutError("timed out"),
+            ):
+                for check in (
+                    lambda: launcher.port_open("0.0.0.0", port),
+                    lambda: launcher.websocket_running("localhost", port),
+                ):
+                    with self.subTest(check=check):
+                        with self.assertRaisesRegex(
+                            RuntimeError, "occupied"
+                        ):
+                            check()
+
 
 if __name__ == "__main__":
     unittest.main()

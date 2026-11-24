@@ -34,13 +34,33 @@ theme.onclick = () => {
   localStorage.setItem("websocket-proxy-theme", currentTheme);
 };
 
+function updatePromptUrl() {
+  const address = new URL(url.value);
+  if (!["ws:", "wss:"].includes(address.protocol)) {
+    throw new Error("URL must use ws:// or wss://");
+  }
+  if (address.search || address.hash) {
+    throw new Error("URL must not contain a query or fragment");
+  }
+  address.pathname = prompt.value
+    ? `/${prompt.value.slice(0, -7)}/` : "/";
+  url.value = address.toString();
+}
+
 if (prompt) {
   prompt.onchange = async () => {
     const request = ++promptRequest;
     promptLoaded = false;
     promptContent.value = "";
+    let urlError;
+    try {
+      updatePromptUrl();
+    } catch (error) {
+      urlError = error.message;
+    }
     if (!prompt.value) {
-      status.textContent = "Select a prompt";
+      status.textContent = urlError
+        ? `Invalid WebSocket URL: ${urlError}` : "Select a prompt";
       return;
     }
     status.textContent = "Loading prompt...";
@@ -56,7 +76,8 @@ if (prompt) {
       if (request !== promptRequest) return;
       promptContent.value = data.yaml;
       promptLoaded = true;
-      status.textContent = "Prompt loaded";
+      status.textContent = urlError
+        ? `Invalid WebSocket URL: ${urlError}` : "Prompt loaded";
     } catch (error) {
       if (request === promptRequest) {
         status.textContent = `Could not load prompt: ${error.message}`;
@@ -72,9 +93,7 @@ connect.onclick = () => {
   }
   try {
     if (prompt) {
-      const address = new URL(url.value);
-      address.pathname = `/${prompt.value.slice(0, -7)}/`;
-      url.value = address.toString();
+      updatePromptUrl();
     }
     socket = new WebSocket(url.value);
   } catch (error) {
