@@ -9,6 +9,7 @@ import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from prompt_utils import load_prompt
+from tools import make_headers, request_json
 
 
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
@@ -16,27 +17,34 @@ logger = logging.getLogger(__name__)
 
 
 class Chromite:
+    live_prompt = True 
+
     def __init__(self, client, path):
         self.client = client
         self.path = path
+        self.base_url = None
         match = re.fullmatch(r"/([A-Za-z0-9][A-Za-z0-9_-]*)/?", path)
         if not match:
             raise ValueError("Path must be /<prompt-name> or /<prompt-name>/")
+        self.matched_path = match.group(1)
+        
+        self.prompt = None
+        self.load_prompt()
+        self._client_send_lock = asyncio.Lock()
+        self._client_sends = set()
 
-        self.prompt_path = (PROMPTS_DIR / f"{match.group(1)}.d.yaml").resolve()
+    def load_prompt(self):
+        self.prompt_path = (PROMPTS_DIR / f"{self.matched_path}.d.yaml").resolve()
         if self.prompt_path.parent != PROMPTS_DIR.resolve():
             raise ValueError("Prompt must be in the prompts directory.")
         self.prompt = load_prompt(self.prompt_path, allow_image_examples=True)
-        self._client_send_lock = asyncio.Lock()
-        self._client_sends = set()
 
     def to_client(self, message):
         """Schedule a JSON message to this client and return its send task.
 
-        Call from a hook as self.to_client({...}); the server waits for hook
-        messages before forwarding the model request. The client must still
-        be connected. Serialization errors are raised immediately, and send
-        failures are logged. Async callers may also await the returned task.
+        Call from a hook as self.to_client({...}). The client must still be
+        connected. Serialization errors are raised immediately, and send
+        failures are logged. Async callers may await the returned task.
         """
         data = json.dumps(message)
         task = asyncio.create_task(self._send_to_client(data))
@@ -62,17 +70,52 @@ class Chromite:
         if self._client_sends:
             await asyncio.gather(*self._client_sends)
 
+    async def request_model(self, payload):
+        """Send a decision request and wait for its JSON response."""
+        if self.base_url is None:
+            raise RuntimeError("Decision-model base URL is not configured.")
+        return await asyncio.to_thread(
+            request_json,
+            f"{self.base_url}/v1/systemone",
+            make_headers(),
+            payload,
+        )
+
     def on_create(self):
         pass
 
-    def on_message(self, message):
+    async def on_message(self, message):
         """Prepare a client message for the decision-model endpoint.
 
-        message is a dict parsed from the client's JSON. Return a dict to
-        forward to the model, not directly to the client. The model's
-        response is sent back to the client.
+        Return a dict to forward automatically, or None after handling the
+        message yourself. This hook can also be async; see the example below.
         """
-        return message
 
+        return await self.example_on_message(message)
+
+    async def example_on_message(self, message):
+        """Example: build a request, await the result, and send it yourself."""
+        print('Example on_message')
+        
+        if self.live_prompt:
+            self.load_prompt()
+        
+        value = message.get("myfield")
+
+        state = f"{self.prompt['state']}\n\nClient message: {value}"
+        payload = self.format_payload(state=state)
+        print('Payload ready:\n', payload)
+        result = await self.request_model(payload)
+        await self.to_client(result)
+        return None
+
+    def format_payload(self, state=None, questions=None, images=None):
+        return {
+            "model": "d1-Omni-2B",
+            "state": state or self.prompt['state'],
+            "questions": questions or self.prompt["questions"],
+            "images": images or [],
+        }
+    
     def on_close(self):
         pass

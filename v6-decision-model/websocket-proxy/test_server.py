@@ -192,6 +192,40 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(0)
         self.assertIn("send failed", logs.output[0])
 
+    async def test_example_builds_request_and_sends_one_response(self):
+        class ExampleChromite(RecordingChromite):
+            on_message = chromites.Chromite.example_on_message
+
+        with patch("server.Chromite", ExampleChromite):
+            async with connect(f"{self.url}/chromite/") as socket:
+                await socket.send(json.dumps({"myfield": "Value"}))
+                result = json.loads(await socket.recv())
+                self.assertEqual(result["path"], "/v1/systemone")
+                self.assertEqual(result["received"], {
+                    "model": "YOUR_MODEL_ID",
+                    "state": "chromite\n\nClient message: Value",
+                    "questions": {"chill": {"type": "noul"}},
+                    "images": [],
+                })
+                self.assertEqual(result["answers"]["chill"]["noul"], 0.8)
+                with self.assertRaises(asyncio.TimeoutError):
+                    await asyncio.wait_for(socket.recv(), timeout=0.1)
+
+                await socket.send('{"myfield": 1}')
+                result = json.loads(await socket.recv())
+                self.assertIn("'myfield' must be a string", result["error"])
+
+    async def test_async_hook_model_errors_reach_client(self):
+        class ExampleChromite(RecordingChromite):
+            async def on_message(self, message):
+                await self.request_model({"fail": True})
+
+        with patch("server.Chromite", ExampleChromite):
+            async with connect(f"{self.url}/chromite/") as socket:
+                await socket.send("{}")
+                result = json.loads(await socket.recv())
+                self.assertIn("HTTP 400", result["error"])
+
 
 if __name__ == "__main__":
     unittest.main()
