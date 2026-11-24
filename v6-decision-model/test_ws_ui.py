@@ -88,6 +88,7 @@ class WebSocketUITests(unittest.TestCase):
         html = response.get_data(as_text=True)
         self.assertIn('value="chromite.d.yaml"', html)
         self.assertIn('id="prompt-content" readonly', html)
+        self.assertIn('id="image" type="file"', html)
         self.assertIn("/ui/api/prompts/prompt-placeholder", html)
 
 

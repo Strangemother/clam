@@ -115,7 +115,7 @@ connect.onclick = () => {
     } catch (error) {
       // Non-JSON messages are displayed unchanged.
     }
-    responses.textContent += `${output}\n`;
+    responses.textContent = `${output}\n${responses.textContent}`;
   };
   socket.onerror = () => { status.textContent = "WebSocket error"; };
   socket.onclose = event => {
@@ -129,6 +129,31 @@ connect.onclick = () => {
 };
 disconnect.onclick = () => socket.close();
 send.onclick = () => {
+  if (image && image.files[0]) {
+    const file = image.files[0];
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      status.textContent = "Choose a JPEG, PNG, or WebP image";
+      return;
+    }
+    const connection = socket;
+    const reader = new FileReader();
+    reader.onerror = () => { status.textContent = "Could not read image"; };
+    reader.onload = () => {
+      const payload = JSON.stringify({image: reader.result});
+      if (new Blob([payload]).size > 64 * 1024 * 1024) {
+        status.textContent = "Image message exceeds the 64 MiB limit";
+        return;
+      }
+      if (connection.readyState !== WebSocket.OPEN) {
+        status.textContent = "Disconnected before image was ready";
+        return;
+      }
+      connection.send(payload);
+      status.textContent = "Image sent";
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
   if (state) {
     socket.send(JSON.stringify({state: state.value}));
     status.textContent = "Connected";
@@ -145,31 +170,8 @@ send.onclick = () => {
     status.textContent = "Connected";
     return;
   }
-
-  const file = image.files[0];
-  if (!file) {
+  if (image) {
     status.textContent = "Choose an image first";
     return;
   }
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    status.textContent = "Choose a JPEG, PNG, or WebP image";
-    return;
-  }
-  const connection = socket;
-  const reader = new FileReader();
-  reader.onerror = () => { status.textContent = "Could not read image"; };
-  reader.onload = () => {
-    const payload = JSON.stringify({image: reader.result});
-    if (new Blob([payload]).size > 64 * 1024 * 1024) {
-      status.textContent = "Image message exceeds the 64 MiB limit";
-      return;
-    }
-    if (connection.readyState !== WebSocket.OPEN) {
-      status.textContent = "Disconnected before image was ready";
-      return;
-    }
-    connection.send(payload);
-    status.textContent = "Image sent";
-  };
-  reader.readAsDataURL(file);
 };
