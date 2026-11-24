@@ -283,6 +283,21 @@ def request_too_large(_error):
     return api_error("Request body exceeds the 64 MiB limit."), 413
 
 
+@app.get("/")
+def index():
+    return render_template("index.html")
+
+
+@app.get("/ws/ui/", strict_slashes=False)
+def websocket_ui():
+    return render_template("websocket_ui.html")
+
+
+@app.get("/ws/images-ui", strict_slashes=False)
+def websocket_images_ui():
+    return render_template("websocket_images_ui.html")
+
+
 @app.get("/ui")
 def prompt_ui():
     return render_template(

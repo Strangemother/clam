@@ -28,6 +28,11 @@ host; do not put tokens in settings.
 
 Open [index.html](./index.html) in a browser on the same machine and connect to
 `ws://localhost:9999/chromite/`. The page supports light and dark modes.
+When both servers are running, Flask also serves copies of these pages at
+`http://localhost:8430/ws/ui/` and
+`http://localhost:8430/ws/images-ui`. Use the configured `D1_PORT` instead
+of `8430` if it differs. These pages use the same editable WebSocket URL as
+the local files; the proxy listens only on localhost by default.
 
 The connection path selects a prompt in `../prompts/`: for example,
 `/chromite-3` or `/chromite-3/` loads `chromite-3.d.yaml`. The file must

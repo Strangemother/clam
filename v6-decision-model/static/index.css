@@ -1,0 +1,20 @@
+:root {
+  color-scheme: dark;
+}
+
+body {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  background: #111820;
+  color: #e7edf3;
+  font: 16px sans-serif;
+}
+
+a {
+  color: #8bc4ff;
+}
+
+li {
+  margin: .75rem 0;
+}

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chromite WebSocket Image</title>
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='websocket_demo.css') }}">
+  <script src="{{ url_for('static', filename='websocket_demo.js') }}"
+          defer></script>
+</head>
+<body>
+  <h1>Chromite WebSocket Image</h1>
+  <button id="theme" type="button">Toggle dark mode</button>
+  <label for="url">WebSocket URL</label>
+  <input id="url" value="ws://localhost:9999/chromite/">
+  <button id="connect" type="button">Connect</button>
+  <button id="disconnect" type="button" disabled>Disconnect</button>
+  <p id="status">Disconnected</p>
+  <label for="image">Choose a JPEG, PNG, or WebP image</label>
+  <input id="image" type="file" accept="image/jpeg,image/png,image/webp">
+  <button id="send" type="button" disabled>Send image</button>
+  <h2>Responses</h2>
+  <pre id="responses"></pre>
+</body>
+</html>

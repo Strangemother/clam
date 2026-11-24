@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chromite WebSocket</title>
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='websocket_demo.css') }}">
+  <script src="{{ url_for('static', filename='websocket_demo.js') }}"
+          defer></script>
+</head>
+<body>
+  <h1>Chromite WebSocket</h1>
+  <button id="theme" type="button">Toggle dark mode</button>
+  <label for="url">WebSocket URL</label>
+  <input id="url" value="ws://localhost:9999/chromite/">
+  <button id="connect">Connect</button>
+  <button id="disconnect" disabled>Disconnect</button>
+  <p id="status">Disconnected</p>
+  <label for="message">Decision-model request (JSON)</label>
+  <textarea id="message">{
+  "model": "YOUR_MODEL_ID",
+  "state": "You are Chromite, a small pet.",
+  "questions": {
+    "chill": {
+      "type": "noul",
+      "instructions": "Should Chromite relax?"
+    }
+  }
+}</textarea>
+  <button id="send" disabled>Send</button>
+  <h2>Responses</h2>
+  <pre id="responses"></pre>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decision model links</title>
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+  <h1>Decision model links</h1>
+  <ul>
+    <li>
+      <a href="{{ url_for('prompt_ui') }}">{{ url_for('prompt_ui') }}</a>
+      &mdash; Prompt runner
+    </li>
+    <li>
+      <a href="{{ url_for('websocket_ui') }}">{{ url_for('websocket_ui') }}</a>
+      &mdash; WebSocket text demo
+    </li>
+    <li>
+      <a href="{{ url_for('websocket_images_ui') }}">
+        {{ url_for('websocket_images_ui') }}
+      </a> &mdash; WebSocket image demo
+    </li>
+    <li>
+      <a href="{{ url_for('health') }}">{{ url_for('health') }}</a>
+      &mdash; Server health
+    </li>
+    <li>
+      <a href="{{ url_for('list_models') }}">{{ url_for('list_models') }}</a>
+      &mdash; Local models
+    </li>
+    <li>
+      <a href="{{ url_for('ui_lm_studio_models') }}">
+        {{ url_for('ui_lm_studio_models') }}
+      </a> &mdash; LM Studio models
+    </li>
+  </ul>
+</body>
+</html>

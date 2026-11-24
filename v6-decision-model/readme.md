@@ -97,6 +97,32 @@ can override the defaults.
 
 ## Host the Transformers model
 
+To run the local model server and WebSocket proxy together on Windows,
+double-click [run_server_and_ws.bat](./run_server_and_ws.bat). Alternatively,
+run `python run_server_and_ws.py` with Python 3.10 through 3.14. The launcher
+creates the shared `env/` and installs missing dependencies as needed. The
+proxy forwards to the local model server (port 8430, or `D1_PORT` if set),
+regardless of its configured remote endpoint.
+
+The launcher skips servers already running or starting. It checks the model
+health endpoint and the WebSocket handshake; another WebSocket service on the
+configured port is indistinguishable from the proxy. Re-running it starts only
+missing services. Keep each launcher window open: Ctrl+C or closing it stops
+the servers started in that window, not servers it skipped. First model startup
+can take time to download and load the model. Startup errors are printed.
+
+Open `http://localhost:8430/` for links to the available pages and
+browser-accessible endpoints.
+
+With both servers running, open `http://localhost:8430/ws/ui/` for the
+WebSocket text demo or `http://localhost:8430/ws/images-ui` for the image
+demo. These Flask templates are separate copies of the standalone proxy pages
+and share CSS and JavaScript in `static/`. Replace `8430` with `D1_PORT` if
+configured. The pages default to
+`ws://localhost:9999/chromite/`; edit that address if the proxy uses another
+host, port, or prompt. By default the proxy is accessible only on the same
+machine as the browser.
+
 On the Windows host with an RTX 5060, run:
 
 ```powershell
