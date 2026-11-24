@@ -6,6 +6,7 @@ const disconnect = document.querySelector("#disconnect");
 const send = document.querySelector("#send");
 const message = document.querySelector("#message");
 const image = document.querySelector("#image");
+const clearImage = document.querySelector("#clear-image");
 const prompt = document.querySelector("#prompt");
 const promptContent = document.querySelector("#prompt-content");
 const state = document.querySelector("#state");
@@ -33,6 +34,19 @@ theme.onclick = () => {
   setTheme(currentTheme === "dark" ? "light" : "dark");
   localStorage.setItem("websocket-proxy-theme", currentTheme);
 };
+
+if (image && clearImage) {
+  const updateClearImageButton = () => {
+    clearImage.disabled = !image.files.length;
+  };
+  image.onchange = updateClearImageButton;
+  clearImage.onclick = () => {
+    image.value = "";
+    updateClearImageButton();
+    status.textContent = "Image selection cleared";
+  };
+  updateClearImageButton();
+}
 
 function updatePromptUrl() {
   const address = new URL(url.value);
@@ -139,7 +153,11 @@ send.onclick = () => {
     const reader = new FileReader();
     reader.onerror = () => { status.textContent = "Could not read image"; };
     reader.onload = () => {
-      const payload = JSON.stringify({image: reader.result});
+      const message = {image: reader.result};
+      if (state && state.value.trim()) {
+        message.state = state.value;
+      }
+      const payload = JSON.stringify(message);
       if (new Blob([payload]).size > 64 * 1024 * 1024) {
         status.textContent = "Image message exceeds the 64 MiB limit";
         return;
@@ -149,7 +167,8 @@ send.onclick = () => {
         return;
       }
       connection.send(payload);
-      status.textContent = "Image sent";
+      status.textContent = message.state
+        ? "Image and text sent" : "Image sent";
     };
     reader.readAsDataURL(file);
     return;

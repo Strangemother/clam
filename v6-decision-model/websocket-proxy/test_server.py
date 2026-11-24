@@ -305,9 +305,16 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             await socket.send('{"image": null}')
             result = json.loads(await socket.recv())
             self.assertIn("'image' must be", result["error"])
-            await socket.send(json.dumps({"image": image}))
+            await socket.send(json.dumps({
+                "image": image,
+                "state": "Look for the red ball",
+            }))
             result = json.loads(await socket.recv())
             self.assertEqual(result["received"]["images"], [image])
+            self.assertEqual(
+                result["received"]["state"],
+                "chromite\n\nClient message: Look for the red ball",
+            )
 
     async def test_image_uses_configured_model_and_live_prompt_setting(self):
         prompt = Path(self.prompts.name) / "chromite.d.yaml"

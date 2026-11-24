@@ -91,6 +91,16 @@ class WebSocketUITests(unittest.TestCase):
         self.assertIn('id="image" type="file"', html)
         self.assertIn("/ui/api/prompts/prompt-placeholder", html)
 
+    def test_image_pages_include_clear_button(self):
+        for path in ("/ws/images-ui", "/ws/yaml-ui"):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(
+                    'id="clear-image" type="button" disabled',
+                    response.get_data(as_text=True),
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

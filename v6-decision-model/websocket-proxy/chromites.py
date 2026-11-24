@@ -111,13 +111,19 @@ class Chromite:
             raise RuntimeError(f"Could not load local image: {exc}") from exc
 
     async def example_image_on_message(self, message):
-        """Send an image received from the browser to the model."""
+        """Send an image and optional client text to the model."""
         image = message.get("image")
         if not isinstance(image, str) or not image.startswith("data:image/"):
             raise ValueError("'image' must be an inline image data URL.")
+        state_text = message.get("state")
+        if "state" in message and not isinstance(state_text, str):
+            raise ValueError("'state' must be a string.")
         if self.live_prompt:
             self.load_prompt()
-        payload = self.format_payload(images=[image])
+        state = self.prompt["state"]
+        if state_text:
+            state = f"{state}\n\nClient message: {state_text}"
+        payload = self.format_payload(state=state, images=[image])
         result = await self.request_model(payload)
         await self.to_client(result)
         return None
