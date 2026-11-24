@@ -2,6 +2,11 @@
 
 - https://huggingface.co/LiquidAI/d1-Omni-2B
 
+## WebSocket proxy
+
+See [websocket-proxy](./websocket-proxy/README.md) for a local WebSocket
+client and transparent decision-model proxy.
+
 ## Ask the decision model through LM Studio
 
 From the repository root, run [ask_lmstudio.py](./ask_lmstudio.py). It uses
