@@ -16,15 +16,14 @@ Set `--base-url` to the HTTP server hosting the decision model. It defaults to
 requires authentication, set `LM_STUDIO_API_TOKEN` on the proxy host.
 
 Open [index.html](./index.html) in a browser on the same machine and connect to
-`ws://localhost:9999/chromite/`. The page supports light and dark modes. Replace
-`YOUR_MODEL_ID` with a loaded model ID and send the JSON request.
+`ws://localhost:9999/chromite/`. The page supports light and dark modes.
 
 The connection path selects a prompt in `../prompts/`: for example,
 `/chromite-3` or `/chromite-3/` loads `chromite-3.d.yaml`. The file must
 already exist. Each connection creates a separate `Chromite` instance in
 [chromites.py](./chromites.py), with `client`, `path`, `prompt_path`, and
 the loaded `prompt` available to its `on_create`, `on_message`, and `on_close`
-hooks. `on_message` receives a JSON object and returns the object to forward.
+hooks. `on_message` receives a JSON object and may return an object to forward.
 The hooks can be extended for per-connection state. `on_create` and `on_close`
 are synchronous; `on_message` may also be asynchronous.
 Call `self.to_client({"event": "ready"})` in a hook to send JSON directly to
@@ -35,28 +34,18 @@ when its ordering relative to that request matters.
 The client must still be connected: `on_close` runs after it disconnects.
 JSON serialization errors are raised immediately and send failures are logged.
 
-By default, each message must be a complete JSON object accepted by the HTTP
-server's
-`/v1/systemone` endpoint. The prompt is loaded for your extensions but is not
-automatically applied to the request. The proxy forwards the request unchanged
-and returns the endpoint's JSON response. Invalid requests and endpoint errors
-return `{"error": "..."}`. If the prompt cannot be loaded, the proxy sends an
-error and closes the connection.
+By default, messages containing `image` use the image example below; other
+messages use `example_on_message`. Invalid requests and endpoint errors return
+`{"error": "..."}`. If the prompt cannot be loaded, the proxy sends an error
+and closes the connection.
 
 ## Building a request in the hook
 
 For a minimal client message such as `{"myfield": "Value"}`, see
-`example_on_message` in [chromites.py](./chromites.py). To enable it, replace
-the default `on_message` with:
-
-```python
-async def on_message(self, message):
-    return await self.example_on_message(message)
-```
-
-Replace `YOUR_MODEL_ID` in the example with your loaded model ID. The example
-uses the selected prompt's state and questions, adds the client value to the
-state, and shows the model, state, questions, and optional images fields.
+`example_on_message` in [chromites.py](./chromites.py). The example uses the
+selected prompt's state and questions, adds the client value to the state, and
+shows the model, state, questions, and optional images fields. Set the model in
+`format_payload` to your loaded model ID.
 Adapt these fields to the endpoint and your application; images, when used
 with the local decision-model server, must be inline image data URLs.
 
@@ -66,6 +55,22 @@ Modify `result` before `await self.to_client(result)` if needed. Returning
 second model request or send a duplicate response. A hook can instead return
 a request dict to use the default automatic forwarding. Invalid input and
 model request errors are sent to the client as `{"error": "..."}`.
+
+## Image examples
+
+Open [index-image.html](./index-image.html), connect, choose a JPEG, PNG, or
+WebP image, and send it. The browser reads the file as a base64 data URL and
+sends `{"image": "data:image/...;base64,..."}` over the WebSocket.
+`example_image_on_message` in [chromites.py](./chromites.py) adds it to the
+selected prompt's request and sends the model result back. The WebSocket
+message limit is 64 MiB, including JSON and base64 encoding.
+
+For an image already on the proxy host, put `my-image.jpg` in an `images`
+directory next to [chromites.py](./chromites.py), then use
+`self.example_load_local_image()` inside a hook. It returns an inline data URL
+that can be passed to `self.format_payload(images=[...])`. It reads relative
+to the Python file, not the current working directory. Change the example path
+in the method as needed; missing or unsupported files produce errors.
 
 The proxy listens on localhost only and has no authentication. It is a local
 proof of concept, not a public-facing service.

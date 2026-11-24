@@ -9,6 +9,7 @@ import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from prompt_utils import load_prompt
+from second import image_data_url
 from tools import make_headers, request_json
 
 
@@ -91,7 +92,30 @@ class Chromite:
         message yourself. This hook can also be async; see the example below.
         """
 
+        if "image" in message:
+            return await self.example_image_on_message(message)
         return await self.example_on_message(message)
+
+    def example_load_local_image(self):
+        """Load an image relative to this file as an inline data URL."""
+        try:
+            return image_data_url(
+                "./images/my-image.jpg", Path(__file__).resolve().parent
+            )
+        except OSError as exc:
+            raise RuntimeError(f"Could not load local image: {exc}") from exc
+
+    async def example_image_on_message(self, message):
+        """Send an image received from the browser to the model."""
+        image = message.get("image")
+        if not isinstance(image, str) or not image.startswith("data:image/"):
+            raise ValueError("'image' must be an inline image data URL.")
+        if self.live_prompt:
+            self.load_prompt()
+        payload = self.format_payload(images=[image])
+        result = await self.request_model(payload)
+        await self.to_client(result)
+        return None
 
     async def example_on_message(self, message):
         """Example: build a request, await the result, and send it yourself."""

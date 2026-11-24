@@ -17,6 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chromites import Chromite
 
 
+MAX_MESSAGE_BYTES = 64 * 1024 * 1024
+
+
 async def handle_client(websocket, base_url):
     try:
         chromite = Chromite(websocket, websocket.request.path)
@@ -59,6 +62,7 @@ async def run_server(base_url):
         partial(handle_client, base_url=base_url),
         "localhost",
         9999,
+        max_size=MAX_MESSAGE_BYTES,
     ):
         print("Listening on ws://localhost:9999/<prompt-name>/", flush=True)
         await asyncio.Future()

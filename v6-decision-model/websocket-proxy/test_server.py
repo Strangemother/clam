@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -13,7 +14,7 @@ from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosedError
 
 import chromites
-from server import handle_client
+from server import MAX_MESSAGE_BYTES, handle_client
 
 
 class RecordingChromite(chromites.Chromite):
@@ -86,6 +87,7 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             partial(handle_client, base_url=base_url),
             "127.0.0.1",
             0,
+            max_size=MAX_MESSAGE_BYTES,
         )
         port = self.proxy.sockets[0].getsockname()[1]
         self.url = f"ws://127.0.0.1:{port}"
@@ -225,6 +227,55 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                 await socket.send("{}")
                 result = json.loads(await socket.recv())
                 self.assertIn("HTTP 400", result["error"])
+
+    async def test_browser_image_reaches_model_and_returns_one_response(self):
+        image = "data:image/png;base64," + base64.b64encode(
+            b"\x89PNG\r\n\x1a\nexample"
+        ).decode("ascii")
+        async with connect(f"{self.url}/chromite/") as socket:
+            await socket.send(json.dumps({"image": image}))
+            result = json.loads(await socket.recv())
+            self.assertEqual(result["path"], "/v1/systemone")
+            self.assertEqual(result["received"]["images"], [image])
+            self.assertEqual(result["received"]["state"], "chromite")
+            self.assertEqual(result["answers"]["chill"]["noul"], 0.8)
+            with self.assertRaises(asyncio.TimeoutError):
+                await asyncio.wait_for(socket.recv(), timeout=0.1)
+
+            await socket.send('{"image": null}')
+            result = json.loads(await socket.recv())
+            self.assertIn("'image' must be", result["error"])
+            await socket.send(json.dumps({"image": image}))
+            result = json.loads(await socket.recv())
+            self.assertEqual(result["received"]["images"], [image])
+
+    async def test_local_image_is_loaded_relative_to_chromites(self):
+        instance = chromites.Chromite(None, "/chromite")
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            (base / "images").mkdir()
+            content = b"\xff\xd8\xffexample"
+            (base / "images" / "my-image.jpg").write_bytes(content)
+            with patch.object(chromites, "__file__", str(base / "chromites.py")):
+                self.assertEqual(
+                    instance.example_load_local_image(),
+                    "data:image/jpeg;base64,"
+                    + base64.b64encode(content).decode("ascii"),
+                )
+                (base / "images" / "my-image.jpg").unlink()
+                with self.assertRaisesRegex(RuntimeError, "Could not load"):
+                    instance.example_load_local_image()
+
+    async def test_image_message_can_exceed_default_websocket_limit(self):
+        image = "data:image/png;base64," + base64.b64encode(
+            b"\x89PNG\r\n\x1a\n" + b"x" * (1024 * 1024)
+        ).decode("ascii")
+        async with connect(
+            f"{self.url}/chromite/", max_size=MAX_MESSAGE_BYTES
+        ) as socket:
+            await socket.send(json.dumps({"image": image}))
+            result = json.loads(await socket.recv())
+            self.assertEqual(result["received"]["images"], [image])
 
 
 if __name__ == "__main__":
