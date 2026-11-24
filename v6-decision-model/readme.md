@@ -116,7 +116,11 @@ browser-accessible endpoints.
 
 With both servers running, open `http://localhost:8430/ws/ui/` for the
 WebSocket text demo or `http://localhost:8430/ws/images-ui` for the image
-demo. These Flask templates are separate copies of the standalone proxy pages
+demo. At `http://localhost:8430/ws/yaml-ui`, select a prompt to view its YAML,
+connect, and send state text. The selected filename determines the WebSocket
+path; reconnect to switch prompts. The proxy appends the text to the prompt's
+state and uses its questions. Responses are formatted as indented JSON.
+These Flask templates are separate copies of the standalone proxy pages
 and share CSS and JavaScript in `static/`. Replace `8430` with `D1_PORT` if
 configured. The pages default to
 `ws://localhost:9999/chromite/`; edit that address if the proxy uses another

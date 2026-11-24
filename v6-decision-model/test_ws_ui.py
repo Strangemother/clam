@@ -26,6 +26,7 @@ class IndexTests(unittest.TestCase):
             "/ui",
             "/ws/ui/",
             "/ws/images-ui",
+            "/ws/yaml-ui",
             "/health",
             "/api/v1/models",
             "/ui/lm-studio/models",
@@ -49,6 +50,8 @@ class WebSocketUITests(unittest.TestCase):
             ("/ws/ui/", 'id="message"'),
             ("/ws/images-ui", 'id="image"'),
             ("/ws/images-ui/", 'id="image"'),
+            ("/ws/yaml-ui", 'id="state"'),
+            ("/ws/yaml-ui/", 'id="state"'),
         )
         for path, control in cases:
             with self.subTest(path=path):
@@ -76,6 +79,13 @@ class WebSocketUITests(unittest.TestCase):
     def test_existing_prompt_ui_remains_available(self):
         response = self.client.get("/ui")
         self.assertEqual(response.status_code, 200)
+
+    def test_yaml_page_lists_existing_prompts(self):
+        response = self.client.get("/ws/yaml-ui")
+        html = response.get_data(as_text=True)
+        self.assertIn('value="chromite.d.yaml"', html)
+        self.assertIn('id="prompt-content" readonly', html)
+        self.assertIn("/ui/api/prompts/prompt-placeholder", html)
 
 
 if __name__ == "__main__":

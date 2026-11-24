@@ -30,7 +30,9 @@ Open [index.html](./index.html) in a browser on the same machine and connect to
 `ws://localhost:9999/chromite/`. The page supports light and dark modes.
 When both servers are running, Flask also serves copies of these pages at
 `http://localhost:8430/ws/ui/` and
-`http://localhost:8430/ws/images-ui`. Use the configured `D1_PORT` instead
+`http://localhost:8430/ws/images-ui`. The Flask-only
+`http://localhost:8430/ws/yaml-ui` selects and displays a prompt and sends
+state text. Use the configured `D1_PORT` instead
 of `8430` if it differs. These pages use the same editable WebSocket URL as
 the local files; the proxy listens only on localhost by default.
 
@@ -54,6 +56,10 @@ By default, messages containing `image` use the image example below; other
 messages use `example_on_message`. Invalid requests and endpoint errors return
 `{"error": "..."}`. If the prompt cannot be loaded, the proxy sends an error
 and closes the connection.
+
+The YAML page sends `{"state": "..."}`. The default hook appends that text
+as a client message to the selected prompt's state and uses its questions.
+It sends both the constructed request and the model response to the client.
 
 ## Building a request in the hook
 

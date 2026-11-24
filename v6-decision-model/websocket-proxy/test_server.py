@@ -188,6 +188,29 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
                         await socket.recv()
                     self.assertEqual(error.exception.rcvd.code, 1008)
 
+    async def test_state_message_uses_selected_prompt(self):
+        async with connect(f"{self.url}/chromite-3/") as socket:
+            await socket.send(json.dumps({"state": "A bird appears"}))
+            payload = json.loads(await socket.recv())
+            self.assertEqual(
+                payload["state"], "chromite-3\n\nClient message: A bird appears"
+            )
+            self.assertEqual(payload["questions"], {"chill": {"type": "noul"}})
+            result = json.loads(await socket.recv())
+            self.assertEqual(result["received"], payload)
+
+            await socket.send(json.dumps({"myfield": "Existing client"}))
+            legacy = json.loads(await socket.recv())
+            self.assertEqual(
+                legacy["state"],
+                "chromite-3\n\nClient message: Existing client",
+            )
+            self.assertEqual(json.loads(await socket.recv())["received"], legacy)
+
+            await socket.send('{"state": 1}')
+            error = json.loads(await socket.recv())
+            self.assertIn("'state' must be a string", error["error"])
+
     async def test_hooks_send_json_before_model_response(self):
         class SendingChromite(RecordingChromite):
             def on_create(self):

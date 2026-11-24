@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebSocket YAML prompt</title>
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='websocket_demo.css') }}">
+  <script src="{{ url_for('static', filename='websocket_demo.js') }}"
+          defer></script>
+</head>
+<body>
+  <h1>WebSocket YAML prompt</h1>
+  <button id="theme" type="button">Toggle dark mode</button>
+  <label for="prompt">Prompt</label>
+  <select id="prompt"
+          data-url="{{ url_for('ui_prompt_details',
+                               prompt_name='prompt-placeholder') }}">
+    <option value="">Select a prompt</option>
+    {% for prompt in prompts %}
+    <option value="{{ prompt }}">{{ prompt }}</option>
+    {% endfor %}
+  </select>
+  <label for="prompt-content">Prompt YAML</label>
+  <textarea id="prompt-content" readonly></textarea>
+  <label for="url">WebSocket URL</label>
+  <input id="url" value="ws://localhost:9999/chromite/">
+  <button id="connect" type="button">Connect</button>
+  <button id="disconnect" type="button" disabled>Disconnect</button>
+  <p id="status">Disconnected</p>
+  <label for="state">State text</label>
+  <textarea id="state"></textarea>
+  <button id="send" type="button" disabled>Send</button>
+  <h2>Responses</h2>
+  <pre id="responses"></pre>
+</body>
+</html>

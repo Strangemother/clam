@@ -6,6 +6,9 @@ const disconnect = document.querySelector("#disconnect");
 const send = document.querySelector("#send");
 const message = document.querySelector("#message");
 const image = document.querySelector("#image");
+const prompt = document.querySelector("#prompt");
+const promptContent = document.querySelector("#prompt-content");
+const state = document.querySelector("#state");
 const status = document.querySelector("#status");
 const responses = document.querySelector("#responses");
 const theme = document.querySelector("#theme");
@@ -15,6 +18,8 @@ let currentTheme = storedTheme || (
     ? "dark" : "light"
 );
 let socket;
+let promptRequest = 0;
+let promptLoaded = false;
 
 function setTheme(value) {
   currentTheme = value;
@@ -29,14 +34,55 @@ theme.onclick = () => {
   localStorage.setItem("websocket-proxy-theme", currentTheme);
 };
 
+if (prompt) {
+  prompt.onchange = async () => {
+    const request = ++promptRequest;
+    promptLoaded = false;
+    promptContent.value = "";
+    if (!prompt.value) {
+      status.textContent = "Select a prompt";
+      return;
+    }
+    status.textContent = "Loading prompt...";
+    try {
+      const endpoint = prompt.dataset.url.replace(
+        "prompt-placeholder", encodeURIComponent(prompt.value)
+      );
+      const response = await fetch(endpoint);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Could not load prompt");
+      }
+      if (request !== promptRequest) return;
+      promptContent.value = data.yaml;
+      promptLoaded = true;
+      status.textContent = "Prompt loaded";
+    } catch (error) {
+      if (request === promptRequest) {
+        status.textContent = `Could not load prompt: ${error.message}`;
+      }
+    }
+  };
+}
+
 connect.onclick = () => {
+  if (prompt && !promptLoaded) {
+    status.textContent = "Select and load a prompt first";
+    return;
+  }
   try {
+    if (prompt) {
+      const address = new URL(url.value);
+      address.pathname = `/${prompt.value.slice(0, -7)}/`;
+      url.value = address.toString();
+    }
     socket = new WebSocket(url.value);
   } catch (error) {
     status.textContent = `Connection error: ${error.message}`;
     return;
   }
   connect.disabled = true;
+  if (prompt) prompt.disabled = true;
   status.textContent = "Connecting...";
   socket.onopen = () => {
     status.textContent = "Connected";
@@ -44,7 +90,13 @@ connect.onclick = () => {
     send.disabled = false;
   };
   socket.onmessage = event => {
-    responses.textContent += `${event.data}\n`;
+    let output = event.data;
+    try {
+      output = JSON.stringify(JSON.parse(event.data), null, 4);
+    } catch (error) {
+      // Non-JSON messages are displayed unchanged.
+    }
+    responses.textContent += `${output}\n`;
   };
   socket.onerror = () => { status.textContent = "WebSocket error"; };
   socket.onclose = event => {
@@ -53,10 +105,16 @@ connect.onclick = () => {
     connect.disabled = false;
     disconnect.disabled = true;
     send.disabled = true;
+    if (prompt) prompt.disabled = false;
   };
 };
 disconnect.onclick = () => socket.close();
 send.onclick = () => {
+  if (state) {
+    socket.send(JSON.stringify({state: state.value}));
+    status.textContent = "Connected";
+    return;
+  }
   if (message) {
     try {
       JSON.parse(message.value);

@@ -298,6 +298,17 @@ def websocket_images_ui():
     return render_template("websocket_images_ui.html")
 
 
+@app.get("/ws/yaml-ui", strict_slashes=False)
+def websocket_yaml_ui():
+    return render_template(
+        "websocket_yaml_ui.html",
+        prompts=[
+            name for name in available_prompts()
+            if valid_prompt_filename(name)
+        ],
+    )
+
+
 @app.get("/ui")
 def prompt_ui():
     return render_template(

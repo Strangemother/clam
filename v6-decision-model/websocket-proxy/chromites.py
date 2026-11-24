@@ -95,6 +95,10 @@ class Chromite:
 
         if "image" in message:
             return await self.example_image_on_message(message)
+        if "state" in message:
+            if not isinstance(message["state"], str):
+                raise ValueError("'state' must be a string.")
+            return await self.example_on_message({"myfield": message["state"]})
         return await self.example_on_message(message)
 
     def example_load_local_image(self):
