@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chromite WebSocket</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f4f6f8;
+      --surface: #ffffff;
+      --text: #17212b;
+      --border: #ccd5de;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --background: #111820;
+      --surface: #1b2631;
+      --text: #e7edf3;
+      --border: #415160;
+    }
+    body { font: 16px sans-serif; max-width: 760px; margin: 2rem auto;
+           padding: 0 1rem; background: var(--background); color: var(--text); }
+    textarea, input { box-sizing: border-box; width: 100%; font: inherit;
+                      background: var(--surface); color: var(--text);
+                      border: 1px solid var(--border); padding: .5rem; }
+    textarea { min-height: 15rem; font-family: monospace; }
+    button { margin: .5rem .5rem .5rem 0; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>Chromite WebSocket</h1>
+  <button id="theme" type="button">Toggle dark mode</button>
+  <label for="url">WebSocket URL</label>
+  <input id="url" value="ws://localhost:9999/chromite/">
+  <button id="connect">Connect</button>
+  <button id="disconnect" disabled>Disconnect</button>
+  <p id="status">Disconnected</p>
+  <label for="message">Decision-model request (JSON)</label>
+  <textarea id="message">{
+  "model": "YOUR_MODEL_ID",
+  "state": "You are Chromite, a small pet.",
+  "questions": {
+    "chill": {
+      "type": "noul",
+      "instructions": "Should Chromite relax?"
+    }
+  }
+}</textarea>
+  <button id="send" disabled>Send</button>
+  <h2>Responses</h2>
+  <pre id="responses"></pre>
+  <script>
+    const url = document.querySelector("#url");
+    const connect = document.querySelector("#connect");
+    const disconnect = document.querySelector("#disconnect");
+    const send = document.querySelector("#send");
+    const status = document.querySelector("#status");
+    const responses = document.querySelector("#responses");
+    const theme = document.querySelector("#theme");
+    const storedTheme = localStorage.getItem("websocket-proxy-theme");
+    let currentTheme = storedTheme || (
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark" : "light"
+    );
+    let socket;
+
+    function setTheme(value) {
+      currentTheme = value;
+      document.documentElement.dataset.theme = value;
+      theme.textContent = value === "dark"
+        ? "Use light mode" : "Use dark mode";
+    }
+
+    setTheme(currentTheme);
+    theme.onclick = () => {
+      setTheme(currentTheme === "dark" ? "light" : "dark");
+      localStorage.setItem("websocket-proxy-theme", currentTheme);
+    };
+
+    connect.onclick = () => {
+      try {
+        socket = new WebSocket(url.value);
+      } catch (error) {
+        status.textContent = `Connection error: ${error.message}`;
+        return;
+      }
+      connect.disabled = true;
+      status.textContent = "Connecting...";
+      socket.onopen = () => {
+        status.textContent = "Connected";
+        disconnect.disabled = false;
+        send.disabled = false;
+      };
+      socket.onmessage = event => {
+        responses.textContent += `${event.data}\n`;
+      };
+      socket.onerror = () => { status.textContent = "WebSocket error"; };
+      socket.onclose = event => {
+        status.textContent = `Disconnected${event.reason
+          ? `: ${event.reason}` : ""}`;
+        connect.disabled = false;
+        disconnect.disabled = true;
+        send.disabled = true;
+      };
+    };
+    disconnect.onclick = () => socket.close();
+    send.onclick = () => {
+      const message = document.querySelector("#message").value;
+      try {
+        JSON.parse(message);
+      } catch (error) {
+        status.textContent = `Invalid JSON: ${error.message}`;
+        return;
+      }
+      socket.send(message);
+      status.textContent = "Connected";
+    };
+  </script>
+</body>
+</html>
