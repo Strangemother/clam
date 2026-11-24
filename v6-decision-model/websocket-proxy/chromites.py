@@ -105,6 +105,7 @@ class Chromite:
         state = f"{self.prompt['state']}\n\nClient message: {value}"
         payload = self.format_payload(state=state)
         print('Payload ready:\n', payload)
+        await self.to_client(payload)
         result = await self.request_model(payload)
         await self.to_client(result)
         return None

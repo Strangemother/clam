@@ -107,6 +107,6 @@ def if_split(text: str) -> str:
 
     ww = text.split()
     if ww[0] not in actions:
-        return 'error("unknown action")'
+        return f'error("unknown action", {ww[0]})'
     res = f"{ww[0]}({', '.join(ww[1:])})"
     return res

@@ -1,0 +1,14 @@
+# Count cats and locate the remote in the attached image.
+#   python3 v6/second.py v6/prompts/cats.d.yaml
+#   python3 v6/second.py v6/prompts/cats.d.yaml --image ./local.jpg
+state: >
+  Inspect the image and answer the visual questions about its contents.
+
+questions:
+  target:
+    type: box
+    instructions: "identify self"
+
+examples:
+  - image: ./polyworld.png
+    # text: "Two cats on a sofa."

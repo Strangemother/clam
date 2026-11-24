@@ -76,4 +76,4 @@ def load_vad() -> None:
 
 if __name__ == "__main__":
     load_vad()
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="127.0.0.1", port=9101, debug=True)

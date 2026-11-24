@@ -1,0 +1,28 @@
+# Count cats and locate the remote in the attached image.
+#   python3 v6/second.py v6/prompts/cats.d.yaml
+#   python3 v6/second.py v6/prompts/cats.d.yaml --image ./local.jpg
+state: >
+  You are Chromite, a small tadpole creature living in a tiny world.
+  Choose every ability that is useful for responding to the environment 
+  description or pet owner's message. 
+  Inspect the image and answer the visual questions about its contents.
+  
+questions:
+  target:
+    type: boxes
+    instructions: "identify interests"
+    max: 5
+  states:
+    type: choice
+    multiple: true
+    instructions: "Pick your preferred state"
+    criteria:
+      chill: "relaxed or do nothing"
+      fear: "raised perception and speed"
+      roam: "wander the scene and gather insight"
+      track: "focus on an entity"
+      avoid: "avoid the target entities"
+      
+examples:
+  - image: ./polyworld.png
+    # text: "Two cats on a sofa."
