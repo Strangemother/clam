@@ -11,9 +11,20 @@ python3 v6-decision-model/websocket-proxy/server.py \
   --base-url http://127.0.0.1:8000
 ```
 
-Set `--base-url` to the HTTP server hosting the decision model. It defaults to
-`LM_STUDIO_BASE_URL`, or `http://192.168.50.60:1234` if unset. If LM Studio
-requires authentication, set `LM_STUDIO_API_TOKEN` on the proxy host.
+Edit [settings.py](./settings.py) to configure:
+
+- `MODEL`: model ID included in requests built by the example hooks.
+- `DECISION_MODEL_ENDPOINT`: HTTP server base URL, without `/v1/systemone`.
+- `HOST` and `PORT`: WebSocket listening address and port.
+- `MAX_MESSAGE_BYTES`: maximum incoming WebSocket message size, including
+  JSON and base64. The image example page also has a 64 MiB limit.
+- `PROMPTS_DIR`: directory containing the `*.d.yaml` prompt files.
+- `LIVE_PROMPT`: reload the selected prompt before each example request.
+
+Restart the proxy after editing settings. `--base-url` overrides
+`LM_STUDIO_BASE_URL`, which overrides `DECISION_MODEL_ENDPOINT`. If the
+endpoint requires authentication, set `LM_STUDIO_API_TOKEN` on the proxy
+host; do not put tokens in settings.
 
 Open [index.html](./index.html) in a browser on the same machine and connect to
 `ws://localhost:9999/chromite/`. The page supports light and dark modes.
@@ -44,8 +55,8 @@ and closes the connection.
 For a minimal client message such as `{"myfield": "Value"}`, see
 `example_on_message` in [chromites.py](./chromites.py). The example uses the
 selected prompt's state and questions, adds the client value to the state, and
-shows the model, state, questions, and optional images fields. Set the model in
-`format_payload` to your loaded model ID.
+shows the model, state, questions, and optional images fields. Set `MODEL` in
+`settings.py` to your loaded model ID.
 Adapt these fields to the endpoint and your application; images, when used
 with the local decision-model server, must be inline image data URLs.
 
@@ -63,7 +74,28 @@ WebP image, and send it. The browser reads the file as a base64 data URL and
 sends `{"image": "data:image/...;base64,..."}` over the WebSocket.
 `example_image_on_message` in [chromites.py](./chromites.py) adds it to the
 selected prompt's request and sends the model result back. The WebSocket
-message limit is 64 MiB, including JSON and base64 encoding.
+message limit defaults to 64 MiB, including JSON and base64 encoding.
+
+For prompts such as [woman.d.yaml](../prompts/woman.d.yaml), use the local
+Transformers decision-model server, not the default LM Studio endpoint.
+LM Studio's `/v1/systemone` accepts `choice`, `score`, and `noul` questions,
+but rejects the prompt's `number`, `box`, and `boxes` types. Replacing those
+types would change the requested answers rather than fix image inference.
+
+Start the model server as described in the
+[parent README](../readme.md#host-the-transformers-model). Then start the
+proxy with the model host's address, for example:
+
+```bash
+python3 v6-decision-model/websocket-proxy/server.py \
+  --base-url http://HOST_IP:8000
+```
+
+Use `127.0.0.1` instead of `HOST_IP` if both servers run on the same host.
+Check `http://HOST_IP:8000/health` and wait for `model_loaded: true`, then
+connect the image page to `ws://localhost:9999/woman/`. The `--base-url`
+option overrides `LM_STUDIO_BASE_URL`; the WebSocket URL remains local to
+the browser's machine.
 
 For an image already on the proxy host, put `my-image.jpg` in an `images`
 directory next to [chromites.py](./chromites.py), then use
@@ -72,5 +104,6 @@ that can be passed to `self.format_payload(images=[...])`. It reads relative
 to the Python file, not the current working directory. Change the example path
 in the method as needed; missing or unsupported files produce errors.
 
-The proxy listens on localhost only and has no authentication. It is a local
-proof of concept, not a public-facing service.
+The proxy listens on localhost by default and has no authentication. It is a
+local proof of concept, not a public-facing service; changing `HOST` can
+expose it to other machines.

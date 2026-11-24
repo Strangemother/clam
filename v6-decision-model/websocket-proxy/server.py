@@ -15,9 +15,10 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chromites import Chromite
+import settings
 
 
-MAX_MESSAGE_BYTES = 64 * 1024 * 1024
+MAX_MESSAGE_BYTES = settings.MAX_MESSAGE_BYTES
 
 
 async def handle_client(websocket, base_url):
@@ -60,11 +61,15 @@ async def handle_client(websocket, base_url):
 async def run_server(base_url):
     async with serve(
         partial(handle_client, base_url=base_url),
-        "localhost",
-        9999,
+        settings.HOST,
+        settings.PORT,
         max_size=MAX_MESSAGE_BYTES,
     ):
-        print("Listening on ws://localhost:9999/<prompt-name>/", flush=True)
+        print(
+            f"Listening on {settings.HOST}:{settings.PORT} "
+            "(path: /<prompt-name>/)",
+            flush=True,
+        )
         await asyncio.Future()
 
 
@@ -73,7 +78,7 @@ def main():
     parser.add_argument(
         "--base-url",
         default=os.environ.get(
-            "LM_STUDIO_BASE_URL", "http://192.168.50.60:1234"
+            "LM_STUDIO_BASE_URL", settings.DECISION_MODEL_ENDPOINT
         ),
         help="decision-model HTTP server URL",
     )

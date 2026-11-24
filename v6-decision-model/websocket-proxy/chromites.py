@@ -11,14 +11,15 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from prompt_utils import load_prompt
 from second import image_data_url
 from tools import make_headers, request_json
+import settings
 
 
-PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+PROMPTS_DIR = settings.PROMPTS_DIR
 logger = logging.getLogger(__name__)
 
 
 class Chromite:
-    live_prompt = True 
+    live_prompt = settings.LIVE_PROMPT
 
     def __init__(self, client, path):
         self.client = client
@@ -136,7 +137,7 @@ class Chromite:
 
     def format_payload(self, state=None, questions=None, images=None):
         return {
-            "model": "d1-Omni-2B",
+            "model": settings.MODEL,
             "state": state or self.prompt['state'],
             "questions": questions or self.prompt["questions"],
             "images": images or [],

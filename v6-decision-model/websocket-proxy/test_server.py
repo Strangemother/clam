@@ -3,18 +3,55 @@ import base64
 from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
+import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from websockets.asyncio.client import connect
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosedError
 
 import chromites
+import server
+import settings
 from server import MAX_MESSAGE_BYTES, handle_client
+
+
+class SettingsTests(unittest.TestCase):
+    def test_endpoint_override_precedence(self):
+        cases = (
+            ([], {}, "http://settings:8000"),
+            (
+                [],
+                {"LM_STUDIO_BASE_URL": "http://env:1234"},
+                "http://env:1234",
+            ),
+            (
+                ["--base-url", "http://cli:9000/"],
+                {"LM_STUDIO_BASE_URL": "http://env:1234"},
+                "http://cli:9000",
+            ),
+        )
+        for args, environ, expected in cases:
+            with self.subTest(args=args, environ=environ):
+                with (
+                    patch.object(
+                        settings, "DECISION_MODEL_ENDPOINT",
+                        "http://settings:8000",
+                    ),
+                    patch.dict(os.environ, environ, clear=True),
+                    patch.object(sys, "argv", ["server.py", *args]),
+                    patch.object(
+                        server, "run_server", new_callable=MagicMock
+                    ) as run_server,
+                    patch.object(server.asyncio, "run"),
+                ):
+                    server.main()
+                run_server.assert_called_once_with(expected)
 
 
 class RecordingChromite(chromites.Chromite):
@@ -248,6 +285,48 @@ class ProxyTests(unittest.IsolatedAsyncioTestCase):
             await socket.send(json.dumps({"image": image}))
             result = json.loads(await socket.recv())
             self.assertEqual(result["received"]["images"], [image])
+
+    async def test_image_uses_configured_model_and_live_prompt_setting(self):
+        prompt = Path(self.prompts.name) / "chromite.d.yaml"
+        image = "data:image/png;base64,example"
+        with patch.object(settings, "MODEL", "configured-model"):
+            async with connect(f"{self.url}/chromite/") as socket:
+                prompt.write_text(
+                    "state: updated\nquestions:\n  chill:\n    type: noul\n",
+                    encoding="utf-8",
+                )
+                await socket.send(json.dumps({"image": image}))
+                result = json.loads(await socket.recv())
+                self.assertEqual(
+                    result["received"]["model"], "configured-model"
+                )
+                self.assertEqual(result["received"]["state"], "updated")
+
+            with patch.object(chromites.Chromite, "live_prompt", False):
+                async with connect(f"{self.url}/chromite/") as socket:
+                    prompt.write_text(
+                        "state: changed\nquestions:\n  chill:\n"
+                        "    type: noul\n",
+                        encoding="utf-8",
+                    )
+                    await socket.send(json.dumps({"image": image}))
+                    result = json.loads(await socket.recv())
+                    self.assertEqual(result["received"]["state"], "updated")
+
+    async def test_listener_uses_configured_host_port_and_message_limit(self):
+        with (
+            patch.object(settings, "HOST", "127.0.0.1"),
+            patch.object(settings, "PORT", 4321),
+            patch.object(server, "MAX_MESSAGE_BYTES", 1234),
+            patch.object(server, "serve", side_effect=RuntimeError("stop"))
+            as serve_mock,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "stop"):
+                await server.run_server("http://model")
+        args, kwargs = serve_mock.call_args
+        self.assertEqual(args[1:], ("127.0.0.1", 4321))
+        self.assertEqual(kwargs["max_size"], 1234)
+        self.assertEqual(args[0].keywords["base_url"], "http://model")
 
     async def test_local_image_is_loaded_relative_to_chromites(self):
         instance = chromites.Chromite(None, "/chromite")
