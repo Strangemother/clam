@@ -4,6 +4,7 @@
 import argparse
 import asyncio
 from functools import partial
+import inspect
 import json
 import os
 from pathlib import Path
@@ -14,7 +15,6 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chromites import Chromite
-from tools import make_headers, request_json
 
 
 async def handle_client(websocket, base_url):
@@ -25,6 +25,7 @@ async def handle_client(websocket, base_url):
         await websocket.close(code=1008, reason="Could not load prompt")
         return
 
+    chromite.base_url = base_url.rstrip("/")
     try:
         chromite.on_create()
         await chromite._flush_client_sends()
@@ -35,16 +36,17 @@ async def handle_client(websocket, base_url):
                     raise ValueError("Request must be a JSON object.")
                 try:
                     payload = chromite.on_message(payload)
+                    if inspect.isawaitable(payload):
+                        payload = await payload
                 finally:
                     await chromite._flush_client_sends()
+                if payload is None:
+                    continue
                 if not isinstance(payload, dict):
-                    raise ValueError("Message hook must return a JSON object.")
-                response = await asyncio.to_thread(
-                    request_json,
-                    f"{base_url}/v1/systemone",
-                    make_headers(),
-                    payload,
-                )
+                    raise ValueError(
+                        "Message hook must return a JSON object or None."
+                    )
+                response = await chromite.request_model(payload)
             except (ValueError, UnicodeDecodeError, RuntimeError) as exc:
                 response = {"error": str(exc)}
             await websocket.send(json.dumps(response))
