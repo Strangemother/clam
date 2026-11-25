@@ -89,6 +89,8 @@ class WebSocketUITests(unittest.TestCase):
         self.assertIn('value="chromite.d.yaml"', html)
         self.assertIn('id="prompt-content" readonly', html)
         self.assertIn('id="image" type="file"', html)
+        self.assertIn('id="websocket-example"', html)
+        self.assertIn('JSON.stringify({state: stateText, image})', html)
         self.assertIn("/ui/api/prompts/prompt-placeholder", html)
 
     def test_image_pages_include_clear_button(self):

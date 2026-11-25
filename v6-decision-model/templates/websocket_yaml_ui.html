@@ -36,5 +36,28 @@
   <button id="send" type="button" disabled>Send</button>
   <h2>Responses</h2>
   <pre id="responses"></pre>
+  <details>
+    <summary>JavaScript example</summary>
+    <pre id="websocket-example"><code>(async () =&gt; {
+  const imageFile = document.querySelector("#image").files[0];
+  const stateText = document.querySelector("#state").value;
+  if (!imageFile) throw new Error("Choose an image first.");
+
+  const image = await new Promise((resolve, reject) =&gt; {
+    const reader = new FileReader();
+    reader.onload = () =&gt; resolve(reader.result);
+    reader.onerror = () =&gt; reject(reader.error);
+    reader.readAsDataURL(imageFile);
+  });
+
+  const socket = new WebSocket("ws://localhost:9999/chromite/");
+  socket.addEventListener("open", () =&gt; {
+    socket.send(JSON.stringify({state: stateText, image}));
+  });
+  socket.addEventListener("message", ({data}) =&gt; {
+    console.log("WebSocket response:", data);
+  });
+})();</code></pre>
+  </details>
 </body>
 </html>
