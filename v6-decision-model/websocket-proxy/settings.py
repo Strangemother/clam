@@ -4,7 +4,7 @@ from pathlib import Path
 
 # model settings
 MODEL = "d1-Omni-2B"
-DECISION_MODEL_ENDPOINT = "http://192.168.50.60:1234"
+DECISION_MODEL_ENDPOINT = "http://127.0.0.1:8430"
 
 # prompt dir
 # where prompt files are stored

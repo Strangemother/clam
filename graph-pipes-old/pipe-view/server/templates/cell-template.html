@@ -1,0 +1,70 @@
+{% raw %}
+<div class="example-window" id="window_content">
+
+    <div class="display-panel">
+
+        <div class="header">
+            <!--  <h2>Header</h2>  -->
+        </div>
+
+        <div class="content">
+            <div class="inbound pips">
+                <ul>
+                    <li class="pip" v-for="pip in pipsInbound">
+                        <div class="draggable-pip"
+                            draggable=true
+                            @dragstart='pipStartDrag(event, "inbound", pip.index)'
+                            @dragend='pipEndDrag(event, "inbound", pip.index)'
+                            @dragover='pipOverDrag(event, "inbound", pip.index)'
+                            @drop='pipDrop(event, "inbound", pip.index)'
+                            :id="label + '-inbound-'+pip.index"
+                            >
+                            {{ pip.index }}
+                        </div>
+                    </li>
+                    <li class="add-pip">
+                        <a href="javascript:;"
+                            @click='addInboundPip()'>+</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="content-value">
+
+                <div class="display-number" v-text="viewInfo.words">
+                        content
+                </div>
+            </div>
+
+            <div class="outbound pips">
+                <ul>
+                    <li class="pip"
+                        v-for="pip in pipsOutbound">
+                        <div class="draggable-pip"
+                            draggable=true
+                            @dragstart='pipStartDrag(event, "outbound", pip.index)'
+                            @dragend='pipEndDrag(event, "outbound", pip.index)'
+                            @dragover='pipOverDrag(event, "outbound", pip.index)'
+                            @drop='pipDrop(event, "outbound", pip.index)'
+                            :id="label + '-outbound-'+pip.index"
+                            >
+                            {{ pip.index }}
+                        </div>
+                    </li>
+                    <li class="add-pip">
+                        <a href="javascript:;"
+                            @click='addOutboundPip()'>+</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="status-bar" v-text=viewInfo.textStatus>
+                Status Text
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endraw %}

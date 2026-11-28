@@ -1,0 +1,23 @@
+# Chromite abilities and questions
+
+state: >
+    You are a 2D robot with left and right tank tracks.
+    Drive the tank to perform the insturction
+
+questions:
+    left_power:
+        type: number
+        instructions: "Power applied to the left tank tread."
+        range: [0, 100]
+        step: 1
+    right_power:
+        type: number
+        instructions: "Power applied to the right tank tread"
+        range: [0, 100]
+        step: 1
+    target:
+        type: box
+        instructions: "highlight the target to drive toward"
+        
+examples:
+    - roam the screen.
